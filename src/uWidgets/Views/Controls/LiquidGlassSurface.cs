@@ -71,8 +71,8 @@ public sealed class LiquidGlassSurface : Control
         }
 
         var tintColor = isDark
-            ? new SKColor(32, 34, 40, (byte)(opacity * 255))
-            : new SKColor(246, 249, 255, (byte)(opacity * 255));
+            ? new SKColor(18, 22, 30, (byte)(opacity * 255))
+            : new SKColor(255, 255, 255, (byte)(opacity * 255));
 
         var cornerRadius = (float)CornerRadius.TopLeft;
 
@@ -115,7 +115,9 @@ public sealed class LiquidGlassSurface : Control
         canvas.ClipRoundRect(roundRect, SKClipOperation.Intersect, true);
 
         float minDim = Math.Min(width, height);
-        float bezelWidth = Math.Clamp(minDim * 0.25f, 20f, 38f);
+        // Smooth curved meniscus width
+        float bezelWidth = Math.Clamp(minDim * 0.18f, 16f, 26f);
+        float maxBezelWarp = bezelWidth * 0.85f;
 
         // Subdivide widget into a fine grid (~4px per cell) for smooth analytical SDF meniscus lens warping
         int cols = Math.Clamp((int)Math.Ceiling(width / 4f), 16, 96);
@@ -126,10 +128,10 @@ public sealed class LiquidGlassSurface : Control
         int vertexCount = vCols * vRows;
 
         var positions = new SKPoint[vertexCount];
-        var texCoordsG = new SKPoint[vertexCount];
-        var texCoordsR = new SKPoint[vertexCount];
-        var texCoordsB = new SKPoint[vertexCount];
+        var texCoords = new SKPoint[vertexCount];
         var rimColors = new SKColor[vertexCount];
+
+        float opacityNorm = tintColor.Alpha / 255f;
 
         for (int iy = 0; iy < vRows; iy++)
         {
@@ -157,46 +159,31 @@ public sealed class LiquidGlassSurface : Control
                 float edgeDist = MathF.Max(-d, 0f);
                 float t = Math.Clamp(1f - (edgeDist / bezelWidth), 0f, 1f);
 
-                // Smooth Bezier meniscus curve + steep outer rim lip matching MyDockFinder Liquid Glass
-                float t2 = t * t;
-                float bevelCurve = t2 * (1.65f - 0.65f * t);
-                float rimLip = t2 * t2;
+                // Smooth liquid meniscus curve (zero slope at t = 0, strong refraction at t = 1 without folding)
+                float meniscusCurve = t * MathF.Sqrt(t);
+                float clearLip = t * t * t;
 
-                // Subtle interior dome magnification + strong curved bezel lens refraction
+                // Continuous convex liquid lens across the body + smooth meniscus refraction at the edge
                 float normX = px / MathF.Max(halfW, 1f);
                 float normY = py / MathF.Max(halfH, 1f);
-                float domeX = -normX * 3.5f * (1f - bevelCurve);
-                float domeY = -normY * 3.5f * (1f - bevelCurve);
+                float radial2 = Math.Clamp(normX * normX + normY * normY, 0f, 1f);
+                float domeStrength = 5.5f * (1f - radial2 * 0.3f) * (1f - meniscusCurve);
+                float domeX = -normX * domeStrength;
+                float domeY = -normY * domeStrength;
 
-                float warpStrength = bevelCurve * 20f + rimLip * 18f;
+                float warpStrength = meniscusCurve * maxBezelWarp;
                 float refractX = -nx * warpStrength + domeX;
                 float refractY = -ny * warpStrength + domeY;
 
-                // Chromatic dispersion at the curved glass rim
-                float disp = 1f + bevelCurve * 0.16f;
-                float invDisp = 2f - disp;
-
-                texCoordsG[idx] = ClampToScreen(
+                texCoords[idx] = ClampToScreen(
                     screenOffsetX + (x + refractX) * dpiScale,
                     screenOffsetY + (y + refractY) * dpiScale,
                     screenWidth,
                     screenHeight);
 
-                texCoordsR[idx] = ClampToScreen(
-                    screenOffsetX + (x + refractX * invDisp) * dpiScale,
-                    screenOffsetY + (y + refractY * invDisp) * dpiScale,
-                    screenWidth,
-                    screenHeight);
-
-                texCoordsB[idx] = ClampToScreen(
-                    screenOffsetX + (x + refractX * disp) * dpiScale,
-                    screenOffsetY + (y + refractY * disp) * dpiScale,
-                    screenWidth,
-                    screenHeight);
-
-                // Vertex alpha weight for clear refractive rim vs frosted interior
-                byte clearRimAlpha = (byte)Math.Clamp((bevelCurve * 0.65f + rimLip * 0.35f) * 255f, 0f, 255f);
-                rimColors[idx] = new SKColor(255, 255, 255, clearRimAlpha);
+                // Crystal-clear refractive meniscus lip at the very outer edge, melting seamlessly into the diffused interior
+                byte rimAlpha = (byte)Math.Clamp(clearLip * 225f, 0f, 225f);
+                rimColors[idx] = new SKColor(255, 255, 255, rimAlpha);
             }
         }
 
@@ -225,142 +212,94 @@ public sealed class LiquidGlassSurface : Control
         using var sharpShader = textures.Sharp.ToShader(SKShaderTileMode.Clamp, SKShaderTileMode.Clamp);
         using var blurredShader = textures.Blurred.ToShader(SKShaderTileMode.Clamp, SKShaderTileMode.Clamp);
 
-        float opacityNorm = tintColor.Alpha / 255f;
-
-        // 1. Base warped backdrop (blend between sharp and frosted wallpaper based on opacity)
-        using (var baseVertices = SKVertices.CreateCopy(SKVertexMode.Triangles, positions, texCoordsG, null, indices))
-        using (var sharpPaint = new SKPaint { Shader = sharpShader, IsAntialias = true })
+        // 1. 100% smooth optically-diffused & refracted wallpaper across the liquid glass interior
+        using (var baseVertices = SKVertices.CreateCopy(SKVertexMode.Triangles, positions, texCoords, null, indices))
+        using (var blurPaint = new SKPaint { Shader = blurredShader, IsAntialias = true })
         {
-            canvas.DrawVertices(baseVertices, SKBlendMode.Dst, sharpPaint);
-
-            byte blurAlpha = (byte)Math.Clamp((0.22f + opacityNorm * 0.58f) * 255f, 0f, 235f);
-            using var blurPaint = new SKPaint
-            {
-                Shader = blurredShader,
-                Color = new SKColor(255, 255, 255, blurAlpha),
-                IsAntialias = true
-            };
             canvas.DrawVertices(baseVertices, SKBlendMode.Dst, blurPaint);
         }
 
-        // 2. Crisp refractive glass rim overlay + subtle chromatic dispersion along the bevel
-        using (var rimVerticesG = SKVertices.CreateCopy(SKVertexMode.Triangles, positions, texCoordsG, rimColors, indices))
-        using (var rimPaintG = new SKPaint { Shader = sharpShader, IsAntialias = true })
+        // 2. Seamless crystal-clear meniscus lip at the curved outer edge (same luminance, zero border seam)
+        using (var rimVertices = SKVertices.CreateCopy(SKVertexMode.Triangles, positions, texCoords, rimColors, indices))
+        using (var sharpPaint = new SKPaint { Shader = sharpShader, IsAntialias = true })
         {
-            canvas.DrawVertices(rimVerticesG, SKBlendMode.Modulate, rimPaintG);
+            canvas.DrawVertices(rimVertices, SKBlendMode.Modulate, sharpPaint);
         }
 
-        // Subtle red/blue prismatic fringe along the outer curved bezel
-        using (var rimVerticesR = SKVertices.CreateCopy(SKVertexMode.Triangles, positions, texCoordsR, rimColors, indices))
-        using (var rimVerticesB = SKVertices.CreateCopy(SKVertexMode.Triangles, positions, texCoordsB, rimColors, indices))
-        using (var redFilter = SKColorFilter.CreateColorMatrix(
-        [
-            1f, 0f, 0f, 0f, 0f,
-            0f, 0f, 0f, 0f, 0f,
-            0f, 0f, 0f, 0f, 0f,
-            0f, 0f, 0f, 0.16f, 0f
-        ]))
-        using (var blueFilter = SKColorFilter.CreateColorMatrix(
-        [
-            0f, 0f, 0f, 0f, 0f,
-            0f, 0f, 0f, 0f, 0f,
-            0f, 0f, 1f, 0f, 0f,
-            0f, 0f, 0f, 0.16f, 0f
-        ]))
-        using (var dispPaintR = new SKPaint { Shader = sharpShader, ColorFilter = redFilter, BlendMode = SKBlendMode.Plus, IsAntialias = true })
-        using (var dispPaintB = new SKPaint { Shader = sharpShader, ColorFilter = blueFilter, BlendMode = SKBlendMode.Plus, IsAntialias = true })
+        // 3. Translucent crystal glaze (preserves background colors and refraction clarity)
+        byte effectiveTintAlpha = (byte)Math.Clamp(opacityNorm * (isDark ? 64f : 42f), 12f, 72f);
+        using (var tintPaint = new SKPaint
         {
-            canvas.DrawVertices(rimVerticesR, SKBlendMode.Modulate, dispPaintR);
-            canvas.DrawVertices(rimVerticesB, SKBlendMode.Modulate, dispPaintB);
-        }
-
-        // 3. Theme tint layer (preserves glass clarity at the bevel while applying Dark/Light tint)
-        byte effectiveTintAlpha = (byte)Math.Clamp(tintColor.Alpha * 0.62f, 0f, 215f);
-        if (effectiveTintAlpha > 0)
+            Color = tintColor.WithAlpha(effectiveTintAlpha),
+            Style = SKPaintStyle.Fill,
+            IsAntialias = true
+        })
         {
-            using var tintPaint = new SKPaint
-            {
-                Color = tintColor.WithAlpha(effectiveTintAlpha),
-                Style = SKPaintStyle.Fill,
-                IsAntialias = true
-            };
             canvas.DrawRect(new SKRect(0, 0, width, height), tintPaint);
         }
 
-        // 4. Inner glass bevel caustic sheen & depth gradient
+        // 4. Delicate diagonal liquid surface specular reflection
         using (var sheenShader = SKShader.CreateLinearGradient(
                    new SKPoint(0, 0),
                    new SKPoint(width, height),
                    [
-                       new SKColor(255, 255, 255, isDark ? (byte)42 : (byte)75),
-                       new SKColor(255, 255, 255, 8),
-                       new SKColor(0, 0, 0, isDark ? (byte)28 : (byte)18),
-                       new SKColor(255, 255, 255, isDark ? (byte)28 : (byte)52)
+                       new SKColor(255, 255, 255, isDark ? (byte)36 : (byte)55),
+                       new SKColor(255, 255, 255, 6),
+                       new SKColor(0, 0, 0, isDark ? (byte)14 : (byte)8),
+                       new SKColor(255, 255, 255, isDark ? (byte)24 : (byte)38)
                    ],
-                   [0f, 0.35f, 0.75f, 1f],
+                   [0f, 0.35f, 0.72f, 1f],
                    SKShaderTileMode.Clamp))
         using (var sheenPaint = new SKPaint { Shader = sheenShader, Style = SKPaintStyle.Fill, IsAntialias = true })
         {
             canvas.DrawRect(new SKRect(0, 0, width, height), sheenPaint);
         }
 
-        // 5. Inner 3D glass thickness rim (bright inner caustic lip + subtle dark meniscus shadow)
-        using (var innerShadowRect = new SKRoundRect(new SKRect(1.5f, 1.5f, width - 1.5f, height - 1.5f), MathF.Max(0f, r - 1.5f), MathF.Max(0f, r - 1.5f)))
-        using (var innerShadowPaint = new SKPaint
-        {
-            Color = new SKColor(0, 0, 0, isDark ? (byte)48 : (byte)32),
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 2.0f,
-            IsAntialias = true
-        })
-        {
-            canvas.DrawRoundRect(innerShadowRect, innerShadowPaint);
-        }
-
-        using (var innerBevelRect = new SKRoundRect(new SKRect(3.0f, 3.0f, width - 3.0f, height - 3.0f), MathF.Max(0f, r - 3.0f), MathF.Max(0f, r - 3.0f)))
-        using (var innerBevelShader = SKShader.CreateLinearGradient(
+        // 5. Soft feathered meniscus specular highlight on the curved corners + delicate hairline glass edge
+        using (var innerSpecularRect = new SKRoundRect(new SKRect(1.2f, 1.2f, width - 1.2f, height - 1.2f), MathF.Max(0f, r - 1.2f), MathF.Max(0f, r - 1.2f)))
+        using (var innerSpecularShader = SKShader.CreateLinearGradient(
                    new SKPoint(0, 0),
                    new SKPoint(width, height),
                    [
-                       new SKColor(255, 255, 255, isDark ? (byte)85 : (byte)150),
-                       new SKColor(255, 255, 255, 18),
-                       new SKColor(255, 255, 255, isDark ? (byte)55 : (byte)105)
+                       new SKColor(255, 255, 255, isDark ? (byte)75 : (byte)110),
+                       new SKColor(255, 255, 255, 0),
+                       new SKColor(255, 255, 255, 0),
+                       new SKColor(255, 255, 255, isDark ? (byte)45 : (byte)70)
                    ],
-                   [0f, 0.5f, 1f],
+                   [0f, 0.28f, 0.72f, 1f],
                    SKShaderTileMode.Clamp))
-        using (var innerBevelPaint = new SKPaint
+        using (var innerSpecularPaint = new SKPaint
         {
-            Shader = innerBevelShader,
+            Shader = innerSpecularShader,
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1.75f,
+            StrokeWidth = 1.6f,
             IsAntialias = true
         })
         {
-            canvas.DrawRoundRect(innerBevelRect, innerBevelPaint);
+            canvas.DrawRoundRect(innerSpecularRect, innerSpecularPaint);
         }
 
-        // 6. Crisp outer specular glass rim highlight + subtle glass edge contour for bright wallpapers
-        using (var outerRimRect = new SKRoundRect(new SKRect(0.75f, 0.75f, width - 0.75f, height - 0.75f), MathF.Max(0f, r - 0.75f), MathF.Max(0f, r - 0.75f)))
-        using (var outerRimShader = SKShader.CreateLinearGradient(
+        using (var outerGlintRect = new SKRoundRect(new SKRect(0.45f, 0.45f, width - 0.45f, height - 0.45f), MathF.Max(0f, r - 0.45f), MathF.Max(0f, r - 0.45f)))
+        using (var outerGlintShader = SKShader.CreateLinearGradient(
                    new SKPoint(0, 0),
                    new SKPoint(width, height),
                    [
-                       isDark ? new SKColor(255, 255, 255, 210) : new SKColor(150, 165, 185, 155),
-                       isDark ? new SKColor(255, 255, 255, 70) : new SKColor(130, 145, 165, 95),
-                       isDark ? new SKColor(255, 255, 255, 50) : new SKColor(120, 135, 155, 85),
-                       isDark ? new SKColor(255, 255, 255, 165) : new SKColor(145, 160, 180, 140)
+                       isDark ? new SKColor(255, 255, 255, 135) : new SKColor(180, 195, 215, 75),
+                       isDark ? new SKColor(255, 255, 255, 32) : new SKColor(165, 180, 200, 42),
+                       isDark ? new SKColor(255, 255, 255, 24) : new SKColor(160, 175, 195, 38),
+                       isDark ? new SKColor(255, 255, 255, 95) : new SKColor(175, 190, 210, 65)
                    ],
                    [0f, 0.35f, 0.65f, 1f],
                    SKShaderTileMode.Clamp))
-        using (var outerRimPaint = new SKPaint
+        using (var outerGlintPaint = new SKPaint
         {
-            Shader = outerRimShader,
+            Shader = outerGlintShader,
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1.5f,
+            StrokeWidth = 0.8f,
             IsAntialias = true
         })
         {
-            canvas.DrawRoundRect(outerRimRect, outerRimPaint);
+            canvas.DrawRoundRect(outerGlintRect, outerGlintPaint);
         }
 
         canvas.Restore();

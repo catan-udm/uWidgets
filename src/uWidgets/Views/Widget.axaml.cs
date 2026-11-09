@@ -79,17 +79,20 @@ public partial class Widget : Window
         UpdateLiquidGlassState(appSettingsProvider.Get());
     }
 
+    private bool UseEffectiveNativeFrame => appSettingsProvider.Get().Theme.UseNativeFrame && !appSettingsProvider.Get().Theme.LiquidGlass;
     public bool ShowEditButton => editWidgetWindow != null;
     public string Edit => $"{Locale.Widget_Edit} \"{widgetLayoutProvider.Get().Type}\"";
-    public CornerRadius Radius => appSettingsProvider.Get().Theme.UseNativeFrame ? new(0) : new(appSettingsProvider.Get().Dimensions.Radius / (Screens.ScreenFromWindow(this)?.Scaling ?? 1.0));
-    public bool IsLiquidGlassEnabled => appSettingsProvider.Get().Theme.LiquidGlass && !appSettingsProvider.Get().Theme.UseNativeFrame;
+    public CornerRadius Radius => UseEffectiveNativeFrame
+        ? new(0)
+        : new((IsLiquidGlassEnabled ? Math.Max(appSettingsProvider.Get().Dimensions.Radius, 22) : appSettingsProvider.Get().Dimensions.Radius) / (Screens.ScreenFromWindow(this)?.Scaling ?? 1.0));
+    public bool IsLiquidGlassEnabled => appSettingsProvider.Get().Theme.LiquidGlass;
     
-    public SystemDecorations WidgetSystemDecorations => appSettingsProvider.Get().Theme.UseNativeFrame
+    public SystemDecorations WidgetSystemDecorations => UseEffectiveNativeFrame
         ? SystemDecorations.BorderOnly
         : SystemDecorations.None;
 
-    public bool ToolTipVisible => !appSettingsProvider.Get().Theme.UseNativeFrame && !appSettingsProvider.Get().Layout.LockSize;
-    public bool WidgetExtendClientArea => appSettingsProvider.Get().Theme.UseNativeFrame;
+    public bool ToolTipVisible => !UseEffectiveNativeFrame && !appSettingsProvider.Get().Layout.LockSize;
+    public bool WidgetExtendClientArea => UseEffectiveNativeFrame;
     public void EditWidget() => editWidgetWindow?.Invoke().ShowDialog(this);
     public void ResizeSmall() => _ = Resize(2, 2);
     public void ResizeMedium() => _ = Resize(4, 2);
@@ -128,11 +131,20 @@ public partial class Widget : Window
 
     private void UpdateLiquidGlassState(AppSettings settings)
     {
-        var enabled = settings.Theme.LiquidGlass && !settings.Theme.UseNativeFrame;
+        var enabled = settings.Theme.LiquidGlass;
         Classes.Set("LiquidGlass", enabled);
+        SystemDecorations = WidgetSystemDecorations;
+        ExtendClientAreaToDecorationsHint = WidgetExtendClientArea;
+        TransparencyLevelHint = enabled
+            ? [WindowTransparencyLevel.Transparent]
+            : settings.Theme.OpacityLevel < 1.0
+                ? [WindowTransparencyLevel.AcrylicBlur]
+                : [WindowTransparencyLevel.None];
         Border.CornerRadius = Radius;
+        Border.BorderThickness = new Thickness(0);
         LiquidGlassSurface.IsVisible = enabled;
         LiquidGlassSurface.CornerRadius = Radius;
+        InteropService.SetLiquidGlassWindowAttributes(this, enabled);
         if (enabled)
             LiquidGlassSurface.InvalidateVisual();
     }

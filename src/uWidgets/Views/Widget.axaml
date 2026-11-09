@@ -50,11 +50,18 @@
             <Setter Property="Margin" Value="0" />
             <Setter Property="Padding" Value="0" />
         </Style>
-        <Style Selector="Window.LiquidGlass">
-            <Setter Property="TransparencyLevelHint" Value="Transparent" />
+        <Style Selector="Border#Border">
+            <Setter Property="Background" Value="{DynamicResource WidgetBackground}" />
+            <Setter Property="BorderThickness" Value="0" />
         </Style>
-        <Style Selector="Window.LiquidGlass Border#Border">
+        <Style Selector=":is(Window).LiquidGlass">
+            <Setter Property="TransparencyLevelHint" Value="Transparent" />
             <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector=":is(Window).LiquidGlass Border#Border">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
         </Style>
     </Window.Styles>
     
@@ -67,7 +74,7 @@
     </ToolTip.Tip>
     
     <Grid>
-        <Border CornerRadius="{Binding Radius}" Background="{DynamicResource WidgetBackground}" 
+        <Border CornerRadius="{Binding Radius}"
                 VerticalAlignment="Top"
                 HorizontalAlignment="Left"
                 ClipToBounds="True"

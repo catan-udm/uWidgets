@@ -1,0 +1,28 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style>
+        <Style.Resources>
+            <SolidColorBrush x:Key="WidgetBackground" Color="#00FFFFFF" Opacity="0" />
+            <x:Double x:Key="TextOpacity">0.95</x:Double>
+        </Style.Resources>
+    </Style>
+    <Style Selector="Window.Widget">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="TransparencyLevelHint" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="SystemDecorations" Value="None" />
+        <Setter Property="ExtendClientAreaToDecorationsHint" Value="False" />
+    </Style>
+    <Style Selector=".Widget Border#Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="TextBlock">
+        <Setter Property="Opacity" Value="0.95" />
+    </Style>
+    <Style Selector=".Widget ContentPresenter#ContentPresenter">
+        <Setter Property="Effect">
+            <DropShadowEffect BlurRadius="4" OffsetX="0" OffsetY="1" Color="#26000000" />
+        </Setter>
+    </Style>
+</Styles>

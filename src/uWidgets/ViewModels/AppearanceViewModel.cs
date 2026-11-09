@@ -94,9 +94,15 @@ public class AppearanceViewModel(IAppSettingsProvider appSettingsProvider) : Rea
         set
         {
             var settings = appSettingsProvider.Get();
-            var newTheme = settings.Theme with { LiquidGlass = value };
+            var newTheme = settings.Theme with
+            {
+                LiquidGlass = value,
+                UseNativeFrame = value ? false : settings.Theme.UseNativeFrame
+            };
             var newSettings = settings with { Theme = newTheme };
             appSettingsProvider.Save(newSettings);
+            if (value)
+                this.RaisePropertyChanged(nameof(UseNativeFrame));
         }
     }
     
@@ -120,9 +126,15 @@ public class AppearanceViewModel(IAppSettingsProvider appSettingsProvider) : Rea
         set
         {
             var settings = appSettingsProvider.Get();
-            var theme = settings.Theme with { UseNativeFrame = value };
+            var theme = settings.Theme with
+            {
+                UseNativeFrame = value,
+                LiquidGlass = value ? false : settings.Theme.LiquidGlass
+            };
             var newSettings = settings with { Theme = theme };
             appSettingsProvider.Save(newSettings);
+            if (value)
+                this.RaisePropertyChanged(nameof(LiquidGlass));
         }        
     }
 

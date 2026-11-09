@@ -156,7 +156,7 @@ public static class WallpaperBackdropService
             return null;
         }
 
-        using (var blurFilter = SKImageFilter.CreateBlur(7.5f, 7.5f, SKShaderTileMode.Clamp))
+        using (var blurFilter = SKImageFilter.CreateBlur(6.0f, 6.0f, SKShaderTileMode.Clamp))
         using (var blurPaint = new SKPaint { ImageFilter = blurFilter, IsAntialias = true })
         {
             blurredSurface.Canvas.DrawImage(sharpImage, 0, 0, blurPaint);

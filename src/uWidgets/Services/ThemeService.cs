@@ -25,6 +25,11 @@ public class ThemeService : IThemeService
     {
         Source = new Uri("avares://uWidgets/Styles/Monochrome.axaml")
     };
+
+    private readonly StyleInclude liquidGlassStyle = new(new Uri("avares://uWidgets/"))
+    {
+        Source = new Uri("avares://uWidgets/Styles/LiquidGlass.axaml")
+    };
     
     public void Apply(Theme theme)
     {
@@ -36,6 +41,7 @@ public class ThemeService : IThemeService
         };
         
         Application.Current.Resources["BackgroundOpacity"] = theme.OpacityLevel;
+        Application.Current.Resources["LiquidGlass"] = theme.LiquidGlass;
         Application.Current.Resources["FontFamily"] = theme.FontFamily == "Inter"
             ? new FontFamily("avares://Avalonia.Fonts.Inter#Inter")
             : new FontFamily(theme.FontFamily);
@@ -47,8 +53,9 @@ public class ThemeService : IThemeService
             Application.Current.Resources["SystemAccentColorLight1"] = color;
         }
         
-        SwitchStyle(transparentStyle, theme.OpacityLevel < 1);
+        SwitchStyle(transparentStyle, theme.OpacityLevel < 1 || theme.LiquidGlass);
         SwitchStyle(monochromeStyle, theme.Monochrome);
+        SwitchStyle(liquidGlassStyle, theme.LiquidGlass);
     }
 
     private static void SwitchStyle(StyleInclude style, bool enable)

@@ -75,6 +75,39 @@ public class InteropService
         SetWindowLong(handle.Value, GWL_EXSTYLE, exStyle);
     }
 
+    public static void SetLiquidGlassWindowAttributes(Window window, bool enabled)
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var handle = window.TryGetPlatformHandle()?.Handle;
+        if (handle == null || handle.Value == IntPtr.Zero)
+            return;
+
+        try
+        {
+            const int DWMWA_NCRENDERING_POLICY = 2;
+            const uint DWMNCRP_USEWINDOWSTYLE = 0;
+            const uint DWMNCRP_DISABLED = 1;
+            const int DWMWA_BORDER_COLOR = 34;
+            const uint DWMWA_COLOR_NONE = 0xFFFFFFFE;
+            const uint DWMWA_COLOR_DEFAULT = 0xFFFFFFFF;
+
+            uint borderColor = enabled ? DWMWA_COLOR_NONE : DWMWA_COLOR_DEFAULT;
+            DwmSetWindowAttribute(handle.Value, DWMWA_BORDER_COLOR, ref borderColor, sizeof(uint));
+
+            uint ncPolicy = enabled ? DWMNCRP_DISABLED : DWMNCRP_USEWINDOWSTYLE;
+            DwmSetWindowAttribute(handle.Value, DWMWA_NCRENDERING_POLICY, ref ncPolicy, sizeof(uint));
+        }
+        catch
+        {
+            // Ignore on older Windows versions that do not support DWMWA_BORDER_COLOR
+        }
+    }
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int dwAttribute, ref uint pvAttribute, int cbAttribute);
+
     [DllImport("user32.dll")]
     private static extern IntPtr GetWindowLong(IntPtr hWnd, int nIndex);
 
