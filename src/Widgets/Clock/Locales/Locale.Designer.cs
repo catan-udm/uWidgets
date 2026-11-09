@@ -202,5 +202,77 @@ namespace Clock.Locales {
                 return ResourceManager.GetString("Clock_Yesterday", resourceCulture);
             }
         }
+
+        public static string Clock_Pomodoro_Title {
+            get {
+                return ResourceManager.GetString("Clock_Pomodoro_Title", resourceCulture);
+            }
+        }
+
+        public static string Clock_Pomodoro_Subtitle {
+            get {
+                return ResourceManager.GetString("Clock_Pomodoro_Subtitle", resourceCulture);
+            }
+        }
+
+        public static string Clock_Pomodoro_Task {
+            get {
+                return ResourceManager.GetString("Clock_Pomodoro_Task", resourceCulture);
+            }
+        }
+
+        public static string Clock_Pomodoro_Focus {
+            get {
+                return ResourceManager.GetString("Clock_Pomodoro_Focus", resourceCulture);
+            }
+        }
+
+        public static string Clock_Pomodoro_ShortBreak {
+            get {
+                return ResourceManager.GetString("Clock_Pomodoro_ShortBreak", resourceCulture);
+            }
+        }
+
+        public static string Clock_Pomodoro_LongBreak {
+            get {
+                return ResourceManager.GetString("Clock_Pomodoro_LongBreak", resourceCulture);
+            }
+        }
+
+        public static string Clock_Pomodoro_PhaseFocus {
+            get {
+                return ResourceManager.GetString("Clock_Pomodoro_PhaseFocus", resourceCulture);
+            }
+        }
+
+        public static string Clock_Pomodoro_PhaseShortBreak {
+            get {
+                return ResourceManager.GetString("Clock_Pomodoro_PhaseShortBreak", resourceCulture);
+            }
+        }
+
+        public static string Clock_Pomodoro_PhaseLongBreak {
+            get {
+                return ResourceManager.GetString("Clock_Pomodoro_PhaseLongBreak", resourceCulture);
+            }
+        }
+
+        public static string Clock_Stopwatch_Title {
+            get {
+                return ResourceManager.GetString("Clock_Stopwatch_Title", resourceCulture);
+            }
+        }
+
+        public static string Clock_Stopwatch_Subtitle {
+            get {
+                return ResourceManager.GetString("Clock_Stopwatch_Subtitle", resourceCulture);
+            }
+        }
+
+        public static string Clock_Stopwatch_Lap {
+            get {
+                return ResourceManager.GetString("Clock_Stopwatch_Lap", resourceCulture);
+            }
+        }
     }
 }

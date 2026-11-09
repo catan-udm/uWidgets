@@ -59,4 +59,40 @@
     <data name="Clock_Yesterday" xml:space="preserve">
         <value>Вчера</value>
     </data>
+    <data name="Clock_Pomodoro_Title" xml:space="preserve">
+        <value>Помодоро</value>
+    </data>
+    <data name="Clock_Pomodoro_Subtitle" xml:space="preserve">
+        <value>Таймер фокусировки с настраиваемыми интервалами работы и отдыха</value>
+    </data>
+    <data name="Clock_Pomodoro_Task" xml:space="preserve">
+        <value>Задача</value>
+    </data>
+    <data name="Clock_Pomodoro_Focus" xml:space="preserve">
+        <value>Фокус (мин)</value>
+    </data>
+    <data name="Clock_Pomodoro_ShortBreak" xml:space="preserve">
+        <value>Короткий перерыв (мин)</value>
+    </data>
+    <data name="Clock_Pomodoro_LongBreak" xml:space="preserve">
+        <value>Длинный перерыв (мин)</value>
+    </data>
+    <data name="Clock_Pomodoro_PhaseFocus" xml:space="preserve">
+        <value>ФОКУС</value>
+    </data>
+    <data name="Clock_Pomodoro_PhaseShortBreak" xml:space="preserve">
+        <value>ПЕРЕРЫВ</value>
+    </data>
+    <data name="Clock_Pomodoro_PhaseLongBreak" xml:space="preserve">
+        <value>ОТДЫХ</value>
+    </data>
+    <data name="Clock_Stopwatch_Title" xml:space="preserve">
+        <value>Секундомер</value>
+    </data>
+    <data name="Clock_Stopwatch_Subtitle" xml:space="preserve">
+        <value>Измерение времени и запись кругов</value>
+    </data>
+    <data name="Clock_Stopwatch_Lap" xml:space="preserve">
+        <value>Круг</value>
+    </data>
 </root>

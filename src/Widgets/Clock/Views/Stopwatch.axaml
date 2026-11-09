@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:locales="clr-namespace:Clock.Locales"
+             xmlns:viewModels="clr-namespace:Clock.ViewModels"
+             x:Class="Clock.Views.Stopwatch"
+             x:DataType="viewModels:StopwatchViewModel">
+    <UserControl.Styles>
+        <Style Selector="Button.controlBtn">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.primaryBtn">
+            <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="CornerRadius" Value="18" />
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto">
+        <TextBlock Grid.Row="0"
+                   Text="{x:Static locales:Locale.Clock_Stopwatch_Title}"
+                   FontSize="11"
+                   FontWeight="Bold"
+                   Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+
+        <Viewbox Grid.Row="1" Stretch="Uniform" Margin="0,4">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="{Binding MainTimeText}"
+                           FontSize="34"
+                           FontWeight="Bold"
+                           VerticalAlignment="Bottom" />
+                <TextBlock Text="{Binding DecisecondsText}"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           Opacity="0.6"
+                           Margin="2,0,0,3"
+                           VerticalAlignment="Bottom" />
+            </StackPanel>
+        </Viewbox>
+
+        <ScrollViewer Grid.Row="2" Name="LapsContainer" MaxHeight="72" Margin="0,0,0,6" IsVisible="False">
+            <ItemsControl ItemsSource="{Binding Laps}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="viewModels:LapItemViewModel">
+                        <Grid ColumnDefinitions="*,Auto" Margin="2,1">
+                            <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="11" Opacity="0.6" />
+                            <TextBlock Grid.Column="1" Text="{Binding ElapsedText}" FontSize="11" FontWeight="SemiBold" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+            <Button Classes="controlBtn" Click="Reset_OnClick">
+                <PathIcon Width="12" Height="12"
+                          Data="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466" />
+            </Button>
+            <Button Classes="primaryBtn" Click="StartPause_OnClick">
+                <PathIcon Width="13" Height="13" Foreground="White" Data="{Binding PlayPauseIcon}" />
+            </Button>
+            <Button Classes="controlBtn" Click="Lap_OnClick">
+                <PathIcon Width="12" Height="12"
+                          Data="M14.778.085A.5.5 0 0 1 15 .5V8a.5.5 0 0 1-.314.464L14.5 8l.186.464-.003.001-.006.003-.023.009a12 12 0 0 1-.397.15c-.264.095-.631.223-1.047.35-.816.252-1.879.523-2.71.523-.847 0-1.548-.28-2.158-.525l-.028-.01C7.68 8.71 7.14 8.5 6.5 8.5c-.7 0-1.638.23-2.437.477A20 20 0 0 0 3 9.342V15.5a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 1 0v.282c.226-.079.496-.17.79-.26C4.606.272 5.67 0 6.5 0c.84 0 1.524.277 2.121.519l.043.018C9.286.788 9.828 1 10.5 1c.7 0 1.638-.23 2.437-.477a20 20 0 0 0 1.349-.476l.019-.007.004-.002h.001" />
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

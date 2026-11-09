@@ -1,0 +1,53 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Calendar.ViewModels"
+             x:Class="Calendar.Views.Countdown"
+             x:DataType="viewModels:CountdownViewModel">
+    <Grid RowDefinitions="Auto,*,Auto,Auto">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+            <TextBlock Grid.Column="0"
+                       Text="{Binding Title}"
+                       FontWeight="Bold"
+                       FontSize="13"
+                       Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
+                       TextTrimming="CharacterEllipsis" />
+            <TextBlock Grid.Column="1"
+                       Name="DateBadge"
+                       Text="{Binding TargetDateText}"
+                       FontSize="11"
+                       FontWeight="SemiBold"
+                       Opacity="0.55"
+                       IsVisible="False" />
+        </Grid>
+
+        <Viewbox Grid.Row="1" Stretch="Uniform" HorizontalAlignment="Left" Margin="0,2">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="6">
+                <TextBlock Text="{Binding DaysValue}"
+                           FontSize="48"
+                           FontWeight="Bold"
+                           LetterSpacing="-2"
+                           VerticalAlignment="Center" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding StatusLabel}"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               Opacity="0.6" />
+                    <TextBlock Text="{Binding DetailText}"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               Opacity="0.8" />
+                </StackPanel>
+            </StackPanel>
+        </Viewbox>
+
+        <ProgressBar Grid.Row="2"
+                     Name="ProgressBar"
+                     Minimum="0"
+                     Maximum="100"
+                     Value="{Binding ProgressPercentage}"
+                     Height="6"
+                     CornerRadius="3"
+                     MinWidth="40"
+                     Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+    </Grid>
+</UserControl>

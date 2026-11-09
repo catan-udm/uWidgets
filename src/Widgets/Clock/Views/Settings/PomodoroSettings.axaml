@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
+             xmlns:locales="clr-namespace:Clock.Locales"
+             xmlns:viewModels="clr-namespace:Clock.ViewModels"
+             x:Class="Clock.Views.Settings.PomodoroSettings"
+             x:DataType="viewModels:PomodoroSettingsViewModel">
+    <ScrollViewer>
+        <StackPanel Orientation="Vertical" Spacing="5">
+            <controls:Setting Title="{x:Static locales:Locale.Clock_Pomodoro_Task}">
+                <TextBox Width="130" Text="{Binding TaskTitle}" />
+            </controls:Setting>
+            <controls:Setting Title="{x:Static locales:Locale.Clock_Pomodoro_Focus}">
+                <NumericUpDown Width="130" Minimum="1" Maximum="180" Increment="5" FormatString="0" Value="{Binding FocusMinutes}" />
+            </controls:Setting>
+            <controls:Setting Title="{x:Static locales:Locale.Clock_Pomodoro_ShortBreak}">
+                <NumericUpDown Width="130" Minimum="1" Maximum="60" Increment="1" FormatString="0" Value="{Binding ShortBreakMinutes}" />
+            </controls:Setting>
+            <controls:Setting Title="{x:Static locales:Locale.Clock_Pomodoro_LongBreak}">
+                <NumericUpDown Width="130" Minimum="1" Maximum="90" Increment="5" FormatString="0" Value="{Binding LongBreakMinutes}" />
+            </controls:Setting>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

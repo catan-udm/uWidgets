@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
+             xmlns:locales="clr-namespace:Shortcuts.Locales"
+             xmlns:viewModels="clr-namespace:Shortcuts.ViewModels"
+             x:Class="Shortcuts.Views.Settings.LauncherSettings"
+             x:DataType="viewModels:LauncherSettingsViewModel">
+    <ScrollViewer>
+        <StackPanel Orientation="Vertical" Spacing="6">
+            <controls:Setting Title="{x:Static locales:Locale.Shortcuts_ShowLabels}">
+                <ToggleSwitch IsChecked="{Binding ShowLabels}" />
+            </controls:Setting>
+
+            <ItemsControl ItemsSource="{Binding Items}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="viewModels:EditableShortcutViewModel">
+                        <Border CornerRadius="6"
+                                Padding="8"
+                                Margin="0,2"
+                                Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+                            <StackPanel Spacing="4">
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2">
+                                    <TextBox Grid.Column="0"
+                                             Watermark="{x:Static locales:Locale.Shortcuts_Name}"
+                                             Text="{Binding Name}"
+                                             Margin="0,0,6,0" />
+                                    <Button Grid.Column="1" Content="✕" Click="Remove_OnClick" />
+                                </Grid>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox Grid.Column="0"
+                                             Watermark="{x:Static locales:Locale.Shortcuts_Target}"
+                                             Text="{Binding Target}"
+                                             Margin="0,0,6,0" />
+                                    <ComboBox Grid.Column="1"
+                                              Width="96"
+                                              ItemsSource="{Binding AvailableIcons}"
+                                              SelectedItem="{Binding IconKey}" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Button HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    Content="{x:Static locales:Locale.Shortcuts_Add}"
+                    Click="Add_OnClick" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

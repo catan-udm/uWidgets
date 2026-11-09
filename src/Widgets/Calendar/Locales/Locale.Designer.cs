@@ -112,5 +112,53 @@ namespace Calendar.Locales {
                 return ResourceManager.GetString("Calendar_Month_Title", resourceCulture);
             }
         }
+
+        public static string Calendar_Countdown_Title {
+            get {
+                return ResourceManager.GetString("Calendar_Countdown_Title", resourceCulture);
+            }
+        }
+
+        public static string Calendar_Countdown_Subtitle {
+            get {
+                return ResourceManager.GetString("Calendar_Countdown_Subtitle", resourceCulture);
+            }
+        }
+
+        public static string Calendar_Countdown_Event {
+            get {
+                return ResourceManager.GetString("Calendar_Countdown_Event", resourceCulture);
+            }
+        }
+
+        public static string Calendar_Countdown_TargetDate {
+            get {
+                return ResourceManager.GetString("Calendar_Countdown_TargetDate", resourceCulture);
+            }
+        }
+
+        public static string Calendar_Countdown_ShowHours {
+            get {
+                return ResourceManager.GetString("Calendar_Countdown_ShowHours", resourceCulture);
+            }
+        }
+
+        public static string Calendar_Countdown_DaysLeft {
+            get {
+                return ResourceManager.GetString("Calendar_Countdown_DaysLeft", resourceCulture);
+            }
+        }
+
+        public static string Calendar_Countdown_DaysAgo {
+            get {
+                return ResourceManager.GetString("Calendar_Countdown_DaysAgo", resourceCulture);
+            }
+        }
+
+        public static string Calendar_Countdown_DefaultEvent {
+            get {
+                return ResourceManager.GetString("Calendar_Countdown_DefaultEvent", resourceCulture);
+            }
+        }
     }
 }

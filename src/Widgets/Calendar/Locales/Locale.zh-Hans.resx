@@ -76,4 +76,28 @@
   <data name="Calendar_FirstDayOfWeek" xml:space="preserve">
     <value>一周的第一天</value>
   </data>
+  <data name="Calendar_Countdown_Title" xml:space="preserve">
+    <value>倒计时</value>
+  </data>
+  <data name="Calendar_Countdown_Subtitle" xml:space="preserve">
+    <value>追踪距离重要日子的剩余天数</value>
+  </data>
+  <data name="Calendar_Countdown_Event" xml:space="preserve">
+    <value>事件名称</value>
+  </data>
+  <data name="Calendar_Countdown_TargetDate" xml:space="preserve">
+    <value>目标日期</value>
+  </data>
+  <data name="Calendar_Countdown_ShowHours" xml:space="preserve">
+    <value>显示小时</value>
+  </data>
+  <data name="Calendar_Countdown_DaysLeft" xml:space="preserve">
+    <value>剩余天数</value>
+  </data>
+  <data name="Calendar_Countdown_DaysAgo" xml:space="preserve">
+    <value>已过去天数</value>
+  </data>
+  <data name="Calendar_Countdown_DefaultEvent" xml:space="preserve">
+    <value>新年</value>
+  </data>
 </root>

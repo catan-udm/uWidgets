@@ -139,5 +139,29 @@ namespace Monitor.Locales {
                 return ResourceManager.GetString("Monitor_SingleMetric_Title", resourceCulture);
             }
         }
+
+        public static string Monitor_Dashboard_Title {
+            get {
+                return ResourceManager.GetString("Monitor_Dashboard_Title", resourceCulture);
+            }
+        }
+
+        public static string Monitor_Dashboard_Subtitle {
+            get {
+                return ResourceManager.GetString("Monitor_Dashboard_Subtitle", resourceCulture);
+            }
+        }
+
+        public static string Monitor_Dashboard_FourthMetric {
+            get {
+                return ResourceManager.GetString("Monitor_Dashboard_FourthMetric", resourceCulture);
+            }
+        }
+
+        public static string Monitor_Dashboard_ShowLabels {
+            get {
+                return ResourceManager.GetString("Monitor_Dashboard_ShowLabels", resourceCulture);
+            }
+        }
     }
 }

@@ -38,4 +38,16 @@
     <data name="Monitor_SingleMetric_Title" xml:space="preserve">
         <value>Одно значение</value>
     </data>
+    <data name="Monitor_Dashboard_Title" xml:space="preserve">
+        <value>Панель системы</value>
+    </data>
+    <data name="Monitor_Dashboard_Subtitle" xml:space="preserve">
+        <value>Одновременный мониторинг ЦП, ОЗУ, диска и сети или батареи</value>
+    </data>
+    <data name="Monitor_Dashboard_FourthMetric" xml:space="preserve">
+        <value>Четвёртый показатель</value>
+    </data>
+    <data name="Monitor_Dashboard_ShowLabels" xml:space="preserve">
+        <value>Показывать подписи</value>
+    </data>
 </root>

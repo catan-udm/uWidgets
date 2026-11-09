@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="Media" xml:space="preserve">
+        <value>Медиа</value>
+    </data>
+    <data name="Media_NowPlaying_Title" xml:space="preserve">
+        <value>Сейчас играет</value>
+    </data>
+    <data name="Media_NowPlaying_Subtitle" xml:space="preserve">
+        <value>Управление воспроизведением и информация о текущем треке</value>
+    </data>
+    <data name="Media_NoTrack" xml:space="preserve">
+        <value>Ничего не воспроизводится</value>
+    </data>
+    <data name="Media_SystemAudio" xml:space="preserve">
+        <value>Системный звук</value>
+    </data>
+    <data name="Media_ShowVisualizer" xml:space="preserve">
+        <value>Индикатор уровня звука</value>
+    </data>
+    <data name="Media_ShowVolume" xml:space="preserve">
+        <value>Кнопка отключения звука</value>
+    </data>
+</root>

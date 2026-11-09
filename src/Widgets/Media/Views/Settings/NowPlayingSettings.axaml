@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
+             xmlns:locales="clr-namespace:Media.Locales"
+             xmlns:viewModels="clr-namespace:Media.ViewModels"
+             x:Class="Media.Views.Settings.NowPlayingSettings"
+             x:DataType="viewModels:NowPlayingSettingsViewModel">
+    <ScrollViewer>
+        <StackPanel Orientation="Vertical" Spacing="5">
+            <controls:Setting Title="{x:Static locales:Locale.Media_ShowVisualizer}">
+                <ToggleSwitch IsChecked="{Binding ShowVisualizer}" />
+            </controls:Setting>
+            <controls:Setting Title="{x:Static locales:Locale.Media_ShowVolume}">
+                <ToggleSwitch IsChecked="{Binding ShowMuteButton}" />
+            </controls:Setting>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

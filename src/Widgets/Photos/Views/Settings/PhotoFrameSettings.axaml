@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
+             xmlns:locales="clr-namespace:Photos.Locales"
+             xmlns:viewModels="clr-namespace:Photos.ViewModels"
+             x:Class="Photos.Views.Settings.PhotoFrameSettings"
+             x:DataType="viewModels:PhotoFrameSettingsViewModel">
+    <ScrollViewer>
+        <StackPanel Orientation="Vertical" Spacing="5">
+            <controls:Setting Title="{x:Static locales:Locale.Photos_Path}">
+                <TextBox Width="140" Text="{Binding Path}" />
+            </controls:Setting>
+            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" Margin="0,2">
+                <Button Content="{x:Static locales:Locale.Photos_BrowseFile}" Click="BrowseFile_OnClick" />
+                <Button Content="{x:Static locales:Locale.Photos_BrowseFolder}" Click="BrowseFolder_OnClick" />
+            </StackPanel>
+            <controls:Setting Title="{x:Static locales:Locale.Photos_Caption}">
+                <TextBox Width="140" Text="{Binding Caption}" />
+            </controls:Setting>
+            <controls:Setting Title="{x:Static locales:Locale.Photos_Interval}">
+                <NumericUpDown Width="130" Minimum="1" Maximum="1440" Increment="5" FormatString="0" Value="{Binding IntervalMinutes}" />
+            </controls:Setting>
+            <controls:Setting Title="{x:Static locales:Locale.Photos_Fill}">
+                <ToggleSwitch IsChecked="{Binding FillWidget}" />
+            </controls:Setting>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

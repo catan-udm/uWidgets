@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
+             xmlns:locales="clr-namespace:Calendar.Locales"
+             xmlns:viewModels="clr-namespace:Calendar.ViewModels"
+             x:Class="Calendar.Views.Settings.CountdownSettings"
+             x:DataType="viewModels:CountdownSettingsViewModel">
+    <ScrollViewer>
+        <StackPanel Orientation="Vertical" Spacing="5">
+            <controls:Setting Title="{x:Static locales:Locale.Calendar_Countdown_Event}">
+                <TextBox Width="140" Text="{Binding Title}" />
+            </controls:Setting>
+            <controls:Setting Title="{x:Static locales:Locale.Calendar_Countdown_TargetDate}">
+                <CalendarDatePicker Width="140" SelectedDate="{Binding TargetDate}" />
+            </controls:Setting>
+            <controls:Setting Title="{x:Static locales:Locale.Calendar_Countdown_ShowHours}">
+                <ToggleSwitch IsChecked="{Binding ShowHours}" />
+            </controls:Setting>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

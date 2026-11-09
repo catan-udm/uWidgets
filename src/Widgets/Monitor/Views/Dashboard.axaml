@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Monitor.Views.Controls"
+             xmlns:viewModels="clr-namespace:Monitor.ViewModels"
+             x:Class="Monitor.Views.Dashboard"
+             x:DataType="viewModels:DashboardViewModel">
+    <ItemsControl ItemsSource="{Binding Items}">
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <UniformGrid Rows="2" Columns="2" />
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="viewModels:DashboardItemViewModel">
+                <Grid RowDefinitions="3*,*" Margin="3">
+                    <controls:Metric Grid.Row="0"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center"
+                                     DataContext="{Binding Metric}" />
+                    <Viewbox Grid.Row="1" Stretch="Uniform" MaxHeight="16" Margin="0,2,0,0">
+                        <TextBlock Text="{Binding SummaryText}"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" />
+                    </Viewbox>
+                </Grid>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>

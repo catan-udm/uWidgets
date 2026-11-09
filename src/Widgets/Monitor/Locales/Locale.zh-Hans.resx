@@ -85,4 +85,16 @@
   <data name="Monitor_SingleMetric_Title" xml:space="preserve">
     <value>简单仪表板</value>
   </data>
+  <data name="Monitor_Dashboard_Title" xml:space="preserve">
+    <value>系统总览</value>
+  </data>
+  <data name="Monitor_Dashboard_Subtitle" xml:space="preserve">
+    <value>同时查看 CPU、内存、磁盘及网络或电池状态</value>
+  </data>
+  <data name="Monitor_Dashboard_FourthMetric" xml:space="preserve">
+    <value>第四项指标</value>
+  </data>
+  <data name="Monitor_Dashboard_ShowLabels" xml:space="preserve">
+    <value>显示标签</value>
+  </data>
 </root>
