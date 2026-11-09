@@ -41,6 +41,11 @@ public class ThemeService : IThemeService
         };
         
         Application.Current.Resources["BackgroundOpacity"] = theme.OpacityLevel;
+        Application.Current.Resources["LiquidGlassRefThickness"] = theme.RefThickness;
+        Application.Current.Resources["LiquidGlassRefFactor"] = theme.RefFactor;
+        Application.Current.Resources["LiquidGlassRefDispersion"] = theme.RefDispersion;
+        Application.Current.Resources["LiquidGlassShapeRadius"] = theme.ShapeRadius;
+        Application.Current.Resources["LiquidGlassShapeRoundness"] = theme.ShapeRoundness;
         Application.Current.Resources["FontFamily"] = theme.FontFamily == "Inter"
             ? new FontFamily("avares://Avalonia.Fonts.Inter#Inter")
             : new FontFamily(theme.FontFamily);

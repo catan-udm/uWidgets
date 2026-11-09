@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Notes.ViewModels"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
+             x:Class="Notes.Views.Controls.NoteWide"
+             x:DataType="viewModels:NoteViewModel"
+             Margin="0">
+    <Grid ColumnDefinitions="118,Auto,*" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+        <Border Grid.Column="0"
+                Background="{DynamicResource SystemControlHighlightListAccentLowBrush}"
+                Padding="4,8">
+            <Grid RowDefinitions="*,Auto">
+                <controls:ClickThroughTextBox Grid.Row="0"
+                                              CornerRadius="0"
+                                              MinHeight="0"
+                                              Text="{Binding Title}"
+                                              LostFocus="UpdateTitle"
+                                              FontSize="15"
+                                              FontWeight="Bold"
+                                              AcceptsReturn="True"
+                                              TextWrapping="Wrap" />
+                <TextBlock Grid.Row="1"
+                           Padding="8,4,8,2"
+                           Text="{Binding Updated}"
+                           FontSize="10"
+                           Opacity="0.55"
+                           TextWrapping="Wrap" />
+            </Grid>
+        </Border>
+
+        <Path Grid.Column="1" Width="1" Stretch="Fill"
+              Opacity="0.2" StrokeThickness="2" StrokeDashArray="1,1" StrokeDashOffset="1"
+              Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}">
+            <Path.Data>
+                <LineGeometry StartPoint="0,0" EndPoint="0,1" />
+            </Path.Data>
+        </Path>
+
+        <controls:ClickThroughTextBox Grid.Column="2"
+                                      MinHeight="0"
+                                      Padding="12,10"
+                                      Text="{Binding Content}"
+                                      LostFocus="UpdateContent"
+                                      AcceptsReturn="True"
+                                      TextWrapping="Wrap" />
+    </Grid>
+</UserControl>

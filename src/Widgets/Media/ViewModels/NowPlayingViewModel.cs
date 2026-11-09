@@ -32,13 +32,21 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
     public string TrackTitle
     {
         get => trackTitle;
-        private set => this.RaiseAndSetIfChanged(ref trackTitle, value);
+        private set
+        {
+            this.RaiseAndSetIfChanged(ref trackTitle, value);
+            this.RaisePropertyChanged(nameof(TooltipText));
+        }
     }
 
     public string ArtistOrApp
     {
         get => artistOrApp;
-        private set => this.RaiseAndSetIfChanged(ref artistOrApp, value);
+        private set
+        {
+            this.RaiseAndSetIfChanged(ref artistOrApp, value);
+            this.RaisePropertyChanged(nameof(TooltipText));
+        }
     }
 
     public bool IsPlaying
@@ -48,16 +56,23 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
         {
             this.RaiseAndSetIfChanged(ref isPlaying, value);
             this.RaisePropertyChanged(nameof(PlayPauseIcon));
+            this.RaisePropertyChanged(nameof(StatusText));
         }
     }
 
     public double PeakPercentage
     {
         get => peakPercentage;
-        private set => this.RaiseAndSetIfChanged(ref peakPercentage, value);
+        private set
+        {
+            this.RaiseAndSetIfChanged(ref peakPercentage, value);
+            this.RaisePropertyChanged(nameof(StatusText));
+        }
     }
 
     public StreamGeometry PlayPauseIcon => IsPlaying ? PauseGeometry : PlayGeometry;
+    public string TooltipText => $"{TrackTitle} — {ArtistOrApp}";
+    public string StatusText => IsPlaying ? $"{PeakPercentage:0}%" : Locale.Media_NoTrack;
 
     public void PlayPause()
     {

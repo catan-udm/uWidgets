@@ -101,8 +101,64 @@ public class AppearanceViewModel(IAppSettingsProvider appSettingsProvider) : Rea
             };
             var newSettings = settings with { Theme = newTheme };
             appSettingsProvider.Save(newSettings);
+            this.RaisePropertyChanged(nameof(LiquidGlass));
             if (value)
                 this.RaisePropertyChanged(nameof(UseNativeFrame));
+        }
+    }
+
+    public double RefThickness
+    {
+        get => appSettingsProvider.Get().Theme.RefThickness;
+        set
+        {
+            var settings = appSettingsProvider.Get();
+            var newTheme = settings.Theme with { RefThickness = value };
+            appSettingsProvider.Save(settings with { Theme = newTheme });
+        }
+    }
+
+    public double RefFactor
+    {
+        get => appSettingsProvider.Get().Theme.RefFactor;
+        set
+        {
+            var settings = appSettingsProvider.Get();
+            var newTheme = settings.Theme with { RefFactor = value };
+            appSettingsProvider.Save(settings with { Theme = newTheme });
+        }
+    }
+
+    public double RefDispersion
+    {
+        get => appSettingsProvider.Get().Theme.RefDispersion;
+        set
+        {
+            var settings = appSettingsProvider.Get();
+            var newTheme = settings.Theme with { RefDispersion = value };
+            appSettingsProvider.Save(settings with { Theme = newTheme });
+        }
+    }
+
+    public double ShapeRadius
+    {
+        get => appSettingsProvider.Get().Theme.ShapeRadius;
+        set
+        {
+            var settings = appSettingsProvider.Get();
+            var newTheme = settings.Theme with { ShapeRadius = value };
+            appSettingsProvider.Save(settings with { Theme = newTheme });
+        }
+    }
+
+    public double ShapeRoundness
+    {
+        get => appSettingsProvider.Get().Theme.ShapeRoundness;
+        set
+        {
+            var settings = appSettingsProvider.Get();
+            var newTheme = settings.Theme with { ShapeRoundness = value };
+            appSettingsProvider.Save(settings with { Theme = newTheme });
         }
     }
     

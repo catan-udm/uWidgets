@@ -13,7 +13,7 @@ public partial class List : UserControl
 {
     private RemindersListModel model;
     private readonly IWidgetLayoutProvider widgetLayoutProvider;
-    private readonly RemindersViewModel viewModel;
+    private RemindersViewModel viewModel;
 
     public List(IWidgetLayoutProvider widgetLayoutProvider) 
         : this(new RemindersListModel(Locale.Reminders_List_Title, []), widgetLayoutProvider) {}
@@ -37,14 +37,17 @@ public partial class List : UserControl
 
     private void OnSizeChanged(object? sender, SizeChangedEventArgs e)
     {
+        const int tinySize = 120;
         const int smallSize = 200;
+        var tiny = e.NewSize is { Width: <= tinySize } or { Height: <= tinySize };
         var small = e.NewSize is { Width: < smallSize, Height: < smallSize };
         var wide = e.NewSize.AspectRatio >= 1.5;
-        
-        Content = (small, wide) switch
+
+        Content = (tiny, small, wide) switch
         {
-            (true, _) => new ListSmall(viewModel),
-            (_, true) => new ListWide(viewModel),
+            (true, _, _) => new ListTiny(viewModel),
+            (_, true, _) => new ListSmall(viewModel),
+            (_, _, true) => new ListWide(viewModel),
             _ => new ListLarge(viewModel)
         };
     }
@@ -58,7 +61,13 @@ public partial class List : UserControl
     private void UpdateModel(RemindersListModel newModel)
     {
         model = newModel;
-        DataContext = new RemindersViewModel(newModel);
+        viewModel = new RemindersViewModel(newModel);
+        DataContext = viewModel;
+        if (Content is Control control)
+        {
+            control.DataContext = viewModel;
+        }
+
         var newSettings = JsonSerializer.SerializeToElement(newModel);
         var newLayout = widgetLayoutProvider.Get() with { Settings = newSettings };
         

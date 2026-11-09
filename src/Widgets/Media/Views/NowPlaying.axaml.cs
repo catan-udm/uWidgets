@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Media.Models;
 using Media.ViewModels;
+using Media.Views.Controls;
 
 namespace Media.Views;
 
@@ -14,21 +15,34 @@ public partial class NowPlaying : UserControl
     public NowPlaying(NowPlayingModel model)
     {
         viewModel = new NowPlayingViewModel(model);
-        DataContext = viewModel;
+        Content = new NowPlayingSmall(viewModel);
+        SizeChanged += OnSizeChanged;
         Unloaded += OnUnloaded;
         InitializeComponent();
     }
 
-    private void Prev_OnClick(object? sender, RoutedEventArgs e) => viewModel.PreviousTrack();
+    private void OnSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        Content = e.NewSize switch
+        {
+            { Width: <= 120 } or { Height: <= 120 } => new NowPlayingTiny(viewModel),
+            { Width: > 230, Height: > 230 } => new NowPlayingLarge(viewModel),
+            { Width: > 230 } => new NowPlayingWide(viewModel),
+            _ => new NowPlayingSmall(viewModel)
+        };
+    }
 
-    private void PlayPause_OnClick(object? sender, RoutedEventArgs e) => viewModel.PlayPause();
+    public void Prev_OnClick(object? sender, RoutedEventArgs e) => viewModel.PreviousTrack();
 
-    private void Next_OnClick(object? sender, RoutedEventArgs e) => viewModel.NextTrack();
+    public void PlayPause_OnClick(object? sender, RoutedEventArgs e) => viewModel.PlayPause();
 
-    private void Mute_OnClick(object? sender, RoutedEventArgs e) => viewModel.ToggleMute();
+    public void Next_OnClick(object? sender, RoutedEventArgs e) => viewModel.NextTrack();
+
+    public void Mute_OnClick(object? sender, RoutedEventArgs e) => viewModel.ToggleMute();
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        SizeChanged -= OnSizeChanged;
         Unloaded -= OnUnloaded;
         viewModel.Dispose();
     }

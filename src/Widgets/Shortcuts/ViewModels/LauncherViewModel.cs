@@ -1,4 +1,6 @@
+using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using Avalonia.Media;
 using ReactiveUI;
@@ -12,6 +14,7 @@ public class ShortcutItemViewModel(ShortcutItemModel item, bool showLabel) : Rea
     public string Target => item.Target;
     public bool ShowLabel => showLabel;
     public StreamGeometry Icon => ShortcutIcon.Get(item.IconKey);
+    public string TargetSummary => FormatTargetSummary(item.Target);
 
     public void Launch()
     {
@@ -26,6 +29,29 @@ public class ShortcutItemViewModel(ShortcutItemModel item, bool showLabel) : Rea
         catch
         {
             // Ignore failed launch targets
+        }
+    }
+
+    private static string FormatTargetSummary(string rawTarget)
+    {
+        if (string.IsNullOrWhiteSpace(rawTarget)) return string.Empty;
+
+        var trimmed = rawTarget.Trim().Trim('"');
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var uri) &&
+            (uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+             uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
+        {
+            return uri.Host;
+        }
+
+        try
+        {
+            var fileName = Path.GetFileName(trimmed);
+            return string.IsNullOrWhiteSpace(fileName) ? trimmed : fileName;
+        }
+        catch
+        {
+            return trimmed;
         }
     }
 }
@@ -44,4 +70,5 @@ public class LauncherViewModel : ReactiveObject
     }
 
     public ShortcutItemViewModel[] Items { get; }
+    public int Count => Items.Length;
 }

@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Shortcuts.ViewModels"
+             x:Class="Shortcuts.Views.Controls.LauncherTiny"
+             x:DataType="viewModels:LauncherViewModel"
+             Margin="6">
+    <UserControl.Styles>
+        <Style Selector="Button.microTile">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="Padding" Value="4" />
+        </Style>
+    </UserControl.Styles>
+
+    <ItemsControl ItemsSource="{Binding Items}">
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <UniformGrid />
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="viewModels:ShortcutItemViewModel">
+                <Button Classes="microTile" Click="Shortcut_OnClick" ToolTip.Tip="{Binding Name}">
+                    <Viewbox MaxWidth="16" MaxHeight="16">
+                        <PathIcon Data="{Binding Icon}"
+                                  Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                    </Viewbox>
+                </Button>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>

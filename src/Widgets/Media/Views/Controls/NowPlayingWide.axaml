@@ -1,0 +1,100 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Media.ViewModels"
+             x:Class="Media.Views.Controls.NowPlayingWide"
+             x:DataType="viewModels:NowPlayingViewModel">
+    <UserControl.Styles>
+        <Style Selector="Button.mediaBtn">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.playBtn">
+            <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="CornerRadius" Value="21" />
+            <Setter Property="Width" Value="42" />
+            <Setter Property="Height" Value="42" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="*,Auto">
+        <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
+                Width="88" Height="88"
+                CornerRadius="18"
+                Margin="0,0,14,0"
+                VerticalAlignment="Center"
+                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+            <Panel>
+                <Ellipse Width="64" Height="64"
+                         Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                         StrokeThickness="1.5"
+                         Opacity="0.18" />
+                <Ellipse Width="22" Height="22"
+                         Fill="{DynamicResource SystemControlForegroundAccentBrush}"
+                         Opacity="0.2" />
+                <PathIcon Width="26" Height="26"
+                          Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
+                          Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
+            </Panel>
+        </Border>
+
+        <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Spacing="4" Margin="0,0,12,0">
+            <TextBlock Text="{Binding ArtistOrApp}"
+                       FontSize="12"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
+                       TextTrimming="CharacterEllipsis" />
+            <TextBlock Text="{Binding TrackTitle}"
+                       FontSize="17"
+                       FontWeight="Bold"
+                       MaxLines="2"
+                       TextWrapping="Wrap"
+                       TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+            <Button Classes="mediaBtn" Click="Prev_OnClick">
+                <PathIcon Width="12" Height="12"
+                          Data="M.5 3.5A.5.5 0 0 0 0 4v8a.5.5 0 0 0 1 0V8.753l6.267 3.636c.54.313 1.233-.066 1.233-.697v-2.94l6.267 3.636c.54.314 1.233-.065 1.233-.696V4.308c0-.63-.693-1.01-1.233-.696L8.5 7.248v-2.94c0-.63-.692-1.01-1.233-.696L1 7.248V4a.5.5 0 0 0-.5-.5" />
+            </Button>
+            <Button Classes="playBtn" Click="PlayPause_OnClick">
+                <PathIcon Width="15" Height="15" Foreground="White" Data="{Binding PlayPauseIcon}" />
+            </Button>
+            <Button Classes="mediaBtn" Click="Next_OnClick">
+                <PathIcon Width="12" Height="12"
+                          Data="M15.5 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V8.753l-6.267 3.636c-.54.313-1.233-.066-1.233-.697v-2.94l-6.267 3.636C.693 12.703 0 12.324 0 11.693V4.308c0-.63.693-1.01 1.233-.696L7.5 7.248v-2.94c0-.63.693-1.01 1.233-.696L15 7.248V4a.5.5 0 0 1 .5-.5" />
+            </Button>
+            <Button Classes="mediaBtn" IsVisible="{Binding ShowMuteButton}" Click="Mute_OnClick">
+                <PathIcon Width="12" Height="12"
+                          Data="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06m7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 1 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0" />
+            </Button>
+        </StackPanel>
+
+        <Grid Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto" IsVisible="{Binding ShowVisualizer}" Margin="0,6,0,0">
+            <ProgressBar Grid.Column="0"
+                         Minimum="0"
+                         Maximum="100"
+                         Value="{Binding PeakPercentage}"
+                         Height="5"
+                         MinWidth="40"
+                         CornerRadius="2.5"
+                         VerticalAlignment="Center"
+                         Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+            <TextBlock Grid.Column="1"
+                       Text="{Binding StatusText}"
+                       FontSize="10"
+                       FontWeight="SemiBold"
+                       Opacity="0.6"
+                       Margin="8,0,0,0"
+                       VerticalAlignment="Center" />
+        </Grid>
+    </Grid>
+</UserControl>

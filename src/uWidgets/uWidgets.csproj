@@ -29,6 +29,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\uWidgets.Core\uWidgets.Core.csproj" />
+      <ProjectReference Include="..\..\..\glossy-glass\src\GlossyGlass\GlossyGlass.csproj" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Photos.ViewModels"
+             x:Class="Photos.Views.Controls.PhotoFrameTiny"
+             x:DataType="viewModels:PhotoFrameViewModel"
+             Margin="{Binding FrameMargin}">
+    <Border ClipToBounds="True" CornerRadius="{Binding FrameCornerRadius}">
+        <Panel>
+            <Image Source="{Binding CurrentBitmap}"
+                   Stretch="{Binding ImageStretch}"
+                   IsVisible="{Binding HasImage}" />
+
+            <Viewbox IsVisible="{Binding ShowPlaceholder}" Stretch="Uniform" MaxWidth="42" MaxHeight="42" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8">
+                <Canvas Width="64" Height="64">
+                    <Ellipse Canvas.Left="40" Canvas.Top="12" Width="12" Height="12"
+                             Fill="{DynamicResource SystemControlForegroundAccentBrush}" Opacity="0.85" />
+                    <Path Fill="{DynamicResource SystemControlForegroundBaseHighBrush}" Opacity="0.35"
+                          Data="M4 52 L22 26 L36 44 L46 32 L60 52 Z" />
+                    <Path Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" StrokeThickness="3" Opacity="0.5"
+                          Data="M6 10 H58 A4 4 0 0 1 62 14 V50 A4 4 0 0 1 58 54 H6 A4 4 0 0 1 2 50 V14 A4 4 0 0 1 6 10 Z" />
+                </Canvas>
+            </Viewbox>
+
+            <Button HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    IsVisible="{Binding HasMultipleImages}"
+                    Click="Next_OnClick" />
+        </Panel>
+    </Border>
+</UserControl>

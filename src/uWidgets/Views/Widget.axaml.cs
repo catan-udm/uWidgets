@@ -47,7 +47,9 @@ public partial class Widget : Window
         RenderOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
         UpdateLiquidGlassState(this.appSettingsProvider.Get());
         
+        Opened += OnOpened;
         Activated += OnActivated;
+        Closed += OnClosed;
         PositionChanged += OnPositionChanged;
         Resized += OnResized;
         PointerPressed += OnPointerPressed;
@@ -71,12 +73,25 @@ public partial class Widget : Window
             LiquidGlassSurface.InvalidateVisual();
     }
 
+    private void OnOpened(object? sender, EventArgs e)
+    {
+        Position = new PixelPoint(widgetLayoutProvider.Get().X, widgetLayoutProvider.Get().Y);
+        Scale();
+        InteropService.PinWindowToDesktop(this);
+        UpdateLiquidGlassState(appSettingsProvider.Get());
+    }
+
     private void OnActivated(object? sender, EventArgs e)
     {
         Position = new PixelPoint(widgetLayoutProvider.Get().X, widgetLayoutProvider.Get().Y);
         Scale();
-        InteropService.RemoveWindowFromAltTab(this);
+        InteropService.PinWindowToDesktop(this);
         UpdateLiquidGlassState(appSettingsProvider.Get());
+    }
+
+    private void OnClosed(object? sender, EventArgs e)
+    {
+        InteropService.UnpinWindowFromDesktop(this);
     }
 
     private bool UseEffectiveNativeFrame => appSettingsProvider.Get().Theme.UseNativeFrame && !appSettingsProvider.Get().Theme.LiquidGlass;
@@ -93,7 +108,12 @@ public partial class Widget : Window
 
     public bool ToolTipVisible => !UseEffectiveNativeFrame && !appSettingsProvider.Get().Layout.LockSize;
     public bool WidgetExtendClientArea => UseEffectiveNativeFrame;
-    public void EditWidget() => editWidgetWindow?.Invoke().ShowDialog(this);
+    public async void EditWidget()
+    {
+        if (editWidgetWindow == null) return;
+        await editWidgetWindow.Invoke().ShowDialog(this);
+        InteropService.EnforceDesktopZOrder(this);
+    }
     public void ResizeSmall() => _ = Resize(2, 2);
     public void ResizeMedium() => _ = Resize(4, 2);
     public void ResizeLarge() => _ = Resize(4, 4);
@@ -141,9 +161,15 @@ public partial class Widget : Window
                 ? [WindowTransparencyLevel.AcrylicBlur]
                 : [WindowTransparencyLevel.None];
         Border.CornerRadius = Radius;
+        Border.ClipToBounds = !enabled;
         Border.BorderThickness = new Thickness(0);
         LiquidGlassSurface.IsVisible = enabled;
         LiquidGlassSurface.CornerRadius = Radius;
+        LiquidGlassSurface.RefThickness = (float)settings.Theme.RefThickness;
+        LiquidGlassSurface.RefFactor = (float)settings.Theme.RefFactor;
+        LiquidGlassSurface.RefDispersion = (float)settings.Theme.RefDispersion;
+        LiquidGlassSurface.ShapeRadius = (float)settings.Theme.ShapeRadius;
+        LiquidGlassSurface.ShapeRoundness = (float)settings.Theme.ShapeRoundness;
         InteropService.SetLiquidGlassWindowAttributes(this, enabled);
         if (enabled)
             LiquidGlassSurface.InvalidateVisual();
@@ -161,11 +187,14 @@ public partial class Widget : Window
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        InteropService.UnpinWindowFromDesktop(this);
         PointerPressed -= OnPointerPressed;
         PointerReleased -= OnPointerReleased;
         PositionChanged -= OnPositionChanged;
         Resized -= OnResized;
+        Opened -= OnOpened;
         Activated -= OnActivated;
+        Closed -= OnClosed;
         Unloaded -= OnUnloaded;
         widgetLayoutProvider.DataChanged -= OnWidgetLayoutUpdated;
         appSettingsProvider.DataChanged -= OnAppSettingsUpdated;

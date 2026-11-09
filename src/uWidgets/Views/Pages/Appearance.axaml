@@ -77,6 +77,33 @@
                           Subtitle="{x:Static locales:Locale.Settings_Appearance_LiquidGlass_Subtitle}">
             <ToggleSwitch IsChecked="{Binding LiquidGlass}" />
         </controls:Setting>
+        <StackPanel Orientation="Vertical" Spacing="3" IsVisible="{Binding LiquidGlass}">
+            <controls:Setting Icon="{DynamicResource LiquidGlass}"
+                              Title="Refraction Thickness (RefThickness)"
+                              Subtitle="Width of the curved meniscus glass bevel in pixels (MyDockFinder default: 50)">
+                <NumericUpDown MinWidth="130" Minimum="8" Maximum="120" Increment="2" FormatString="0.#" Value="{Binding RefThickness}" />
+            </controls:Setting>
+            <controls:Setting Icon="{DynamicResource LiquidGlass}"
+                              Title="Refraction Index (RefFactor)"
+                              Subtitle="Snell's law index of refraction for meniscus ray bending (MyDockFinder default: 1.50)">
+                <NumericUpDown MinWidth="130" Minimum="1.05" Maximum="2.60" Increment="0.05" FormatString="0.00" Value="{Binding RefFactor}" />
+            </controls:Setting>
+            <controls:Setting Icon="{DynamicResource LiquidGlass}"
+                              Title="Chromatic Dispersion (RefDispersion)"
+                              Subtitle="7-tap spectral R/G/B separation along the glass rim (MyDockFinder default: 160)">
+                <NumericUpDown MinWidth="130" Minimum="0" Maximum="400" Increment="10" FormatString="0" Value="{Binding RefDispersion}" />
+            </controls:Setting>
+            <controls:Setting Icon="{DynamicResource WidgetRadius}"
+                              Title="Corner Shape Radius (ShapeRadius)"
+                              Subtitle="Corner radius ratio relative to widget corner radius (MyDockFinder default: 0.85)">
+                <NumericUpDown MinWidth="130" Minimum="0.10" Maximum="1.00" Increment="0.05" FormatString="0.00" Value="{Binding ShapeRadius}" />
+            </controls:Setting>
+            <controls:Setting Icon="{DynamicResource WidgetRadius}"
+                              Title="Corner Roundness (ShapeRoundness)"
+                              Subtitle="Superellipse squircle exponent n (2.0 = circle, MyDockFinder default: 4.0)">
+                <NumericUpDown MinWidth="130" Minimum="2.0" Maximum="8.0" Increment="0.2" FormatString="0.0#" Value="{Binding ShapeRoundness}" />
+            </controls:Setting>
+        </StackPanel>
         <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0 20 0 10"
                    Text="{x:Static locales:Locale.Settings_Advanced_Appearance}"/>
         <controls:Setting Icon="{DynamicResource Font}" 

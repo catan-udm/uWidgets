@@ -1,0 +1,107 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:locales="clr-namespace:Photos.Locales"
+             xmlns:viewModels="clr-namespace:Photos.ViewModels"
+             x:Class="Photos.Views.Controls.PhotoFrameWide"
+             x:DataType="viewModels:PhotoFrameViewModel"
+             Margin="{Binding FrameMargin}">
+    <Border ClipToBounds="True" CornerRadius="{Binding FrameCornerRadius}">
+        <Panel>
+            <Grid ColumnDefinitions="2*,Auto" IsVisible="{Binding HasImage}">
+                <Image Grid.Column="0"
+                       Source="{Binding CurrentBitmap}"
+                       Stretch="{Binding ImageStretch}" />
+                <Border Grid.Column="1"
+                        Width="104"
+                        Margin="4,0,0,0"
+                        ClipToBounds="True"
+                        IsVisible="{Binding HasSecondaryImage}">
+                    <Panel>
+                        <Image Source="{Binding SecondaryBitmap}"
+                               Stretch="UniformToFill"
+                               Opacity="0.82" />
+                        <Button HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Background="#22000000"
+                                BorderThickness="0"
+                                Click="Next_OnClick" />
+                    </Panel>
+                </Border>
+            </Grid>
+
+            <Grid IsVisible="{Binding ShowPlaceholder}" ColumnDefinitions="Auto,*" Margin="20,12">
+                <Viewbox Grid.Column="0" Stretch="Uniform" MaxWidth="76" MaxHeight="76" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <Canvas Width="64" Height="64">
+                        <Ellipse Canvas.Left="40" Canvas.Top="12" Width="12" Height="12"
+                                 Fill="{DynamicResource SystemControlForegroundAccentBrush}" Opacity="0.85" />
+                        <Path Fill="{DynamicResource SystemControlForegroundBaseHighBrush}" Opacity="0.35"
+                              Data="M4 52 L22 26 L36 44 L46 32 L60 52 Z" />
+                        <Path Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" StrokeThickness="3" Opacity="0.5"
+                              Data="M6 10 H58 A4 4 0 0 1 62 14 V50 A4 4 0 0 1 58 54 H6 A4 4 0 0 1 2 50 V14 A4 4 0 0 1 6 10 Z" />
+                    </Canvas>
+                </Viewbox>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                    <TextBlock Text="{x:Static locales:Locale.Photos_Frame_Title}"
+                               FontSize="15"
+                               FontWeight="Bold" />
+                    <TextBlock Text="{x:Static locales:Locale.Photos_Placeholder}"
+                               FontSize="12"
+                               Opacity="0.65"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Grid>
+
+            <Border VerticalAlignment="Top"
+                    HorizontalAlignment="Left"
+                    Margin="10"
+                    Padding="8,3"
+                    CornerRadius="8"
+                    Background="#77000000"
+                    IsVisible="{Binding HasMultipleImages}">
+                <TextBlock Text="{Binding ImageCounterText}"
+                           Foreground="White"
+                           FontSize="10"
+                           FontWeight="Bold" />
+            </Border>
+
+            <Border VerticalAlignment="Bottom"
+                    HorizontalAlignment="Left"
+                    Margin="10"
+                    Padding="9,4"
+                    CornerRadius="8"
+                    MaxWidth="200"
+                    Background="#77000000"
+                    IsVisible="{Binding HasDisplayCaption}">
+                <TextBlock Text="{Binding DisplayCaption}"
+                           Foreground="White"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           TextTrimming="CharacterEllipsis" />
+            </Border>
+
+            <StackPanel VerticalAlignment="Bottom"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal"
+                        Spacing="6"
+                        Margin="10"
+                        IsVisible="{Binding HasMultipleImages}">
+                <Button Width="26" Height="26" Padding="0" CornerRadius="13"
+                        Background="#77000000"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Click="Prev_OnClick">
+                    <PathIcon Width="10" Height="10" Foreground="White"
+                              Data="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
+                </Button>
+                <Button Width="26" Height="26" Padding="0" CornerRadius="13"
+                        Background="#77000000"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Click="Next_OnClick">
+                    <PathIcon Width="10" Height="10" Foreground="White"
+                              Data="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z" />
+                </Button>
+            </StackPanel>
+        </Panel>
+    </Border>
+</UserControl>

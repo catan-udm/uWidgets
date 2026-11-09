@@ -2,16 +2,20 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Shortcuts.Models;
 using Shortcuts.ViewModels;
+using Shortcuts.Views.Controls;
 
 namespace Shortcuts.Views;
 
 public partial class Launcher : UserControl
 {
+    private readonly LauncherViewModel viewModel;
+
     public Launcher() : this(LauncherModel.CreateDefault()) { }
 
     public Launcher(LauncherModel model)
     {
-        DataContext = new LauncherViewModel(model);
+        viewModel = new LauncherViewModel(model);
+        Content = new LauncherSmall(viewModel);
         SizeChanged += OnSizeChanged;
         Unloaded += OnUnloaded;
         InitializeComponent();
@@ -19,10 +23,16 @@ public partial class Launcher : UserControl
 
     private void OnSizeChanged(object? sender, SizeChangedEventArgs e)
     {
-        Margin = new(e.NewSize.Height < 110 ? 6 : 10);
+        Content = e.NewSize switch
+        {
+            { Width: <= 120 } or { Height: <= 120 } => new LauncherTiny(viewModel),
+            { Width: > 230, Height: > 230 } => new LauncherLarge(viewModel),
+            { Width: > 230 } => new LauncherWide(viewModel),
+            _ => new LauncherSmall(viewModel)
+        };
     }
 
-    private void Shortcut_OnClick(object? sender, RoutedEventArgs e)
+    public void Shortcut_OnClick(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { DataContext: ShortcutItemViewModel item })
         {

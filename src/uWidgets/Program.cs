@@ -16,6 +16,15 @@ class Program
     {
         try
         {
+            try
+            {
+                GlossyGlass.GlossyGlassApi.StartEngine();
+            }
+            catch
+            {
+                // Non-fatal if MyDockFinder is not installed or locked
+            }
+
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args);
         }
