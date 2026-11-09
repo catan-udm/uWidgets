@@ -21,16 +21,28 @@ public class AssemblyProvider : IAssemblyProvider
     /// <param name="serviceProvider">The service provider.</param>
     public AssemblyProvider(IServiceProvider serviceProvider)
     {
-        assemblyCache = GetAssemblyInfos(Const.WidgetsFolder);
+        assemblyCache = LoadAssemblyInfos(Const.WidgetsFolder);
         this.serviceProvider = serviceProvider;
     }
 
     /// <inheritdoc />
     public ILookup<string, AssemblyInfo> GetAssemblyInfos(string directoryPath)
     {
+        if (assemblyCache != null &&
+            string.Equals(Path.GetFullPath(directoryPath), Path.GetFullPath(Const.WidgetsFolder), StringComparison.OrdinalIgnoreCase))
+        {
+            return assemblyCache;
+        }
+
+        return LoadAssemblyInfos(directoryPath);
+    }
+
+    private ILookup<string, AssemblyInfo> LoadAssemblyInfos(string directoryPath)
+    {
         var assemblies = Directory.Exists(directoryPath)
             ? Directory
                 .GetFiles(directoryPath, "*.dll")
+                .Where(IsCandidatePluginDll)
                 .Select(GetAssemblyInfo)
                 .Where(info => info != null)
                 .Cast<AssemblyInfo>()
@@ -40,11 +52,24 @@ public class AssemblyProvider : IAssemblyProvider
             .ToLookup(assembly => assembly.AssemblyName);
     }
 
+    private static bool IsCandidatePluginDll(string filePath)
+    {
+        var fileName = Path.GetFileName(filePath);
+        return !fileName.StartsWith("System.", StringComparison.OrdinalIgnoreCase) &&
+               !fileName.StartsWith("Microsoft.", StringComparison.OrdinalIgnoreCase) &&
+               !fileName.StartsWith("TimeZone", StringComparison.OrdinalIgnoreCase) &&
+               !fileName.StartsWith("Avalonia", StringComparison.OrdinalIgnoreCase) &&
+               !fileName.StartsWith("uWidgets", StringComparison.OrdinalIgnoreCase) &&
+               !fileName.StartsWith("lib", StringComparison.OrdinalIgnoreCase) &&
+               !fileName.StartsWith("av_", StringComparison.OrdinalIgnoreCase);
+    }
+
     private AssemblyInfo? GetAssemblyInfo(string filePath)
     {
+        AssemblyLoadContext? context = null;
         try
         {
-            var context = new AssemblyLoadContext(filePath, true);
+            context = new PluginLoadContext(filePath);
             var assembly = context.LoadFromAssemblyPath(filePath);
             var localeAttribute = assembly.GetCustomAttributes<LocaleAttribute>().FirstOrDefault();
             var companyAttribute = assembly.GetCustomAttributes<AssemblyCompanyAttribute>().FirstOrDefault();
@@ -58,17 +83,16 @@ public class AssemblyProvider : IAssemblyProvider
             var locale = GetLocaleResourceManager(assembly);
             var displayName = locale?.GetString(localeAttribute?.DisplayName ?? "") ?? assemblyName;
 
-            context.Unload();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-
             return new AssemblyInfo(filePath, assemblyName, displayName, company, version, localeAttribute?.IconData ?? "");
         }
         catch (Exception)
         {
             return null;
         }
-       
+        finally
+        {
+            context?.Unload();
+        }
     }
     
     /// <inheritdoc />
@@ -123,7 +147,7 @@ public class AssemblyProvider : IAssemblyProvider
     private string GetAssemblyPath(string name, bool updateCache = false)
     {
         if (updateCache) 
-            assemblyCache = GetAssemblyInfos(Const.WidgetsFolder);
+            assemblyCache = LoadAssemblyInfos(Const.WidgetsFolder);
         
         var assemblyInfo = assemblyCache[name]
             .MaxBy(assembly => assembly.Version);

@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
@@ -52,10 +53,16 @@ public partial class ThemeButton : UserControl
     
     public static Bitmap GetWallpaperPreview(int targetHeight = 150)
     {
-        var originalBitmap = new Bitmap(InteropService.GetWallpaperPath());
+        var wallpaperPath = InteropService.GetWallpaperPath();
+        if (string.IsNullOrWhiteSpace(wallpaperPath) || !File.Exists(wallpaperPath))
+        {
+            return new RenderTargetBitmap(new PixelSize((int)(targetHeight * 16.0 / 9.0), targetHeight), new Vector(96, 96));
+        }
+
+        using var originalBitmap = new Bitmap(wallpaperPath);
 
         var aspectRatio = (double)originalBitmap.PixelSize.Width / originalBitmap.PixelSize.Height;
-        var targetWidth = (int)(targetHeight * aspectRatio);
+        var targetWidth = Math.Max(1, (int)(targetHeight * aspectRatio));
         var renderTarget = new RenderTargetBitmap(new PixelSize(targetWidth, targetHeight), new Vector(96, 96));
 
         using var context = renderTarget.CreateDrawingContext(false);
