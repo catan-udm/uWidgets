@@ -41,7 +41,6 @@ public class ThemeService : IThemeService
         };
         
         Application.Current.Resources["BackgroundOpacity"] = theme.OpacityLevel;
-        Application.Current.Resources["LiquidGlass"] = theme.LiquidGlass;
         Application.Current.Resources["FontFamily"] = theme.FontFamily == "Inter"
             ? new FontFamily("avares://Avalonia.Fonts.Inter#Inter")
             : new FontFamily(theme.FontFamily);
