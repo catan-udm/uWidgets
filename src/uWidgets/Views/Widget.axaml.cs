@@ -45,8 +45,10 @@ public partial class Widget : Window
         
         SetMinMaxSize(this.appSettingsProvider.Get().Layout.LockSize);
         RenderOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
+        UpdateLiquidGlassState(this.appSettingsProvider.Get());
         
         Activated += OnActivated;
+        PositionChanged += OnPositionChanged;
         Resized += OnResized;
         PointerPressed += OnPointerPressed;
         PointerReleased += OnPointerReleased;
@@ -55,10 +57,18 @@ public partial class Widget : Window
         Unloaded += OnUnloaded;
     }
 
+    private void OnPositionChanged(object? sender, PixelPointEventArgs e)
+    {
+        if (IsLiquidGlassEnabled)
+            LiquidGlassSurface.InvalidateVisual();
+    }
+
     private void OnResized(object? sender, WindowResizedEventArgs e)
     {
         if (appSettingsProvider.Get().Theme.UseNativeFrame)
             AfterResize();
+        if (IsLiquidGlassEnabled)
+            LiquidGlassSurface.InvalidateVisual();
     }
 
     private void OnActivated(object? sender, EventArgs e)
@@ -66,11 +76,13 @@ public partial class Widget : Window
         Position = new PixelPoint(widgetLayoutProvider.Get().X, widgetLayoutProvider.Get().Y);
         Scale();
         InteropService.RemoveWindowFromAltTab(this);
+        UpdateLiquidGlassState(appSettingsProvider.Get());
     }
 
     public bool ShowEditButton => editWidgetWindow != null;
     public string Edit => $"{Locale.Widget_Edit} \"{widgetLayoutProvider.Get().Type}\"";
     public CornerRadius Radius => appSettingsProvider.Get().Theme.UseNativeFrame ? new(0) : new(appSettingsProvider.Get().Dimensions.Radius / (Screens.ScreenFromWindow(this)?.Scaling ?? 1.0));
+    public bool IsLiquidGlassEnabled => appSettingsProvider.Get().Theme.LiquidGlass && !appSettingsProvider.Get().Theme.UseNativeFrame;
     
     public SystemDecorations WidgetSystemDecorations => appSettingsProvider.Get().Theme.UseNativeFrame
         ? SystemDecorations.BorderOnly
@@ -110,6 +122,19 @@ public partial class Widget : Window
             AfterMove();
             AfterResize();
         }
+
+        UpdateLiquidGlassState(newData);
+    }
+
+    private void UpdateLiquidGlassState(AppSettings settings)
+    {
+        var enabled = settings.Theme.LiquidGlass && !settings.Theme.UseNativeFrame;
+        Classes.Set("LiquidGlass", enabled);
+        Border.CornerRadius = Radius;
+        LiquidGlassSurface.IsVisible = enabled;
+        LiquidGlassSurface.CornerRadius = Radius;
+        if (enabled)
+            LiquidGlassSurface.InvalidateVisual();
     }
 
     private void SetMinMaxSize(bool lockSize)
@@ -126,6 +151,7 @@ public partial class Widget : Window
     {
         PointerPressed -= OnPointerPressed;
         PointerReleased -= OnPointerReleased;
+        PositionChanged -= OnPositionChanged;
         Resized -= OnResized;
         Activated -= OnActivated;
         Unloaded -= OnUnloaded;

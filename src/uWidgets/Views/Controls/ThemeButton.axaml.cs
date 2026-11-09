@@ -70,7 +70,7 @@ public partial class ThemeButton : UserControl
     private void Apply(object? sender, RoutedEventArgs e)
     {
         var settings = appSettingsProvider.Get();
-        var newSettings = settings with { Theme = AppTheme };
+        var newSettings = settings with { Theme = AppTheme with { LiquidGlass = settings.Theme.LiquidGlass } };
         
         appSettingsProvider.Save(newSettings);
         if (settings.Theme.UseNativeFrame != newSettings.Theme.UseNativeFrame)

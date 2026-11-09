@@ -87,6 +87,18 @@ public class AppearanceViewModel(IAppSettingsProvider appSettingsProvider) : Rea
             appSettingsProvider.Save(newSettings);
         }
     }
+
+    public bool LiquidGlass
+    {
+        get => appSettingsProvider.Get().Theme.LiquidGlass;
+        set
+        {
+            var settings = appSettingsProvider.Get();
+            var newTheme = settings.Theme with { LiquidGlass = value };
+            var newSettings = settings with { Theme = newTheme };
+            appSettingsProvider.Save(newSettings);
+        }
+    }
     
     public List<string> Fonts => ["Inter", "Segoe UI", "Microsoft YaHei"];
 

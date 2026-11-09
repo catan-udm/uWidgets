@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:locales="clr-namespace:uWidgets.Locales"
         xmlns:views="clr-namespace:uWidgets.Views"
+        xmlns:controls="clr-namespace:uWidgets.Views.Controls"
         x:Class="uWidgets.Views.Widget"
         Background="Transparent"
         ShowInTaskbar="False"
@@ -49,6 +50,12 @@
             <Setter Property="Margin" Value="0" />
             <Setter Property="Padding" Value="0" />
         </Style>
+        <Style Selector="Window.LiquidGlass">
+            <Setter Property="TransparencyLevelHint" Value="Transparent" />
+        </Style>
+        <Style Selector="Window.LiquidGlass Border#Border">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
     </Window.Styles>
     
     <ToolTip.Tip>
@@ -67,7 +74,12 @@
                 Name="Border"
                 Width="{Binding Width, RelativeSource={RelativeSource AncestorType=Window}}"
                 Height="{Binding Height, RelativeSource={RelativeSource AncestorType=Window}}">
-            <ContentPresenter Name="ContentPresenter" />
+            <Panel>
+                <controls:LiquidGlassSurface Name="LiquidGlassSurface"
+                                             IsVisible="{Binding IsLiquidGlassEnabled}"
+                                             CornerRadius="{Binding Radius}" />
+                <ContentPresenter Name="ContentPresenter" />
+            </Panel>
         </Border>
     </Grid>
     

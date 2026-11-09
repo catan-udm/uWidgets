@@ -796,5 +796,23 @@ namespace uWidgets.Locales {
                 return ResourceManager.GetString("Widgets", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Liquid glass.
+        /// </summary>
+        public static string Settings_Appearance_LiquidGlass_Title {
+            get {
+                return ResourceManager.GetString("Settings_Appearance_LiquidGlass_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Apply refractive glass warping effect to widgets.
+        /// </summary>
+        public static string Settings_Appearance_LiquidGlass_Subtitle {
+            get {
+                return ResourceManager.GetString("Settings_Appearance_LiquidGlass_Subtitle", resourceCulture);
+            }
+        }
     }
 }

@@ -23,10 +23,14 @@
 /// <param name="FontFamily">
 /// Font family to use
 /// </param>
+/// <param name="LiquidGlass">
+/// Should the application use the liquid glass (glass warping) effect
+/// </param>
 public record Theme(
     bool? DarkMode, 
     string? AccentColor, 
     double OpacityLevel, 
     bool Monochrome, 
     bool UseNativeFrame, 
-    string FontFamily);
+    string FontFamily,
+    bool LiquidGlass = false);

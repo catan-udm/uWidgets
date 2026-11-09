@@ -3,8 +3,19 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
 using Avalonia.Controls;
+using Microsoft.Win32;
 
 namespace uWidgets.Services;
+
+public enum WallpaperFitMode
+{
+    Fill,
+    Fit,
+    Stretch,
+    Tile,
+    Center,
+    Span
+}
 
 public class InteropService
 {
@@ -18,6 +29,36 @@ public class InteropService
         StringBuilder wallpaperPath = new StringBuilder(260);
         SystemParametersInfo(SPI_GETDESKWALLPAPER, wallpaperPath.Capacity, wallpaperPath, 0);
         return wallpaperPath.ToString();
+    }
+
+    public static WallpaperFitMode GetWallpaperFitMode()
+    {
+        if (!OperatingSystem.IsWindows())
+            return WallpaperFitMode.Fill;
+
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop");
+            var style = key?.GetValue("WallpaperStyle")?.ToString() ?? "10";
+            var tile = key?.GetValue("TileWallpaper")?.ToString() ?? "0";
+
+            if (tile == "1")
+                return WallpaperFitMode.Tile;
+
+            return style switch
+            {
+                "10" => WallpaperFitMode.Fill,
+                "6" => WallpaperFitMode.Fit,
+                "2" => WallpaperFitMode.Stretch,
+                "22" => WallpaperFitMode.Span,
+                "0" => WallpaperFitMode.Center,
+                _ => WallpaperFitMode.Fill
+            };
+        }
+        catch
+        {
+            return WallpaperFitMode.Fill;
+        }
     }
     public static void RemoveWindowFromAltTab(Window window)
     {
