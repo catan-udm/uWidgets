@@ -129,7 +129,7 @@ public sealed class LiquidGlassSurface : Control
 
         var positions = new SKPoint[vertexCount];
         var texCoords = new SKPoint[vertexCount];
-        var rimColors = new SKColor[vertexCount];
+        var frostColors = new SKColor[vertexCount];
 
         float opacityNorm = tintColor.Alpha / 255f;
 
@@ -157,23 +157,16 @@ public sealed class LiquidGlassSurface : Control
                 float ny = dy / nLen;
 
                 float edgeDist = MathF.Max(-d, 0f);
+                // t = 0 on the flat interior, rising to 1 at the outer rim of the curved bezel
                 float t = Math.Clamp(1f - (edgeDist / bezelWidth), 0f, 1f);
 
-                // Smooth liquid meniscus curve (zero slope at t = 0, strong refraction at t = 1 without folding)
-                float meniscusCurve = t * MathF.Sqrt(t);
-                float clearLip = t * t * t;
-
-                // Continuous convex liquid lens across the body + smooth meniscus refraction at the edge
-                float normX = px / MathF.Max(halfW, 1f);
-                float normY = py / MathF.Max(halfH, 1f);
-                float radial2 = Math.Clamp(normX * normX + normY * normY, 0f, 1f);
-                float domeStrength = 5.5f * (1f - radial2 * 0.3f) * (1f - meniscusCurve);
-                float domeX = -normX * domeStrength;
-                float domeY = -normY * domeStrength;
+                // Bezel refraction: zero displacement (and zero slope) where the bezel meets the flat
+                // interior, increasing toward the rim. The interior is left untouched so it stays clear.
+                float meniscusCurve = t * t * (3f - 2f * t) * MathF.Sqrt(t);
 
                 float warpStrength = meniscusCurve * maxBezelWarp;
-                float refractX = -nx * warpStrength + domeX;
-                float refractY = -ny * warpStrength + domeY;
+                float refractX = -nx * warpStrength;
+                float refractY = -ny * warpStrength;
 
                 texCoords[idx] = ClampToScreen(
                     screenOffsetX + (x + refractX) * dpiScale,
@@ -181,9 +174,10 @@ public sealed class LiquidGlassSurface : Control
                     screenWidth,
                     screenHeight);
 
-                // Crystal-clear refractive meniscus lip at the very outer edge, melting seamlessly into the diffused interior
-                byte rimAlpha = (byte)Math.Clamp(clearLip * 225f, 0f, 225f);
-                rimColors[idx] = new SKColor(255, 255, 255, rimAlpha);
+                // Light frosting confined to the outer part of the bezel; fully transparent in the interior
+                float frost = t * t * t;
+                byte frostAlpha = (byte)Math.Clamp(frost * 150f, 0f, 150f);
+                frostColors[idx] = new SKColor(255, 255, 255, frostAlpha);
             }
         }
 
@@ -212,18 +206,18 @@ public sealed class LiquidGlassSurface : Control
         using var sharpShader = textures.Sharp.ToShader(SKShaderTileMode.Clamp, SKShaderTileMode.Clamp);
         using var blurredShader = textures.Blurred.ToShader(SKShaderTileMode.Clamp, SKShaderTileMode.Clamp);
 
-        // 1. 100% smooth optically-diffused & refracted wallpaper across the liquid glass interior
+        // 1. Sharp wallpaper everywhere: undistorted in the flat interior, refracted across the curved bezel
         using (var baseVertices = SKVertices.CreateCopy(SKVertexMode.Triangles, positions, texCoords, null, indices))
-        using (var blurPaint = new SKPaint { Shader = blurredShader, IsAntialias = true })
-        {
-            canvas.DrawVertices(baseVertices, SKBlendMode.Dst, blurPaint);
-        }
-
-        // 2. Seamless crystal-clear meniscus lip at the curved outer edge (same luminance, zero border seam)
-        using (var rimVertices = SKVertices.CreateCopy(SKVertexMode.Triangles, positions, texCoords, rimColors, indices))
         using (var sharpPaint = new SKPaint { Shader = sharpShader, IsAntialias = true })
         {
-            canvas.DrawVertices(rimVertices, SKBlendMode.Modulate, sharpPaint);
+            canvas.DrawVertices(baseVertices, SKBlendMode.Dst, sharpPaint);
+        }
+
+        // 2. Soft frosting that fades in only toward the rounded rim (alpha 0 across the interior)
+        using (var frostVertices = SKVertices.CreateCopy(SKVertexMode.Triangles, positions, texCoords, frostColors, indices))
+        using (var blurPaint = new SKPaint { Shader = blurredShader, IsAntialias = true })
+        {
+            canvas.DrawVertices(frostVertices, SKBlendMode.Modulate, blurPaint);
         }
 
         // 3. Translucent crystal glaze (preserves background colors and refraction clarity)
