@@ -119,60 +119,65 @@ jobs:
             exit 1
           }
 
+      # Pushes to beta that don't bump AssemblyVersion must not fail the run.
+      # If a release for this version already exists, skip everything below.
+      - name: Check existing release
+        id: existing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ steps.version.outputs.version }}"
+
+          gh release view $tag --repo "${{ github.repository }}" *> $null
+          if ($LASTEXITCODE -eq 0) {
+            echo "::notice::Release $tag already exists. Bump AssemblyVersion in src/uWidgets/AssemblyInfo.cs to publish a new release."
+            echo "release_exists=true" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "release_exists=false" >> $env:GITHUB_OUTPUT
+          }
+
+          git ls-remote --exit-code --tags origin "refs/tags/$tag" *> $null
+          if ($LASTEXITCODE -eq 0) {
+            echo "tag_exists=true" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "tag_exists=false" >> $env:GITHUB_OUTPUT
+          }
+          exit 0
+
       - name: Create Tag
-        uses: negz/create-tag@v1
-        with:
-          version: ${{ steps.version.outputs.version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ steps.existing.outputs.release_exists == 'false' && steps.existing.outputs.tag_exists == 'false' }}
+        run: |
+          $tag = "${{ steps.version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag $tag ${{ github.sha }}
+          git push origin "refs/tags/$tag"
 
       - name: Get Changelog
         id: changelog
+        if: ${{ steps.existing.outputs.release_exists == 'false' }}
         uses: requarks/changelog-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ steps.version.outputs.version }}
 
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ steps.version.outputs.version }}
-          release_name: ${{ steps.version.outputs.version }}-beta
-          body: |
-            # Changelog:
-            ${{ steps.changelog.outputs.changes }}
+        if: ${{ steps.existing.outputs.release_exists == 'false' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGES: ${{ steps.changelog.outputs.changes }}
+        run: |
+          $tag = "${{ steps.version.outputs.version }}"
+          $notes = "# Changelog:`n$env:CHANGES"
+          Set-Content -Path release-notes.md -Value $notes -Encoding utf8
 
-      - name: Upload win-x86
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .\src\uWidgets\bin\Publish\win-x86.zip
-          asset_name: win-x86.zip
-          asset_content_type: application/zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload win-x64
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .\src\uWidgets\bin\Publish\win-x64.zip
-          asset_name: win-x64.zip
-          asset_content_type: application/zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload win-arm64
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .\src\uWidgets\bin\Publish\win-arm64.zip
-          asset_name: win-arm64.zip
-          asset_content_type: application/zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          gh release create $tag `
+            --repo "${{ github.repository }}" `
+            --title "$tag-beta" `
+            --notes-file release-notes.md `
+            .\src\uWidgets\bin\Publish\win-x86.zip `
+            .\src\uWidgets\bin\Publish\win-x64.zip `
+            .\src\uWidgets\bin\Publish\win-arm64.zip
 
   update-docs:
     runs-on: windows-latest
@@ -184,8 +189,10 @@ jobs:
         with:
           dotnet-version: 8.0.x
   
+      # Pinned: v6.0.0 replaced --github-pages with --platform github-pages,
+      # and an unpinned install picks up breaking changes automatically.
       - name: Install tool
-        run: dotnet tool install -g XMLDoc2Markdown
+        run: dotnet tool install -g XMLDoc2Markdown --version 6.0.0
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -195,30 +202,49 @@ jobs:
   
       - name: Run tool
         run: |
-          ls .
-          ls .\build
           xmldoc2md .\build\uWidgets.Core.dll `
-          --output .\new-wiki\API `
-          --github-pages `
-          --index-page-name API `
+            --output .\new-wiki\API `
+            --platform github-pages `
+            --index-page-name API
   
+      # The wiki repo only exists after its first page is created in the GitHub UI.
+      - name: Check wiki repository
+        id: wiki
+        run: |
+          git ls-remote "https://github.com/${{ github.repository }}.wiki.git" *> $null
+          if ($LASTEXITCODE -eq 0) {
+            echo "exists=true" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "::warning::Wiki for ${{ github.repository }} is not initialized. Create the first wiki page on GitHub to enable API docs publishing."
+            echo "exists=false" >> $env:GITHUB_OUTPUT
+          }
+          exit 0
+
       - name: Checkout wiki repository
+        if: ${{ steps.wiki.outputs.exists == 'true' }}
         uses: actions/checkout@v4
         with:
-          repository: ${{github.repository}}.wiki
+          repository: ${{ github.repository }}.wiki
           path: wiki
   
       - name: Update API docs
+        if: ${{ steps.wiki.outputs.exists == 'true' }}
         run: |
           if (Test-Path -Path wiki\API) { Remove-Item -Recurse -Force wiki\API }
           New-Item -ItemType Directory -Path wiki\API
           Copy-Item -Path new-wiki\API\* -Destination wiki\API -Recurse
   
       - name: Commit & Push changes
+        if: ${{ steps.wiki.outputs.exists == 'true' }}
         run: |
           cd wiki
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) {
+            echo "No API doc changes to commit."
+            exit 0
+          }
           git commit -m "Update API docs"
           git push
