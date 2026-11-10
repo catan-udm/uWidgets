@@ -12,7 +12,9 @@ public static class Const
     /// <summary>
     /// The folder with the application.
     /// </summary>
-    public static readonly string CurrentFolder = Path.GetDirectoryName(Environment.ProcessPath)!;    
+    public static readonly string CurrentFolder = !string.IsNullOrEmpty(AppContext.BaseDirectory)
+        ? AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+        : (Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory);    
     /// <summary>
     /// The folder with the widgets.
     /// </summary>

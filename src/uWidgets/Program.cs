@@ -14,6 +14,32 @@ class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+        {
+            try
+            {
+                var ex = e.ExceptionObject as Exception;
+                var fileName = Path.Combine(Const.CurrentFolder, "crash_log.txt");
+                File.WriteAllText(fileName, $"[{DateTime.UtcNow:O}] UnhandledException: {ex?.Message}{Environment.NewLine}{ex?.StackTrace}");
+            }
+            catch
+            {
+            }
+        };
+
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (s, e) =>
+        {
+            try
+            {
+                var fileName = Path.Combine(Const.CurrentFolder, "crash_log.txt");
+                File.AppendAllText(fileName, $"[{DateTime.UtcNow:O}] UnobservedTaskException: {e.Exception.Message}{Environment.NewLine}{e.Exception.StackTrace}");
+                e.SetObserved();
+            }
+            catch
+            {
+            }
+        };
+
         try
         {
             try
@@ -31,7 +57,7 @@ class Program
         catch (Exception e)
         {
             var fileName = Path.Combine(Const.CurrentFolder, "crash_log.txt");
-            File.WriteAllText(fileName, $"{e.Message}{Environment.NewLine}{e.StackTrace}");
+            File.WriteAllText(fileName, $"[{DateTime.UtcNow:O}] Fatal: {e.Message}{Environment.NewLine}{e.StackTrace}");
             throw;
         }
     }

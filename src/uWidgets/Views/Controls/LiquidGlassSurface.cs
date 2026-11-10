@@ -196,25 +196,32 @@ public sealed class LiquidGlassSurface : Control
 
         public void Render(ImmediateDrawingContext context)
         {
-            if (!context.TryGetFeature<ISkiaSharpApiLeaseFeature>(out var leaseFeature))
-                return;
+            try
+            {
+                if (!context.TryGetFeature<ISkiaSharpApiLeaseFeature>(out var leaseFeature))
+                    return;
 
-            var textures = WallpaperBackdropService.GetSharedTextures(scrW, scrH);
-            if (textures == null)
-                return;
+                var textures = WallpaperBackdropService.GetSharedTextures(scrW, scrH);
+                if (textures == null)
+                    return;
 
-            using var lease = leaseFeature.Lease();
-            LiquidGlassRenderer.RenderCached(
-                lease.SkCanvas,
-                textures,
-                (float)drawBounds.Width,
-                (float)drawBounds.Height,
-                offsetX,
-                offsetY,
-                scrW,
-                scrH,
-                scale,
-                opts);
+                using var lease = leaseFeature.Lease();
+                LiquidGlassRenderer.RenderCached(
+                    lease.SkCanvas,
+                    textures,
+                    (float)drawBounds.Width,
+                    (float)drawBounds.Height,
+                    offsetX,
+                    offsetY,
+                    scrW,
+                    scrH,
+                    scale,
+                    opts);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[LiquidGlassSurface] Render error: {ex}");
+            }
         }
     }
 }

@@ -284,33 +284,40 @@ public class InteropService
         IntPtr lParam,
         ref bool handled)
     {
-        if (msg == WM_SYSCOMMAND && ((int)wParam & 0xFFF0) == SC_MINIMIZE)
+        try
         {
-            handled = true;
-            return IntPtr.Zero;
-        }
-
-        if (msg == WM_WINDOWPOSCHANGING && lParam != IntPtr.Zero && !isSyncingZOrder && window.OwnedWindows.Count == 0)
-        {
-            var pos = Marshal.PtrToStructure<WINDOWPOS>(lParam);
-            if ((pos.flags & SWP_NOZORDER) == 0)
+            if (msg == WM_SYSCOMMAND && ((int)wParam & 0xFFF0) == SC_MINIMIZE)
             {
-                var targetInsertAfter = GetDesktopBandTarget(hWnd, out var alreadyInBand);
-                if (alreadyInBand)
-                {
-                    pos.flags |= SWP_NOZORDER;
-                }
-                else
-                {
-                    pos.hwndInsertAfter = targetInsertAfter;
-                }
+                handled = true;
+                return IntPtr.Zero;
+            }
 
-                Marshal.StructureToPtr(pos, lParam, false);
+            if (msg == WM_WINDOWPOSCHANGING && lParam != IntPtr.Zero && !isSyncingZOrder && window.OwnedWindows.Count == 0)
+            {
+                var pos = Marshal.PtrToStructure<WINDOWPOS>(lParam);
+                if ((pos.flags & SWP_NOZORDER) == 0)
+                {
+                    var targetInsertAfter = GetDesktopBandTarget(hWnd, out var alreadyInBand);
+                    if (alreadyInBand)
+                    {
+                        pos.flags |= SWP_NOZORDER;
+                    }
+                    else
+                    {
+                        pos.hwndInsertAfter = targetInsertAfter;
+                    }
+
+                    Marshal.StructureToPtr(pos, lParam, false);
+                }
+            }
+            else if ((msg == WM_ACTIVATE || msg == WM_ACTIVATEAPP || msg == WM_WINDOWPOSCHANGED) && !isSyncingZOrder && window.OwnedWindows.Count == 0)
+            {
+                Dispatcher.UIThread.Post(SyncPinnedWidgetsZOrder, DispatcherPriority.Send);
             }
         }
-        else if ((msg == WM_ACTIVATE || msg == WM_ACTIVATEAPP || msg == WM_WINDOWPOSCHANGED) && !isSyncingZOrder && window.OwnedWindows.Count == 0)
+        catch (Exception ex)
         {
-            Dispatcher.UIThread.Post(SyncPinnedWidgetsZOrder, DispatcherPriority.Send);
+            System.Diagnostics.Debug.WriteLine($"[InteropService] WidgetWndProc error: {ex}");
         }
 
         return IntPtr.Zero;
@@ -394,52 +401,60 @@ public class InteropService
         if (isSyncingZOrder || PinnedWidgets.Count == 0)
             return;
 
-        var desktopHost = GetDesktopHostWindow();
-        if (desktopHost == IntPtr.Zero)
-            return;
-
-        InBandScratch.Clear();
-        var backmostNormalWindow = IntPtr.Zero;
-
-        var curr = GetWindow(desktopHost, GW_HWNDPREV);
-        while (curr != IntPtr.Zero)
-        {
-            if (PinnedWidgets.ContainsKey(curr))
-            {
-                InBandScratch.Add(curr);
-            }
-            else if (IsNormalTopLevelWindow(curr))
-            {
-                backmostNormalWindow = curr;
-                break;
-            }
-
-            curr = GetWindow(curr, GW_HWNDPREV);
-        }
-
-        var targetInsertAfter = backmostNormalWindow != IntPtr.Zero ? backmostNormalWindow : HWND_TOP;
-
-        isSyncingZOrder = true;
         try
         {
-            foreach (var (hwnd, entry) in PinnedWidgets)
-            {
-                if (InBandScratch.Contains(hwnd) || entry.Window.OwnedWindows.Count > 0)
-                    continue;
+            var desktopHost = GetDesktopHostWindow();
+            if (desktopHost == IntPtr.Zero)
+                return;
 
-                SetWindowPos(
-                    hwnd,
-                    targetInsertAfter,
-                    0,
-                    0,
-                    0,
-                    0,
-                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOSENDCHANGING | SWP_ASYNCWINDOWPOS);
+            InBandScratch.Clear();
+            var backmostNormalWindow = IntPtr.Zero;
+
+            var curr = GetWindow(desktopHost, GW_HWNDPREV);
+            while (curr != IntPtr.Zero)
+            {
+                if (PinnedWidgets.ContainsKey(curr))
+                {
+                    InBandScratch.Add(curr);
+                }
+                else if (IsNormalTopLevelWindow(curr))
+                {
+                    backmostNormalWindow = curr;
+                    break;
+                }
+
+                curr = GetWindow(curr, GW_HWNDPREV);
+            }
+
+            var targetInsertAfter = backmostNormalWindow != IntPtr.Zero ? backmostNormalWindow : HWND_TOP;
+
+            isSyncingZOrder = true;
+            try
+            {
+                foreach (var (hwnd, entry) in PinnedWidgets)
+                {
+                    if (InBandScratch.Contains(hwnd) || entry.Window.OwnedWindows.Count > 0)
+                        continue;
+
+                    SetWindowPos(
+                        hwnd,
+                        targetInsertAfter,
+                        0,
+                        0,
+                        0,
+                        0,
+                        SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOSENDCHANGING | SWP_ASYNCWINDOWPOS);
+                }
+            }
+            finally
+            {
+                isSyncingZOrder = false;
             }
         }
-        finally
+        catch (Exception ex)
         {
             isSyncingZOrder = false;
+            System.Diagnostics.Debug.WriteLine($"[InteropService] SyncPinnedWidgetsZOrder error: {ex}");
         }
     }
 
