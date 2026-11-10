@@ -46,9 +46,17 @@ class Program
             {
                 GlossyGlass.GlossyGlassApi.StartEngine();
             }
-            catch
+            catch (Exception ex)
             {
                 // Non-fatal if MyDockFinder is not installed or locked
+                try
+                {
+                    var fileName = Path.Combine(Const.CurrentFolder, "crash_log.txt");
+                    File.AppendAllText(fileName, $"[{DateTime.UtcNow:O}] GlossyGlass StartEngine warning: {ex.Message}{Environment.NewLine}{ex.StackTrace}{Environment.NewLine}");
+                }
+                catch
+                {
+                }
             }
 
             BuildAvaloniaApp()

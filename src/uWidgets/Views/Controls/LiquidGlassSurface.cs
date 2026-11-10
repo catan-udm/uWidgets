@@ -99,7 +99,7 @@ public sealed class LiquidGlassSurface : Control
 
     private void OnWallpaperChanged(object? sender, EventArgs e)
     {
-        InvalidateVisual();
+        Avalonia.Threading.Dispatcher.UIThread.Post(InvalidateVisual);
     }
 
     public override void Render(DrawingContext context)
@@ -221,6 +221,14 @@ public sealed class LiquidGlassSurface : Control
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[LiquidGlassSurface] Render error: {ex}");
+                try
+                {
+                    var fileName = System.IO.Path.Combine(uWidgets.Core.Const.CurrentFolder, "crash_log.txt");
+                    System.IO.File.AppendAllText(fileName, $"[{DateTime.UtcNow:O}] LiquidGlassSurface Render error: {ex.Message}{Environment.NewLine}{ex.StackTrace}{Environment.NewLine}");
+                }
+                catch
+                {
+                }
             }
         }
     }
