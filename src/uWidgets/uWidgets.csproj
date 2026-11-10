@@ -29,7 +29,11 @@
 
     <ItemGroup>
       <ProjectReference Include="..\uWidgets.Core\uWidgets.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="Exists('..\..\..\glossy-glass\src\GlossyGlass\GlossyGlass.csproj')">
       <ProjectReference Include="..\..\..\glossy-glass\src\GlossyGlass\GlossyGlass.csproj" />
+      <Compile Remove="Compatibility\GlossyGlassFallback.cs" />
     </ItemGroup>
 
     <ItemGroup>
