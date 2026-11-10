@@ -173,7 +173,7 @@ jobs:
 
           gh release create $tag `
             --repo "${{ github.repository }}" `
-            --title "$tag-beta" `
+            --title "$tag" `
             --notes-file release-notes.md `
             .\src\uWidgets\bin\Publish\win-x86.zip `
             .\src\uWidgets\bin\Publish\win-x64.zip `
