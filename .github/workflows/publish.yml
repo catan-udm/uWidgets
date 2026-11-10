@@ -85,6 +85,8 @@ jobs:
   release:
     runs-on: windows-latest
     needs: publish
+    permissions:
+      contents: write
     
     steps:
       - name: Checkout
