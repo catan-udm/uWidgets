@@ -16,17 +16,31 @@ public partial class DeviceBatteries : UserControl, IDisposable
     {
         DataContext = new DeviceBatteriesViewModel(model);
         Unloaded += OnUnloaded;
+        SizeChanged += OnSizeChanged;
         InitializeComponent();
+    }
+
+    private void OnSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is DeviceBatteriesViewModel vm)
+        {
+            vm.IsSmallView = e.NewSize.Width <= 200 && e.NewSize.Height <= 200;
+        }
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
-        Unloaded -= OnUnloaded;
         Dispose();
     }
 
     public void Dispose()
     {
-        (DataContext as IDisposable)?.Dispose();
+        Unloaded -= OnUnloaded;
+        SizeChanged -= OnSizeChanged;
+        if (DataContext is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+        GC.SuppressFinalize(this);
     }
 }

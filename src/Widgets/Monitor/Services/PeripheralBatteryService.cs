@@ -27,6 +27,93 @@ public static class PeripheralBatteryService
 
     private const string BatteryLevelPropKey = "{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2";
 
+    private static readonly HashSet<string> GenericNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Bluetooth Device",
+        "Wireless Device",
+        "Wireless Accessory",
+        "HID-compliant mouse",
+        "HID-compliant device",
+        "HID-compliant system controller",
+        "HID Keyboard Device",
+        "Standard PS/2 Keyboard",
+        "Bluetooth Audio Device",
+        "Generic Bluetooth Adapter",
+        "USB Input Device",
+        "System Product Name"
+    };
+
+    private static string? cachedHostName;
+
+    public static string GetHostDeviceName()
+    {
+        if (cachedHostName != null) return cachedHostName;
+
+        try
+        {
+            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\BIOS");
+            if (key != null)
+            {
+                var prodName = key.GetValue("SystemProductName") as string;
+                if (!string.IsNullOrWhiteSpace(prodName) && !prodName.Equals("System Product Name", StringComparison.OrdinalIgnoreCase))
+                {
+                    cachedHostName = prodName.Trim();
+                    return cachedHostName;
+                }
+            }
+        }
+        catch { }
+
+        cachedHostName = Environment.MachineName;
+        return cachedHostName;
+    }
+
+    public static bool IsGenericName(string? name) =>
+        string.IsNullOrWhiteSpace(name) || GenericNames.Contains(name.Trim());
+
+    public static string ResolveAccessoryModelName(DeviceInformation d, string? fallbackManufacturer = null)
+    {
+        string? model = null;
+
+        if (d.Properties.TryGetValue("System.Devices.ModelName", out var m) && m is string ms && !IsGenericName(ms))
+        {
+            model = ms.Trim();
+        }
+        else if (d.Properties.TryGetValue("System.ItemNameDisplay", out var ind) && ind is string inds && !IsGenericName(inds))
+        {
+            model = inds.Trim();
+        }
+        else if (d.Properties.TryGetValue("System.Devices.FriendlyName", out var fn) && fn is string fns && !IsGenericName(fns))
+        {
+            model = fns.Trim();
+        }
+        else if (!IsGenericName(d.Name))
+        {
+            model = d.Name.Trim();
+        }
+
+        string? manufacturer = fallbackManufacturer;
+        if (d.Properties.TryGetValue("System.Devices.DeviceManufacturer", out var mfg) && mfg is string mfgs && !string.IsNullOrWhiteSpace(mfgs))
+        {
+            var cleanMfg = mfgs.Trim();
+            if (!IsGenericName(cleanMfg) && !cleanMfg.Equals("Microsoft", StringComparison.OrdinalIgnoreCase))
+            {
+                manufacturer = cleanMfg;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(model))
+        {
+            if (!string.IsNullOrWhiteSpace(manufacturer) && !model.Contains(manufacturer, StringComparison.OrdinalIgnoreCase))
+            {
+                return $"{manufacturer} {model}";
+            }
+            return model;
+        }
+
+        return "Wireless Accessory";
+    }
+
     public static DeviceBatteryInfo? GetHostBattery()
     {
         if (!OperatingSystem.IsWindows()) return null;
@@ -40,7 +127,7 @@ public static class PeripheralBatteryService
                 double level = Math.Clamp(status.BatteryLifePercent / 100.0, 0.0, 1.0);
                 return new DeviceBatteryInfo(
                     DeviceId: "host_battery",
-                    Name: "PC / Laptop Battery",
+                    Name: GetHostDeviceName(),
                     Type: DeviceType.Host,
                     BatteryLevel: level,
                     IsCharging: isCharging,
@@ -77,14 +164,25 @@ public static class PeripheralBatteryService
         return result;
     }
 
+    private static readonly Guid ServiceUuidDeviceInformation = new("0000180A-0000-1000-8000-00805F9B34FB");
+    private static readonly Guid CharUuidModelNumber = new("00002A24-0000-1000-8000-00805F9B34FB");
+    private static readonly Guid CharUuidManufacturer = new("00002A29-0000-1000-8000-00805F9B34FB");
+
     private static async Task<List<DeviceBatteryInfo>> GetPeripheralsAsync()
     {
         var list = new List<DeviceBatteryInfo>();
 
         try
         {
-            // Query devices with battery property
-            var properties = new[] { "System.ItemNameDisplay", BatteryLevelPropKey };
+            // Query devices with battery property and model/friendly identification
+            var properties = new[]
+            {
+                "System.ItemNameDisplay",
+                "System.Devices.ModelName",
+                "System.Devices.FriendlyName",
+                "System.Devices.DeviceManufacturer",
+                BatteryLevelPropKey
+            };
             var selector = $"System.Devices.Aep.IsConnected:=System.StructuredQueryType.Boolean#True";
             
             var devices = await DeviceInformation.FindAllAsync(selector, properties);
@@ -95,11 +193,7 @@ public static class PeripheralBatteryService
                 {
                     if (Convert.ToInt32(batteryVal) is var pct and >= 0 and <= 100)
                     {
-                        var name = d.Name;
-                        if (string.IsNullOrWhiteSpace(name) && d.Properties.TryGetValue("System.ItemNameDisplay", out var dispName))
-                        {
-                            name = dispName?.ToString() ?? "Wireless Device";
-                        }
+                        var name = ResolveAccessoryModelName(d);
 
                         list.Add(new DeviceBatteryInfo(
                             DeviceId: d.Id,
@@ -163,10 +257,12 @@ public static class PeripheralBatteryService
                                         if (reader.UnconsumedBufferLength > 0)
                                         {
                                             byte b = reader.ReadByte();
+                                            var resolvedName = await ResolveBleModelNameAsync(ble, devInfo.Name);
+
                                             list.Add(new DeviceBatteryInfo(
                                                 DeviceId: devInfo.Id,
-                                                Name: string.IsNullOrWhiteSpace(devInfo.Name) ? "Bluetooth Device" : devInfo.Name,
-                                                Type: InferDeviceType(devInfo.Name),
+                                                Name: resolvedName,
+                                                Type: InferDeviceType(resolvedName),
                                                 BatteryLevel: b / 100.0,
                                                 IsCharging: false,
                                                 IsConnected: true
@@ -197,6 +293,68 @@ public static class PeripheralBatteryService
         }
 
         return list;
+    }
+
+    private static async Task<string> ResolveBleModelNameAsync(BluetoothLEDevice ble, string initialName)
+    {
+        if (!IsGenericName(initialName)) return initialName;
+
+        try
+        {
+            var disResult = await ble.GetGattServicesForUuidAsync(ServiceUuidDeviceInformation, BluetoothCacheMode.Cached);
+            if (disResult.Status == GattCommunicationStatus.Success && disResult.Services.Count > 0)
+            {
+                var dis = disResult.Services[0];
+                try
+                {
+                    string? model = null;
+                    string? mfg = null;
+
+                    var modelCharResult = await dis.GetCharacteristicsForUuidAsync(CharUuidModelNumber, BluetoothCacheMode.Cached);
+                    if (modelCharResult.Status == GattCommunicationStatus.Success && modelCharResult.Characteristics.Count > 0)
+                    {
+                        var read = await modelCharResult.Characteristics[0].ReadValueAsync(BluetoothCacheMode.Cached);
+                        if (read.Status == GattCommunicationStatus.Success && read.Value != null)
+                        {
+                            using var reader = DataReader.FromBuffer(read.Value);
+                            model = reader.ReadString(reader.UnconsumedBufferLength)?.Trim();
+                        }
+                    }
+
+                    var mfgCharResult = await dis.GetCharacteristicsForUuidAsync(CharUuidManufacturer, BluetoothCacheMode.Cached);
+                    if (mfgCharResult.Status == GattCommunicationStatus.Success && mfgCharResult.Characteristics.Count > 0)
+                    {
+                        var read = await mfgCharResult.Characteristics[0].ReadValueAsync(BluetoothCacheMode.Cached);
+                        if (read.Status == GattCommunicationStatus.Success && read.Value != null)
+                        {
+                            using var reader = DataReader.FromBuffer(read.Value);
+                            mfg = reader.ReadString(reader.UnconsumedBufferLength)?.Trim();
+                        }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(model) && !IsGenericName(model))
+                    {
+                        if (!string.IsNullOrWhiteSpace(mfg) && !model.Contains(mfg, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return $"{mfg} {model}";
+                        }
+                        return model;
+                    }
+                }
+                finally
+                {
+                    foreach (var s in disResult.Services) { try { s?.Dispose(); } catch { } }
+                }
+            }
+        }
+        catch { }
+
+        if (!IsGenericName(ble.DeviceInformation?.Name))
+        {
+            return ble.DeviceInformation!.Name.Trim();
+        }
+
+        return "Wireless Accessory";
     }
 
     public static DeviceType InferDeviceType(string? name)

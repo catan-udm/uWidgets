@@ -66,6 +66,8 @@ public class DeviceBatteryItemViewModel : ReactiveObject
         private set => this.RaiseAndSetIfChanged(ref statusBrush, value);
     }
 
+    public double StrokeDashOffset => 27.6 * (1.0 - Math.Clamp(BatteryLevel, 0.0, 1.0));
+
     public void Update(DeviceBatteryInfo info)
     {
         DeviceId = info.DeviceId;
@@ -75,6 +77,7 @@ public class DeviceBatteryItemViewModel : ReactiveObject
         IsCharging = info.IsCharging;
         Icon = info.Icon;
         FormattedLevel = info.FormattedLevel;
+        this.RaisePropertyChanged(nameof(StrokeDashOffset));
 
         if (info.IsCharging)
         {
@@ -109,6 +112,14 @@ public class DeviceBatteriesViewModel : ReactiveObject, IDisposable
     }
 
     public ObservableCollection<DeviceBatteryItemViewModel> Devices { get; }
+    public IEnumerable<DeviceBatteryItemViewModel> SmallDevices => Devices.Take(4);
+
+    private bool isSmallView;
+    public bool IsSmallView
+    {
+        get => isSmallView;
+        set => this.RaiseAndSetIfChanged(ref isSmallView, value);
+    }
 
     private bool hasDevices;
     public bool HasDevices
@@ -149,6 +160,7 @@ public class DeviceBatteriesViewModel : ReactiveObject, IDisposable
                 }
 
                 HasDevices = Devices.Count > 0;
+                this.RaisePropertyChanged(nameof(SmallDevices));
             });
         }
         catch (Exception)

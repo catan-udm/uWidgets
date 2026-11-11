@@ -22,7 +22,7 @@ public class SingleMetricSettingsViewModel : ReactiveObject
 
         AvailableDevices =
         [
-            new DeviceOptionViewModel("host_battery", "PC / Laptop Battery (Default)")
+            new DeviceOptionViewModel("host_battery", $"{PeripheralBatteryService.GetHostDeviceName()} (Default)")
         ];
 
         LoadDevicesAsync();

@@ -5,42 +5,90 @@
              x:Class="Monitor.Views.DeviceBatteries"
              x:DataType="viewModels:DeviceBatteriesViewModel">
     <Grid>
-        <!-- Device List -->
-        <ScrollViewer VerticalScrollBarVisibility="Auto" IsVisible="{Binding HasDevices}">
-            <ItemsControl ItemsSource="{Binding Devices}" Margin="4">
+        <!-- Standard View (Wide / Large / Extra Large): Icon, Actual Name, and Single Straight Line -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      IsVisible="{Binding HasDevices}">
+            <!-- Non-Small View -->
+            <ItemsControl ItemsSource="{Binding Devices}"
+                          IsVisible="{Binding !IsSmallView}"
+                          Margin="8,6">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="viewModels:DeviceBatteryItemViewModel">
-                        <Border Margin="0,2,0,4" Padding="6,4" CornerRadius="6"
-                                Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}">
-                            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-                                <!-- Device Icon -->
-                                <PathIcon Grid.Column="0" Data="{Binding Icon}" 
-                                          Width="18" Height="18" Margin="0,0,8,0"
-                                          Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                                          Opacity="0.85" VerticalAlignment="Center" />
+                        <Grid ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center" Margin="0,5">
+                            <!-- 1. Device Icon -->
+                            <PathIcon Grid.Column="0" Data="{Binding Icon}"
+                                      Width="16" Height="16" Margin="0,0,8,0"
+                                      Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                      Opacity="0.9" VerticalAlignment="Center" />
 
-                                <!-- Device Name and Mini Battery Bar -->
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2" Margin="0,0,8,0">
-                                    <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="Medium"
-                                               TextTrimming="CharacterEllipsis"
-                                               Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-                                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding BatteryPercent}"
-                                                 Height="4" CornerRadius="2"
-                                                 Foreground="{Binding StatusBrush}"
-                                                 Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
-                                </StackPanel>
+                            <!-- 2. Actual Reported Device Name -->
+                            <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       TextTrimming="CharacterEllipsis" MaxWidth="190"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,12,0" />
 
-                                <!-- Battery Percentage & Status -->
-                                <TextBlock Grid.Column="2" Text="{Binding FormattedLevel}"
-                                           FontSize="11" FontWeight="SemiBold"
-                                           Foreground="{Binding StatusBrush}"
-                                           VerticalAlignment="Center" />
-                            </Grid>
-                        </Border>
+                            <!-- 3. Single Straight Line Centered Horizontally on Text -->
+                            <ProgressBar Grid.Column="2" Minimum="0" Maximum="100"
+                                         Value="{Binding BatteryPercent}"
+                                         Height="4" CornerRadius="2"
+                                         Foreground="{Binding StatusBrush}"
+                                         Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                         VerticalAlignment="Center" />
+                        </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
+
+        <!-- Small View (2x2): Max 2x2 Grid of Semicircular / Radial Indicators with Icons and No Text -->
+        <Grid IsVisible="{Binding HasDevices}" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <ItemsControl ItemsSource="{Binding SmallDevices}"
+                          IsVisible="{Binding IsSmallView}"
+                          HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="2" Columns="2" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="viewModels:DeviceBatteryItemViewModel">
+                        <Viewbox Stretch="Uniform" MaxWidth="58" MaxHeight="58" Margin="4">
+                            <Canvas Width="60" Height="60">
+                                <!-- Background Circular Track -->
+                                <Path Opacity="0.18" StrokeThickness="5"
+                                      Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}">
+                                    <Path.Data>
+                                        <EllipseGeometry Center="30,30" RadiusX="22" RadiusY="22" />
+                                    </Path.Data>
+                                </Path>
+
+                                <!-- Device Icon (Centered inside the ring) -->
+                                <PathIcon Canvas.Left="19" Canvas.Top="19" Width="22" Height="22"
+                                          Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                          Opacity="0.88"
+                                          Data="{Binding Icon}" />
+
+                                <!-- Colored Semicircular / Radial Progress Arc -->
+                                <Path StrokeThickness="5"
+                                      StrokeDashArray="27.6,27.6"
+                                      StrokeLineCap="Round"
+                                      StrokeDashOffset="{Binding StrokeDashOffset}"
+                                      Stroke="{Binding StatusBrush}"
+                                      RenderTransformOrigin="30,30">
+                                    <Path.RenderTransform>
+                                        <RotateTransform Angle="-90" />
+                                    </Path.RenderTransform>
+                                    <Path.Data>
+                                        <EllipseGeometry Center="30,30" RadiusX="22" RadiusY="22" />
+                                    </Path.Data>
+                                </Path>
+                            </Canvas>
+                        </Viewbox>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
 
         <!-- Empty State -->
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6"
