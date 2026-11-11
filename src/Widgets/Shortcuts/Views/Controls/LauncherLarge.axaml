@@ -54,8 +54,16 @@
                                     VerticalAlignment="Top"
                                     Background="{DynamicResource SystemControlHighlightListAccentLowBrush}">
                                 <Viewbox MaxWidth="20" MaxHeight="20" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <PathIcon Data="{Binding Icon}"
-                                              Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                                    <Panel Width="16" Height="16">
+                                        <PathIcon IsVisible="{Binding !HasImage}"
+                                                  Data="{Binding Icon}"
+                                                  Width="16" Height="16"
+                                                  Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                                        <Image IsVisible="{Binding HasImage}"
+                                               Source="{Binding Image}"
+                                               Width="16" Height="16"
+                                               Stretch="Uniform" />
+                                    </Panel>
                                 </Viewbox>
                             </Border>
                             <StackPanel Grid.Row="1" Spacing="2" Margin="0,6,0,0">

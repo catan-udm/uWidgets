@@ -22,7 +22,19 @@ public class EditableShortcutViewModel : ReactiveObject
         iconKey = model.IconKey;
     }
 
-    public string[] AvailableIcons => ShortcutIcon.Keys;
+    public IReadOnlyList<ShortcutIconOption> AvailableIcons => ShortcutIcon.All;
+
+    public ShortcutIconOption SelectedIcon
+    {
+        get => ShortcutIcon.FindOption(iconKey);
+        set
+        {
+            if (value != null && !string.Equals(value.Key, iconKey, StringComparison.OrdinalIgnoreCase))
+            {
+                IconKey = value.Key;
+            }
+        }
+    }
 
     public string Name
     {
@@ -50,6 +62,7 @@ public class EditableShortcutViewModel : ReactiveObject
         set
         {
             this.RaiseAndSetIfChanged(ref iconKey, value);
+            this.RaisePropertyChanged(nameof(SelectedIcon));
             onChanged();
         }
     }

@@ -113,12 +113,27 @@ public sealed class LiquidGlassSurface : Control
         if (topLevel == null)
             return;
 
-        var screen = topLevel.Screens.ScreenFromWindow(topLevel) ?? topLevel.Screens.Primary;
-        var scaling = screen?.Scaling ?? 1.0;
+        // The canvas Avalonia hands us is already scaled by the window's RenderScaling, so that is the
+        // scale the glass must use (Screen.Scaling can lag behind while a window changes monitors).
+        var scaling = topLevel.RenderScaling;
+
+        // Use the surface's actual on-screen origin (in physical pixels) rather than the window's outer
+        // position, so window frames/decorations, extended client area and the surface's own offset inside
+        // the window don't shift the sampled wallpaper region.
+        var origin = this.PointToScreen(new Point(0, 0));
+
+        // Pick the monitor the glass actually sits on (by its center) so the wallpaper texture and the
+        // offset inside it come from the same monitor on multi-monitor / mixed-DPI setups.
+        var center = new PixelPoint(
+            origin.X + (int)Math.Round(Bounds.Width * scaling / 2),
+            origin.Y + (int)Math.Round(Bounds.Height * scaling / 2));
+        var screen = topLevel.Screens.ScreenFromPoint(center)
+                     ?? topLevel.Screens.ScreenFromWindow(topLevel)
+                     ?? topLevel.Screens.Primary;
         var screenBounds = screen?.Bounds ?? new PixelRect(0, 0, 1920, 1080);
 
-        var offsetX = (float)(topLevel.Position.X - screenBounds.X);
-        var offsetY = (float)(topLevel.Position.Y - screenBounds.Y);
+        var offsetX = (float)(origin.X - screenBounds.X);
+        var offsetY = (float)(origin.Y - screenBounds.Y);
 
         var isDark = Application.Current?.ActualThemeVariant == ThemeVariant.Dark;
         var opacity = 0.4;

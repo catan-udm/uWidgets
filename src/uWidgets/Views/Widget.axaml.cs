@@ -51,6 +51,7 @@ public partial class Widget : Window
         Activated += OnActivated;
         Closed += OnClosed;
         PositionChanged += OnPositionChanged;
+        ScalingChanged += OnScalingChanged;
         Resized += OnResized;
         PointerPressed += OnPointerPressed;
         PointerReleased += OnPointerReleased;
@@ -63,6 +64,14 @@ public partial class Widget : Window
     {
         if (IsLiquidGlassEnabled)
             LiquidGlassSurface.InvalidateVisual();
+    }
+
+    private void OnScalingChanged(object? sender, EventArgs e)
+    {
+        if (!IsLiquidGlassEnabled) return;
+        Border.CornerRadius = Radius;
+        LiquidGlassSurface.CornerRadius = Radius;
+        LiquidGlassSurface.InvalidateVisual();
     }
 
     private void OnResized(object? sender, WindowResizedEventArgs e)
@@ -191,6 +200,7 @@ public partial class Widget : Window
         PointerPressed -= OnPointerPressed;
         PointerReleased -= OnPointerReleased;
         PositionChanged -= OnPositionChanged;
+        ScalingChanged -= OnScalingChanged;
         Resized -= OnResized;
         Opened -= OnOpened;
         Activated -= OnActivated;

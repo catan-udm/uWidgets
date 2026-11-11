@@ -5,6 +5,18 @@
              xmlns:viewModels="clr-namespace:Shortcuts.ViewModels"
              x:Class="Shortcuts.Views.Settings.LauncherSettings"
              x:DataType="viewModels:LauncherSettingsViewModel">
+    <UserControl.Styles>
+        <Style Selector="Button.icon-tile">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style Selector="Button.icon-tile:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListLowBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightListMediumBrush}" />
+        </Style>
+    </UserControl.Styles>
     <ScrollViewer>
         <StackPanel Orientation="Vertical" Spacing="6">
             <controls:Setting Title="{x:Static locales:Locale.Shortcuts_ShowLabels}">
@@ -31,10 +43,170 @@
                                              Watermark="{x:Static locales:Locale.Shortcuts_Target}"
                                              Text="{Binding Target}"
                                              Margin="0,0,6,0" />
-                                    <ComboBox Grid.Column="1"
-                                              Width="96"
-                                              ItemsSource="{Binding AvailableIcons}"
-                                              SelectedItem="{Binding IconKey}" />
+                                    <DropDownButton Grid.Column="1"
+                                                    MinWidth="130"
+                                                    Padding="8,5"
+                                                    VerticalAlignment="Center">
+                                        <DropDownButton.Content>
+                                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                <Panel Width="16" Height="16" VerticalAlignment="Center">
+                                                    <PathIcon IsVisible="{Binding !SelectedIcon.HasImage}"
+                                                              Data="{Binding SelectedIcon.Icon}"
+                                                              Width="16" Height="16"
+                                                              Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                                                    <Image IsVisible="{Binding SelectedIcon.HasImage}"
+                                                           Source="{Binding SelectedIcon.Image}"
+                                                           Width="16" Height="16"
+                                                           Stretch="Uniform" />
+                                                </Panel>
+                                                <TextBlock Text="{Binding SelectedIcon.DisplayName}"
+                                                           VerticalAlignment="Center"
+                                                           MaxWidth="75"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </DropDownButton.Content>
+                                        <DropDownButton.Flyout>
+                                            <Flyout Placement="BottomEdgeAlignedRight">
+                                                <Border Width="332" MaxHeight="400" Padding="2">
+                                                    <ScrollViewer>
+                                                        <StackPanel Orientation="Vertical">
+                                                            <!-- Category 1: General & Quick Access -->
+                                                            <StackPanel Margin="0,4,0,8"
+                                                                        x:DataType="viewModels:ShortcutIconCategory"
+                                                                        DataContext="{x:Static viewModels:ShortcutIcon.FirstCategory}">
+                                                                <TextBlock Text="{Binding Name}"
+                                                                           FontWeight="SemiBold"
+                                                                           FontSize="11"
+                                                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                                           Margin="6,2,6,4" />
+                                                                <ItemsControl ItemsSource="{Binding Icons}">
+                                                                    <ItemsControl.ItemsPanel>
+                                                                        <ItemsPanelTemplate>
+                                                                            <WrapPanel Orientation="Horizontal" />
+                                                                        </ItemsPanelTemplate>
+                                                                    </ItemsControl.ItemsPanel>
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate x:DataType="viewModels:ShortcutIconOption">
+                                                                            <Button Classes="icon-tile"
+                                                                                    Click="SelectIcon_OnClick"
+                                                                                    ToolTip.Tip="{Binding DisplayName}"
+                                                                                    Width="36" Height="36"
+                                                                                    Margin="2"
+                                                                                    Padding="0"
+                                                                                    HorizontalContentAlignment="Center"
+                                                                                    VerticalContentAlignment="Center">
+                                                                                <PathIcon Data="{Binding Icon}"
+                                                                                          Width="16" Height="16"
+                                                                                          Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                                                                            </Button>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
+                                                            </StackPanel>
+
+                                                            <!-- Custom Icons Section (Directly Below First Category) -->
+                                                            <Border Margin="2,4,2,8"
+                                                                    Padding="8,6"
+                                                                    CornerRadius="8"
+                                                                    Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+                                                                <StackPanel Spacing="6">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Grid.Column="0"
+                                                                                   Text="Custom Icons"
+                                                                                   FontWeight="SemiBold"
+                                                                                   FontSize="11"
+                                                                                   Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
+                                                                                   VerticalAlignment="Center"
+                                                                                   Margin="2,0,0,0" />
+                                                                        <Button Grid.Column="1"
+                                                                                Content="+ Upload Icon"
+                                                                                Click="UploadCustomIcon_OnClick"
+                                                                                FontSize="11"
+                                                                                Padding="8,4" />
+                                                                    </Grid>
+                                                                    <ItemsControl ItemsSource="{x:Static viewModels:ShortcutIcon.CustomIcons}">
+                                                                        <ItemsControl.ItemsPanel>
+                                                                            <ItemsPanelTemplate>
+                                                                                <WrapPanel Orientation="Horizontal" />
+                                                                            </ItemsPanelTemplate>
+                                                                        </ItemsControl.ItemsPanel>
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate x:DataType="viewModels:ShortcutIconOption">
+                                                                                <Button Classes="icon-tile"
+                                                                                        Click="SelectIcon_OnClick"
+                                                                                        ToolTip.Tip="{Binding DisplayName}"
+                                                                                        Width="36" Height="36"
+                                                                                        Margin="2"
+                                                                                        Padding="0"
+                                                                                        HorizontalContentAlignment="Center"
+                                                                                        VerticalContentAlignment="Center">
+                                                                                    <Button.ContextMenu>
+                                                                                        <ContextMenu>
+                                                                                            <MenuItem Header="Delete Custom Icon"
+                                                                                                      Tag="{Binding Key}"
+                                                                                                      Click="DeleteCustomIcon_OnClick" />
+                                                                                        </ContextMenu>
+                                                                                    </Button.ContextMenu>
+                                                                                    <Panel Width="16" Height="16">
+                                                                                        <PathIcon IsVisible="{Binding !HasImage}"
+                                                                                                  Data="{Binding Icon}"
+                                                                                                  Width="16" Height="16"
+                                                                                                  Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                                                                                        <Image IsVisible="{Binding HasImage}"
+                                                                                               Source="{Binding Image}"
+                                                                                               Width="16" Height="16"
+                                                                                               Stretch="Uniform" />
+                                                                                    </Panel>
+                                                                                </Button>
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </StackPanel>
+                                                            </Border>
+
+                                                            <!-- Remaining Categories -->
+                                                            <ItemsControl ItemsSource="{x:Static viewModels:ShortcutIcon.RemainingCategories}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate x:DataType="viewModels:ShortcutIconCategory">
+                                                                        <StackPanel Margin="0,4,0,8">
+                                                                            <TextBlock Text="{Binding Name}"
+                                                                                       FontWeight="SemiBold"
+                                                                                       FontSize="11"
+                                                                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                                                       Margin="6,2,6,4" />
+                                                                            <ItemsControl ItemsSource="{Binding Icons}">
+                                                                                <ItemsControl.ItemsPanel>
+                                                                                    <ItemsPanelTemplate>
+                                                                                        <WrapPanel Orientation="Horizontal" />
+                                                                                    </ItemsPanelTemplate>
+                                                                                </ItemsControl.ItemsPanel>
+                                                                                <ItemsControl.ItemTemplate>
+                                                                                    <DataTemplate x:DataType="viewModels:ShortcutIconOption">
+                                                                                        <Button Classes="icon-tile"
+                                                                                                Click="SelectIcon_OnClick"
+                                                                                                ToolTip.Tip="{Binding DisplayName}"
+                                                                                                Width="36" Height="36"
+                                                                                                Margin="2"
+                                                                                                Padding="0"
+                                                                                                HorizontalContentAlignment="Center"
+                                                                                                VerticalContentAlignment="Center">
+                                                                                            <PathIcon Data="{Binding Icon}"
+                                                                                                      Width="16" Height="16"
+                                                                                                      Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                                                                                        </Button>
+                                                                                    </DataTemplate>
+                                                                                </ItemsControl.ItemTemplate>
+                                                                            </ItemsControl>
+                                                                        </StackPanel>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </StackPanel>
+                                                    </ScrollViewer>
+                                                </Border>
+                                            </Flyout>
+                                        </DropDownButton.Flyout>
+                                    </DropDownButton>
                                 </Grid>
                             </StackPanel>
                         </Border>

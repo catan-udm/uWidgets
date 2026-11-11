@@ -27,8 +27,16 @@
             <DataTemplate DataType="viewModels:ShortcutItemViewModel">
                 <Button Classes="microTile" Click="Shortcut_OnClick" ToolTip.Tip="{Binding Name}">
                     <Viewbox MaxWidth="16" MaxHeight="16">
-                        <PathIcon Data="{Binding Icon}"
-                                  Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                        <Panel Width="16" Height="16">
+                            <PathIcon IsVisible="{Binding !HasImage}"
+                                      Data="{Binding Icon}"
+                                      Width="16" Height="16"
+                                      Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                            <Image IsVisible="{Binding HasImage}"
+                                   Source="{Binding Image}"
+                                   Width="16" Height="16"
+                                   Stretch="Uniform" />
+                        </Panel>
                     </Viewbox>
                 </Button>
             </DataTemplate>

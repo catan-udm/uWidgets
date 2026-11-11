@@ -13,7 +13,10 @@ public class ShortcutItemViewModel(ShortcutItemModel item, bool showLabel) : Rea
     public string Name => item.Name;
     public string Target => item.Target;
     public bool ShowLabel => showLabel;
-    public StreamGeometry Icon => ShortcutIcon.Get(item.IconKey);
+    public ShortcutIconOption IconOption => ShortcutIcon.FindOption(item.IconKey);
+    public StreamGeometry? Icon => IconOption.Icon;
+    public IImage? Image => IconOption.Image;
+    public bool HasImage => IconOption.HasImage;
     public string TargetSummary => FormatTargetSummary(item.Target);
 
     public void Launch()
