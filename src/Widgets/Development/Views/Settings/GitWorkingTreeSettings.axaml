@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
+             xmlns:viewModels="clr-namespace:Development.ViewModels"
+             x:DataType="viewModels:GitWorkingTreeSettingsViewModel"
+             x:Class="Development.Views.Settings.GitWorkingTreeSettings">
+    <ScrollViewer>
+        <StackPanel Orientation="Vertical" Spacing="8">
+            <controls:Setting Title="Tracked repositories">
+                <Button Content="Add Folder..." Click="BrowseFolder_OnClick" Padding="8,4" />
+            </controls:Setting>
+
+            <ItemsControl ItemsSource="{Binding Repositories}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="x:String">
+                        <Border Margin="0,2" Padding="6,4" CornerRadius="4"
+                                Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{Binding}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Command="{Binding $parent[UserControl].((viewModels:GitWorkingTreeSettingsViewModel)DataContext).RemoveFolderCommand}"
+                                        CommandParameter="{Binding}" Content="✕" Padding="6,2"
+                                        Background="Transparent" Foreground="#EF4444" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

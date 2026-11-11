@@ -1,0 +1,14 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
+             xmlns:viewModels="clr-namespace:Development.ViewModels"
+             x:DataType="viewModels:DockerSettingsViewModel"
+             x:Class="Development.Views.Settings.DockerSettings">
+    <ScrollViewer>
+        <StackPanel Orientation="Vertical" Spacing="5">
+            <controls:Setting Title="Show all containers">
+                <ToggleSwitch IsChecked="{Binding ShowAllContainers}" OnContent="" OffContent="" />
+            </controls:Setting>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

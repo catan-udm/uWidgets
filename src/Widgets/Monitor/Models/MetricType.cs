@@ -7,4 +7,7 @@ public enum MetricType
     DiskUsage,
     NetworkUsage,
     BatteryLevel,
+    StorageCapacity,
+    GpuUsage,
+    RecycleBin,
 }

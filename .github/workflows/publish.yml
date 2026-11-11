@@ -110,7 +110,7 @@ jobs:
           $filePath = ".\src\uWidgets\AssemblyInfo.cs"
           $content = [string](Get-Content $filePath)
 
-          if ($content -match '\[assembly: AssemblyVersion\("([0-9]+\.[0-9]+\.[0-9]+)"\)\]') {
+          if ($content -match '\[assembly: AssemblyVersion\("([0-9]+(?:\.[0-9]+)+)"\)\]') {
             $version = $matches[1]
             echo "Assembly Version: $version"
             echo "version=v$version" >> $env:GITHUB_OUTPUT
@@ -175,6 +175,7 @@ jobs:
             --repo "${{ github.repository }}" `
             --title "$tag" `
             --notes-file release-notes.md `
+            --prerelease `
             .\src\uWidgets\bin\Publish\win-x86.zip `
             .\src\uWidgets\bin\Publish\win-x64.zip `
             .\src\uWidgets\bin\Publish\win-arm64.zip

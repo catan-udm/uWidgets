@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Development.ViewModels"
+             x:Class="Development.Views.Docker"
+             x:DataType="viewModels:DockerViewModel">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="6,4,6,6">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <PathIcon Data="{x:Static viewModels:DevelopmentIcon.DockerGeometry}" Width="16" Height="16"
+                          Foreground="#0DB7ED" />
+                <TextBlock Text="Docker" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock Grid.Column="2" Text="{Binding HeaderSummary}" FontSize="11" Opacity="0.7"
+                       VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- Containers List -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" IsVisible="{Binding IsDockerOnline}">
+            <ItemsControl ItemsSource="{Binding Containers}" Margin="4,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="viewModels:DockerContainerItemViewModel">
+                        <Border Margin="0,2,0,3" Padding="6,4" CornerRadius="6"
+                                Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}">
+                            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                                <!-- Status dot -->
+                                <Ellipse Grid.Column="0" Width="8" Height="8" Margin="2,0,8,0"
+                                         Fill="{Binding StatusBrush}" VerticalAlignment="Center" />
+
+                                <!-- Container info -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1" Margin="0,0,6,0">
+                                    <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Image}" FontSize="9" Opacity="0.65"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding PortSummary}" FontSize="9" Opacity="0.5"
+                                               IsVisible="{Binding PortSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+
+                                <!-- Action Buttons -->
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                                    <Button Classes="small" Command="{Binding StartCommand}" IsVisible="{Binding !IsRunning}"
+                                            Padding="4" Background="Transparent" ToolTip.Tip="Start">
+                                        <PathIcon Data="{x:Static viewModels:DevelopmentIcon.PlayGeometry}" Width="10" Height="10" Foreground="#10B981" />
+                                    </Button>
+                                    <Button Classes="small" Command="{Binding StopCommand}" IsVisible="{Binding IsRunning}"
+                                            Padding="4" Background="Transparent" ToolTip.Tip="Stop">
+                                        <PathIcon Data="{x:Static viewModels:DevelopmentIcon.StopGeometry}" Width="10" Height="10" Foreground="#EF4444" />
+                                    </Button>
+                                    <Button Classes="small" Command="{Binding RestartCommand}"
+                                            Padding="4" Background="Transparent" ToolTip.Tip="Restart">
+                                        <PathIcon Data="{x:Static viewModels:DevelopmentIcon.RestartGeometry}" Width="10" Height="10" Opacity="0.8" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Offline state -->
+        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6"
+                    IsVisible="{Binding !IsDockerOnline}">
+            <PathIcon Data="{x:Static viewModels:DevelopmentIcon.DockerGeometry}" Width="32" Height="32" Opacity="0.3"
+                      HorizontalAlignment="Center" />
+            <TextBlock Text="Docker Engine is Offline" FontSize="11" Opacity="0.6" HorizontalAlignment="Center" />
+        </StackPanel>
+    </Grid>
+</UserControl>

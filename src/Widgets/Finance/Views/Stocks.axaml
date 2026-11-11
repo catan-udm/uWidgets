@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Finance.ViewModels"
+             x:Class="Finance.Views.Stocks"
+             x:DataType="viewModels:StocksViewModel">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="6,4,6,6">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <PathIcon Data="{x:Static viewModels:FinanceIcon.StocksGeometry}" Width="16" Height="16"
+                          Foreground="#10B981" />
+                <TextBlock Text="Stocks &amp; Indices" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Quotes List -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Quotes}" Margin="4,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="viewModels:StockItemViewModel">
+                        <Border Margin="0,2,0,3" Padding="6,4" CornerRadius="6"
+                                Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}">
+                            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                                <!-- Stock info -->
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="1">
+                                    <TextBlock Text="{Binding Symbol}" FontSize="11" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding DisplayName}" FontSize="9" Opacity="0.6"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+
+                                <!-- Price and Change pill -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" Spacing="1">
+                                    <TextBlock Text="{Binding FormattedPrice}" FontSize="11" FontWeight="SemiBold"
+                                               HorizontalAlignment="Right" />
+                                    <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                            CornerRadius="3" Padding="4,1" HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding FormattedChange}" FontSize="9" FontWeight="Medium"
+                                                   Foreground="{Binding DeltaBrush}" />
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

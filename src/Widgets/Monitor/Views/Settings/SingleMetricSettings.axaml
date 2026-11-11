@@ -17,6 +17,16 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>
             </controls:Setting>
+            <controls:Setting Title="{x:Static locales:Locale.Monitor_TargetDevice}" IsVisible="{Binding IsBatterySelected}">
+                <ComboBox ItemsSource="{Binding AvailableDevices}" MinWidth="150"
+                          SelectedItem="{Binding SelectedDevice}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate DataType="viewModels:DeviceOptionViewModel">
+                            <TextBlock Text="{Binding Title}" Margin="0 4" TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </controls:Setting>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

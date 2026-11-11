@@ -1,0 +1,75 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Finance.ViewModels"
+             x:Class="Finance.Views.Converter"
+             x:DataType="viewModels:ConverterViewModel">
+    <ScrollViewer Margin="4">
+        <StackPanel Spacing="10">
+            <!-- Header -->
+            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="2,0">
+                <PathIcon Data="{x:Static viewModels:FinanceIcon.ConverterGeometry}" Width="16" Height="16"
+                          Foreground="#6366F1" />
+                <TextBlock Text="Live Currency &amp; Dev Converter" FontWeight="SemiBold" FontSize="12"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+
+            <!-- Currency Conversion Section -->
+            <Border Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}"
+                    CornerRadius="8" Padding="10,8">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="CURRENCY" FontSize="9" FontWeight="Bold" Opacity="0.5" />
+
+                    <!-- Amount Input -->
+                    <NumericUpDown Value="{Binding SourceAmount}" Minimum="0" Maximum="1000000000"
+                                   FormatString="N2" HorizontalAlignment="Stretch" />
+
+                    <!-- Currencies Row -->
+                    <Grid ColumnDefinitions="*,Auto,*">
+                        <ComboBox Grid.Column="0" ItemsSource="{Binding Currencies}"
+                                  SelectedItem="{Binding SourceCurrency}" HorizontalAlignment="Stretch" />
+
+                        <Button Grid.Column="1" Command="{Binding SwapCurrenciesCommand}"
+                                Margin="4,0" Padding="8,4" Background="Transparent" ToolTip.Tip="Swap">
+                            <TextBlock Text="⇄" FontSize="14" FontWeight="Bold" />
+                        </Button>
+
+                        <ComboBox Grid.Column="2" ItemsSource="{Binding Currencies}"
+                                  SelectedItem="{Binding TargetCurrency}" HorizontalAlignment="Stretch" />
+                    </Grid>
+
+                    <!-- Result -->
+                    <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                            CornerRadius="6" Padding="8,6">
+                        <TextBlock Text="{Binding ConvertedResult}" FontSize="16" FontWeight="Bold"
+                                   Foreground="#10B981" HorizontalAlignment="Center" />
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- CSS Unit Conversion Section -->
+            <Border Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}"
+                    CornerRadius="8" Padding="10,8">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="CSS UNITS (PX ⇄ REM)" FontSize="9" FontWeight="Bold" Opacity="0.5" />
+
+                    <Grid ColumnDefinitions="*,Auto,*">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock Text="Pixels (px)" FontSize="10" Opacity="0.7" />
+                            <NumericUpDown Value="{Binding PxValue}" Minimum="0" Maximum="10000"
+                                           FormatString="0.##" HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="1" Text="=" FontSize="14" FontWeight="Bold"
+                                   VerticalAlignment="Center" Margin="6,14,6,0" Opacity="0.5" />
+
+                        <StackPanel Grid.Column="2" Spacing="2">
+                            <TextBlock Text="Rems (rem)" FontSize="10" Opacity="0.7" />
+                            <NumericUpDown Value="{Binding RemValue}" Minimum="0" Maximum="1000"
+                                           FormatString="0.###" HorizontalAlignment="Stretch" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

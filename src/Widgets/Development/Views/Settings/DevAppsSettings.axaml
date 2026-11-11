@@ -1,0 +1,14 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
+             xmlns:viewModels="clr-namespace:Development.ViewModels"
+             x:DataType="viewModels:DevAppsSettingsViewModel"
+             x:Class="Development.Views.Settings.DevAppsSettings">
+    <ScrollViewer>
+        <StackPanel Orientation="Vertical" Spacing="5">
+            <controls:Setting Title="Refresh interval (seconds)">
+                <NumericUpDown Minimum="1" Maximum="60" Value="{Binding RefreshIntervalSeconds}" Width="120" />
+            </controls:Setting>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Development.ViewModels"
+             x:Class="Development.Views.GitWorkingTree"
+             x:DataType="viewModels:GitWorkingTreeViewModel">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="4">
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="4,2,4,6">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <PathIcon Data="{x:Static viewModels:DevelopmentIcon.GitBranchGeometry}" Width="16" Height="16"
+                          Foreground="#F05032" />
+                <TextBlock Text="{Binding RepoName}" FontWeight="SemiBold" FontSize="12"
+                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+            </StackPanel>
+            <Border Grid.Column="2" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                    CornerRadius="4" Padding="6,2" VerticalAlignment="Center"
+                    IsVisible="{Binding HasRepo}">
+                <TextBlock Text="{Binding SyncStatus}" FontSize="10" FontWeight="SemiBold" />
+            </Border>
+        </Grid>
+
+        <!-- Main Body -->
+        <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}"
+                CornerRadius="8" Padding="10,8" Margin="0,2,0,6"
+                IsVisible="{Binding HasRepo}">
+            <StackPanel Spacing="6" VerticalAlignment="Center">
+                <!-- Branch Row -->
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <PathIcon Data="{x:Static viewModels:DevelopmentIcon.GitBranchGeometry}" Width="14" Height="14"
+                              Opacity="0.8" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Branch}" FontWeight="SemiBold" FontSize="13"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Status Row -->
+                <TextBlock Text="{Binding ChangeStatus}" FontSize="11" FontWeight="Medium"
+                           Foreground="{Binding StatusBrush}" />
+            </StackPanel>
+        </Border>
+
+        <!-- No Repo Configured State -->
+        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="4"
+                    IsVisible="{Binding !HasRepo}" Margin="10">
+            <PathIcon Data="{x:Static viewModels:DevelopmentIcon.FolderGeometry}" Width="28" Height="28" Opacity="0.3"
+                      HorizontalAlignment="Center" />
+            <TextBlock Text="No Repository Selected" FontSize="11" Opacity="0.6" HorizontalAlignment="Center" />
+            <TextBlock Text="Open widget settings to select a folder" FontSize="9" Opacity="0.4" HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <!-- Quick Actions Bottom Bar -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,*,*" Margin="0,2,0,0" IsVisible="{Binding HasRepo}">
+            <Button Grid.Column="0" Command="{Binding OpenVSCodeCommand}"
+                    Margin="2,0" Padding="6,4" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                    ToolTip.Tip="Open in VS Code">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <PathIcon Data="{x:Static viewModels:DevelopmentIcon.CodeGeometry}" Width="12" Height="12" Foreground="#007ACC" />
+                    <TextBlock Text="Code" FontSize="10" />
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="1" Command="{Binding OpenTerminalCommand}"
+                    Margin="2,0" Padding="6,4" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                    ToolTip.Tip="Open Terminal">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <PathIcon Data="{x:Static viewModels:DevelopmentIcon.TerminalGeometry}" Width="12" Height="12" />
+                    <TextBlock Text="Terminal" FontSize="10" />
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="2" Command="{Binding OpenExplorerCommand}"
+                    Margin="2,0" Padding="6,4" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                    ToolTip.Tip="Open Folder">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <PathIcon Data="{x:Static viewModels:DevelopmentIcon.FolderGeometry}" Width="12" Height="12" Foreground="#F59E0B" />
+                    <TextBlock Text="Folder" FontSize="10" />
+                </StackPanel>
+            </Button>
+        </Grid>
+    </Grid>
+</UserControl>

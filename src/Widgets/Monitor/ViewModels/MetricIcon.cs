@@ -18,4 +18,34 @@ public static class MetricIcon
 
     public static Lazy<StreamGeometry> BatteryLevel = new(() => StreamGeometry.Parse(
         "M17,6 C18.6569,6 20,7.34315 20,9 L20,10 L21.0003237,10 C21.1824237,10 21.3532237,10.0487 21.5003237,10.1338 C21.7992237,10.3067 22.0003237,10.6299 22.0003237,11 L22.0003237,13 C22.0003237,13.3701 21.7992237,13.6933 21.5003237,13.8662 C21.3532237,13.9513 21.1824237,14 21.0003237,14 L20,14 L20,15 C20,16.6569 18.6569,18 17,18 L4.99967629,18 C3.34282629,18 1.99967629,16.6569 1.99967629,15 L1.99967629,9 C1.99967629,7.34315 3.34282629,6 4.99967629,6 L17,6 Z M16.998153,7.5 L4.99967629,7.5 C4.21997746,7.5 3.57922729,8.09488554 3.50654284,8.85553954 L3.49967629,9 L3.49967629,15 C3.49967629,15.7796706 4.09456182,16.4204457 4.85521583,16.4931332 L4.99967629,16.5 L16.998153,16.5 C17.7778236,16.5 18.4185987,15.9050879 18.4912862,15.1444558 L18.498153,15 L18.498153,9 C18.498153,8.22030118 17.9032409,7.579551 17.1426088,7.50686655 L16.998153,7.5 Z M5.99967629,9 L14,9 C14.51285,9 14.9355092,9.38604429 14.9932725,9.88337975 L15,10 L15,14 C15,14.51285 14.613973,14.9355092 14.1166239,14.9932725 L14,15 L5.99967629,15 C5.48683557,15 5.06416843,14.613973 5.00640394,14.1166239 L4.99967629,14 L4.99967629,10 C4.99967629,9.48716857 5.38572057,9.06449347 5.88305604,9.0067278 L5.99967629,9 L14,9 L5.99967629,9 Z"));
+
+    public static StreamGeometry Battery => BatteryLevel.Value;
+
+    public static Lazy<StreamGeometry> BatteryCharging = new(() => StreamGeometry.Parse(
+        "M11 1L4 10h5l-2 7 8-9h-5l2-7z"));
+
+    public static Lazy<StreamGeometry> StorageCapacity = new(() => StreamGeometry.Parse(
+        "M2 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4zm2 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H4zm11 1.5a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5zm-2 0a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5zM2 11a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-3zm2 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1H4zm11 1.5a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5zm-2 0a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5z"));
+
+    public static Lazy<StreamGeometry> GpuUsage = new(() => StreamGeometry.Parse(
+        "M3 4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4zm2 0v12h10V4H5zm2 2h6v8H7V6zm1 1v6h4V7H8z"));
+
+    public static Lazy<StreamGeometry> RecycleBin = new(() => StreamGeometry.Parse(
+        "M5.5 1h5a.5.5 0 0 1 .5.5V3h3.5a.5.5 0 0 1 0 1H14v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4h-.5a.5.5 0 0 1 0-1H5V1.5a.5.5 0 0 1 .5-.5zM6 2v1h4V2H6zM3 4v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4H3zm3 3a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5A.5.5 0 0 1 6 7zm4 0a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5z"));
+
+    public static Lazy<StreamGeometry> DeviceLaptop = new(() => StreamGeometry.Parse(
+        "M2 3a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7H2V3zm2 0v6h8V3H4zM0 12a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1v-1z"));
+
+    public static Lazy<StreamGeometry> DeviceHeadphones = new(() => StreamGeometry.Parse(
+        "M8 1a7 7 0 0 0-7 7v4a3 3 0 0 0 3 3h1a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1H3V8a5 5 0 0 1 10 0v2h-2a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h1a3 3 0 0 0 3-3V8a7 7 0 0 0-7-7z"));
+
+    public static Lazy<StreamGeometry> DeviceMouse = new(() => StreamGeometry.Parse(
+        "M8 1a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4zm-1 3.5a.5.5 0 0 1 1 0v2a.5.5 0 0 1-1 0v-2z"));
+
+    public static Lazy<StreamGeometry> DeviceKeyboard = new(() => StreamGeometry.Parse(
+        "M2 4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H2zm1 2h2v1H3V6zm3 0h2v1H6V6zm3 0h2v1H9V6zm3 0h2v1h-2V6zM3 8h2v1H3V8zm3 0h5v1H6V8zm6 0h2v1h-2V8z"));
+
+    public static Lazy<StreamGeometry> DeviceGamepad = new(() => StreamGeometry.Parse(
+        "M3.5 4A2.5 2.5 0 0 0 1 6.5v3A2.5 2.5 0 0 0 3.1 11.9l1.4 2.1A1 1 0 0 0 5.3 14.5h.5a1 1 0 0 0 .9-.6L8 11h2l1.3 2.9a1 1 0 0 0 .9.6h.5a1 1 0 0 0 .8-.5l1.4-2.1A2.5 2.5 0 0 0 17 9.5v-3A2.5 2.5 0 0 0 14.5 4h-11zM4 6.5a.5.5 0 0 1 .5.5V8H5a.5.5 0 0 1 0 1h-.5v.5a.5.5 0 0 1-1 0V9H3a.5.5 0 0 1 0-1h.5v-.5a.5.5 0 0 1 .5-.5zm9.5 0a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5zm-1.5 2a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5zm3 0a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5z"));
+
 }

@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
+             xmlns:viewModels="clr-namespace:Finance.ViewModels"
+             x:DataType="viewModels:CryptoSettingsViewModel"
+             x:Class="Finance.Views.Settings.CryptoSettings">
+    <ScrollViewer>
+        <StackPanel Orientation="Vertical" Spacing="8">
+            <controls:Setting Title="Add Coin (ID e.g. bitcoin, solana)">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Grid.Column="0" Text="{Binding NewCoinId}" Watermark="coin id..." Width="120" />
+                    <Button Grid.Column="1" Command="{Binding AddCoinCommand}" Content="Add" Margin="4,0,0,0" />
+                </Grid>
+            </controls:Setting>
+
+            <TextBlock Text="Tracked Coins" FontWeight="SemiBold" FontSize="11" Margin="0,4" />
+
+            <ItemsControl ItemsSource="{Binding Coins}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="x:String">
+                        <Border Margin="0,2" Padding="6,4" CornerRadius="4"
+                                Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{Binding}" FontSize="11" VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Command="{Binding $parent[UserControl].((viewModels:CryptoSettingsViewModel)DataContext).RemoveCoinCommand}"
+                                        CommandParameter="{Binding}" Content="✕" Padding="6,2"
+                                        Background="Transparent" Foreground="#EF4444" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

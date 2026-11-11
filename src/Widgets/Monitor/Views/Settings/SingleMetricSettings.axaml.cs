@@ -6,6 +6,10 @@ namespace Monitor.Views.Settings;
 
 public partial class SingleMetricSettings : UserControl
 {
+    public SingleMetricSettings() : this(null!)
+    {
+    }
+
     public SingleMetricSettings(IWidgetLayoutProvider widgetLayoutProvider)
     {
         DataContext = new SingleMetricSettingsViewModel(widgetLayoutProvider);

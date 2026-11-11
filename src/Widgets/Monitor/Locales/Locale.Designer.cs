@@ -163,5 +163,47 @@ namespace Monitor.Locales {
                 return ResourceManager.GetString("Monitor_Dashboard_ShowLabels", resourceCulture);
             }
         }
+
+        public static string Monitor_Metric_5 {
+            get {
+                return ResourceManager.GetString("Monitor_Metric_5", resourceCulture);
+            }
+        }
+
+        public static string Monitor_Metric_6 {
+            get {
+                return ResourceManager.GetString("Monitor_Metric_6", resourceCulture);
+            }
+        }
+
+        public static string Monitor_Metric_7 {
+            get {
+                return ResourceManager.GetString("Monitor_Metric_7", resourceCulture);
+            }
+        }
+
+        public static string Monitor_TargetDevice {
+            get {
+                return ResourceManager.GetString("Monitor_TargetDevice", resourceCulture);
+            }
+        }
+
+        public static string Monitor_DeviceBatteries_Title {
+            get {
+                return ResourceManager.GetString("Monitor_DeviceBatteries_Title", resourceCulture);
+            }
+        }
+
+        public static string Monitor_DeviceBatteries_Subtitle {
+            get {
+                return ResourceManager.GetString("Monitor_DeviceBatteries_Subtitle", resourceCulture);
+            }
+        }
+
+        public static string Monitor_DeviceBatteries_Empty {
+            get {
+                return ResourceManager.GetString("Monitor_DeviceBatteries_Empty", resourceCulture);
+            }
+        }
     }
 }

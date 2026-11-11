@@ -1,0 +1,14 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
+             xmlns:viewModels="clr-namespace:Finance.ViewModels"
+             x:DataType="viewModels:ConverterSettingsViewModel"
+             x:Class="Finance.Views.Settings.ConverterSettings">
+    <ScrollViewer>
+        <StackPanel Orientation="Vertical" Spacing="5">
+            <controls:Setting Title="Base root font size (px)">
+                <NumericUpDown Minimum="8" Maximum="64" Value="{Binding RootFontSizePx}" Width="120" />
+            </controls:Setting>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

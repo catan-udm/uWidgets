@@ -1,3 +1,3 @@
 namespace Monitor.Models;
 
-public record SingleMetricModel(MetricType Metric);
+public record SingleMetricModel(MetricType Metric, string? TargetDeviceId = null);
