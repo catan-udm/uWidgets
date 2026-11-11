@@ -36,7 +36,7 @@ public static class MediaService
     private const uint KEYEVENTF_KEYUP = 0x0002;
 
     private static GlobalSystemMediaTransportControlsSessionManager? sessionManager;
-    private static bool sessionManagerFailed;
+    private static DateTime lastSessionManagerAttempt = DateTime.MinValue;
 
     private static readonly HashSet<string> BrowserKeywords = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -95,7 +95,12 @@ public static class MediaService
     private static async Task<GlobalSystemMediaTransportControlsSessionManager?> GetSessionManagerAsync()
     {
         if (sessionManager != null) return sessionManager;
-        if (sessionManagerFailed || !OperatingSystem.IsWindows()) return null;
+        if (!OperatingSystem.IsWindows()) return null;
+
+        if ((DateTime.UtcNow - lastSessionManagerAttempt).TotalSeconds < 3)
+            return null;
+
+        lastSessionManagerAttempt = DateTime.UtcNow;
 
         try
         {
@@ -104,7 +109,6 @@ public static class MediaService
         }
         catch
         {
-            sessionManagerFailed = true;
             return null;
         }
     }
@@ -135,30 +139,16 @@ public static class MediaService
         // If a music player is playing OR paused, it stays displayed; browser audio will NOT override it!
         if (prefersMusicPlayer)
         {
-            if (musicSessions.Count > 0)
+            // 1A. Any non-browser player actively PLAYING
+            var playingMusic = musicSessions.FirstOrDefault(s =>
             {
-                // 1A. Any music player actively PLAYING
-                var playingMusic = musicSessions.FirstOrDefault(s =>
-                {
-                    try { return s.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing; }
-                    catch { return false; }
-                });
-                if (playingMusic != null) return playingMusic;
+                try { return s.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing; }
+                catch { return false; }
+            });
+            if (playingMusic != null) return playingMusic;
 
-                // 1B. Any music player PAUSED (holds priority over any active browser video)
-                var pausedMusic = musicSessions.FirstOrDefault(s =>
-                {
-                    try { return s.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Paused; }
-                    catch { return false; }
-                });
-                if (pausedMusic != null) return pausedMusic;
-
-                // 1C. Any other music session
-                return musicSessions[0];
-            }
-
-            // Only evaluated when ZERO music players are open
-            if (allowBrowserMedia && browserSessions.Count > 0)
+            // 1B. Any browser actively PLAYING (if browser media is allowed)
+            if (allowBrowserMedia)
             {
                 var playingBrowser = browserSessions.FirstOrDefault(s =>
                 {
@@ -166,18 +156,43 @@ public static class MediaService
                     catch { return false; }
                 });
                 if (playingBrowser != null) return playingBrowser;
+            }
 
+            // 1C. Any non-browser player PAUSED
+            var pausedMusic = musicSessions.FirstOrDefault(s =>
+            {
+                try { return s.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Paused; }
+                catch { return false; }
+            });
+            if (pausedMusic != null) return pausedMusic;
+
+            // 1D. Any browser PAUSED
+            if (allowBrowserMedia)
+            {
                 var pausedBrowser = browserSessions.FirstOrDefault(s =>
                 {
                     try { return s.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Paused; }
                     catch { return false; }
                 });
                 if (pausedBrowser != null) return pausedBrowser;
-
-                return browserSessions[0];
             }
 
-            return null;
+            // 1E. Non-browser session that is not stopped or closed
+            var activeMusic = musicSessions.FirstOrDefault(s =>
+            {
+                try
+                {
+                    var status = s.GetPlaybackInfo()?.PlaybackStatus;
+                    return status != null && status != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Closed && status != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Stopped;
+                }
+                catch { return false; }
+            });
+            if (activeMusic != null) return activeMusic;
+
+            if (allowBrowserMedia && browserSessions.Count > 0)
+                return browserSessions[0];
+
+            return musicSessions.FirstOrDefault();
         }
 
         // MODE 2: PrefersMusicPlayer = FALSE (Active Playback Follower)
@@ -228,11 +243,10 @@ public static class MediaService
             using var stream = await thumbnailRef.OpenReadAsync();
             if (stream == null || stream.Size == 0 || stream.Size > 15 * 1024 * 1024) return null;
 
-            using var reader = new DataReader(stream.GetInputStreamAt(0));
-            await reader.LoadAsync((uint)stream.Size);
-            var bytes = new byte[stream.Size];
-            reader.ReadBytes(bytes);
-            return bytes;
+            using var netStream = stream.AsStreamForRead();
+            using var ms = new MemoryStream();
+            await netStream.CopyToAsync(ms);
+            return ms.ToArray();
         }
         catch
         {
@@ -609,7 +623,8 @@ public static class MediaService
                     {
                         var timeline = session.GetTimelineProperties();
                         var controls = playbackInfo?.Controls;
-                        canSeek = controls?.IsPlaybackPositionEnabled == true && timeline != null && timeline.EndTime > timeline.StartTime;
+                        canSeek = (controls?.IsPlaybackPositionEnabled == true || (timeline != null && (timeline.EndTime - timeline.StartTime).TotalSeconds > 1))
+                            && timeline != null && timeline.EndTime > timeline.StartTime;
 
                         if (timeline != null && timeline.EndTime > timeline.StartTime)
                         {

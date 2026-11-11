@@ -6,6 +6,30 @@
              x:Class="Development.Views.Settings.GitWorkingTreeSettings">
     <ScrollViewer>
         <StackPanel Orientation="Vertical" Spacing="8">
+            <!-- Code Editor Selection -->
+            <controls:Setting Title="Code Editor / IDE">
+                <ComboBox ItemsSource="{Binding AvailableEditors}"
+                          SelectedItem="{Binding SelectedEditor}"
+                          MinWidth="200">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate DataType="viewModels:EditorOption">
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </controls:Setting>
+
+            <!-- Custom Command (Visible when Custom is chosen) -->
+            <controls:Setting Title="Custom Launch Command" IsVisible="{Binding IsCustomEditor}">
+                <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                    <TextBox Grid.Column="0" Text="{Binding CustomEditorCommand}"
+                             Watermark="e.g. notepad++ &quot;{path}&quot;"
+                             Margin="0,0,6,0" />
+                    <Button Grid.Column="1" Content="Browse App..."
+                            Click="BrowseExecutable_OnClick" Padding="8,4" />
+                </Grid>
+            </controls:Setting>
+
             <controls:Setting Title="Tracked repositories">
                 <Button Content="Add Folder..." Click="BrowseFolder_OnClick" Padding="8,4" />
             </controls:Setting>

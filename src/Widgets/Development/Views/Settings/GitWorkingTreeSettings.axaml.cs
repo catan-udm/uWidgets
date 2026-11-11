@@ -44,4 +44,31 @@ public partial class GitWorkingTreeSettings : UserControl
             viewModel.AddRepository(selected);
         }
     }
+
+    private async void BrowseExecutable_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (viewModel == null) return;
+
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Select Code Editor Executable",
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Executable Files (*.exe, *.cmd, *.bat)")
+                {
+                    Patterns = ["*.exe", "*.cmd", "*.bat"]
+                }
+            ]
+        });
+
+        var selected = files.FirstOrDefault()?.TryGetLocalPath();
+        if (!string.IsNullOrEmpty(selected))
+        {
+            viewModel.CustomEditorCommand = $"\"{selected}\"";
+        }
+    }
 }

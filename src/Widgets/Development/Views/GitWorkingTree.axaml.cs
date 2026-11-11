@@ -16,7 +16,16 @@ public partial class GitWorkingTree : UserControl, IDisposable
     {
         DataContext = new GitWorkingTreeViewModel(model);
         Unloaded += OnUnloaded;
+        SizeChanged += OnSizeChanged;
         InitializeComponent();
+    }
+
+    private void OnSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is GitWorkingTreeViewModel vm)
+        {
+            vm.IsSmallView = e.NewSize.Width <= 200 && e.NewSize.Height <= 200;
+        }
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
@@ -27,6 +36,7 @@ public partial class GitWorkingTree : UserControl, IDisposable
 
     public void Dispose()
     {
+        SizeChanged -= OnSizeChanged;
         (DataContext as IDisposable)?.Dispose();
     }
 }

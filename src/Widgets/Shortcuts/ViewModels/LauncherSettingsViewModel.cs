@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.Json;
 using ReactiveUI;
 using Shortcuts.Models;
+using Shortcuts.Services;
 using uWidgets.Core.Interfaces;
 
 namespace Shortcuts.ViewModels;
@@ -85,6 +86,8 @@ public class LauncherSettingsViewModel : ReactiveObject
 
     public ObservableCollection<EditableShortcutViewModel> Items { get; }
 
+    public List<AppCategoryInfo> AppCategories => AppCategoryService.GetCategories();
+
     public bool ShowLabels
     {
         get => model.ShowLabels;
@@ -94,6 +97,13 @@ public class LauncherSettingsViewModel : ReactiveObject
     public void AddShortcut()
     {
         var item = new EditableShortcutViewModel(new ShortcutItemModel("App", "notepad.exe", "App"), SyncItems);
+        Items.Add(item);
+        SyncItems();
+    }
+
+    public void AddShortcutFromDiscoveredApp(DiscoveredApp app)
+    {
+        var item = new EditableShortcutViewModel(new ShortcutItemModel(app.Name, app.Target, app.IconKey), SyncItems);
         Items.Add(item);
         SyncItems();
     }

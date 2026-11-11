@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
              xmlns:locales="clr-namespace:Shortcuts.Locales"
+             xmlns:services="clr-namespace:Shortcuts.Services"
              xmlns:viewModels="clr-namespace:Shortcuts.ViewModels"
              x:Class="Shortcuts.Views.Settings.LauncherSettings"
              x:DataType="viewModels:LauncherSettingsViewModel">
@@ -200,7 +201,7 @@
                                                                         </StackPanel>
                                                                     </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>
-                                                            </ItemsControl>
+                                                             </ItemsControl>
                                                         </StackPanel>
                                                     </ScrollViewer>
                                                 </Border>
@@ -214,10 +215,63 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <Button HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Center"
-                    Content="{x:Static locales:Locale.Shortcuts_Add}"
-                    Click="Add_OnClick" />
+            <!-- Add Shortcut by Category DropDown Button -->
+            <DropDownButton HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Padding="8,6">
+                <DropDownButton.Content>
+                    <TextBlock Text="+ Add Shortcut (by Category...)" FontWeight="SemiBold" />
+                </DropDownButton.Content>
+                <DropDownButton.Flyout>
+                    <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                        <MenuItem Header="Custom Blank Shortcut" Click="Add_OnClick" />
+                        <MenuItem Header="Browse File or App..." Click="BrowseApp_OnClick" />
+                        <Separator />
+                        <MenuItem Header="💻 Development &amp; Code" ItemsSource="{Binding AppCategories[0].Apps}">
+                            <MenuItem.ItemTemplate>
+                                <DataTemplate DataType="services:DiscoveredApp">
+                                    <MenuItem Header="{Binding Name}" CommandParameter="{Binding}" Click="SelectDiscoveredApp_OnClick" />
+                                </DataTemplate>
+                            </MenuItem.ItemTemplate>
+                        </MenuItem>
+                        <MenuItem Header="🌐 Web Browsers" ItemsSource="{Binding AppCategories[1].Apps}">
+                            <MenuItem.ItemTemplate>
+                                <DataTemplate DataType="services:DiscoveredApp">
+                                    <MenuItem Header="{Binding Name}" CommandParameter="{Binding}" Click="SelectDiscoveredApp_OnClick" />
+                                </DataTemplate>
+                            </MenuItem.ItemTemplate>
+                        </MenuItem>
+                        <MenuItem Header="🎵 Media &amp; Audio" ItemsSource="{Binding AppCategories[2].Apps}">
+                            <MenuItem.ItemTemplate>
+                                <DataTemplate DataType="services:DiscoveredApp">
+                                    <MenuItem Header="{Binding Name}" CommandParameter="{Binding}" Click="SelectDiscoveredApp_OnClick" />
+                                </DataTemplate>
+                            </MenuItem.ItemTemplate>
+                        </MenuItem>
+                        <MenuItem Header="🎨 Graphics &amp; Design" ItemsSource="{Binding AppCategories[3].Apps}">
+                            <MenuItem.ItemTemplate>
+                                <DataTemplate DataType="services:DiscoveredApp">
+                                    <MenuItem Header="{Binding Name}" CommandParameter="{Binding}" Click="SelectDiscoveredApp_OnClick" />
+                                </DataTemplate>
+                            </MenuItem.ItemTemplate>
+                        </MenuItem>
+                        <MenuItem Header="📄 Office &amp; Documents" ItemsSource="{Binding AppCategories[4].Apps}">
+                            <MenuItem.ItemTemplate>
+                                <DataTemplate DataType="services:DiscoveredApp">
+                                    <MenuItem Header="{Binding Name}" CommandParameter="{Binding}" Click="SelectDiscoveredApp_OnClick" />
+                                </DataTemplate>
+                            </MenuItem.ItemTemplate>
+                        </MenuItem>
+                        <MenuItem Header="🛠️ System &amp; Utilities" ItemsSource="{Binding AppCategories[5].Apps}">
+                            <MenuItem.ItemTemplate>
+                                <DataTemplate DataType="services:DiscoveredApp">
+                                    <MenuItem Header="{Binding Name}" CommandParameter="{Binding}" Click="SelectDiscoveredApp_OnClick" />
+                                </DataTemplate>
+                            </MenuItem.ItemTemplate>
+                        </MenuItem>
+                    </MenuFlyout>
+                </DropDownButton.Flyout>
+            </DropDownButton>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

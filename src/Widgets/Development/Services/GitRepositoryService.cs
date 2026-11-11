@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using Development.Models;
 
 namespace Development.Services;
@@ -139,21 +140,169 @@ public static class GitRepositoryService
         }
     }
 
-    public static void OpenInVSCode(string repoPath)
+    [DllImport("shell32.dll", EntryPoint = "SHOpenWithDialog", CharSet = CharSet.Unicode)]
+    private static extern int SHOpenWithDialog(IntPtr hWndParent, ref OPENASINFO poa);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct OPENASINFO
     {
-        if (Directory.Exists(repoPath))
+        public string pcszFile;
+        public string pcszClass;
+        public int oaifInFlags;
+    }
+
+    private const int OAIF_ALLOW_REGISTRATION = 0x00000001;
+    private const int OAIF_EXEC = 0x00000004;
+
+    public static void PromptOpenWith(string repoPath)
+    {
+        if (!OperatingSystem.IsWindows() || !Directory.Exists(repoPath)) return;
+        try
+        {
+            var info = new OPENASINFO
+            {
+                pcszFile = repoPath,
+                pcszClass = ".code-workspace",
+                oaifInFlags = OAIF_ALLOW_REGISTRATION | OAIF_EXEC
+            };
+            int hr = SHOpenWithDialog(IntPtr.Zero, ref info);
+            if (hr != 0)
+            {
+                Process.Start(new ProcessStartInfo("rundll32.exe", $"shell32.dll,OpenAs_RunDLL \"{repoPath}\"")
+                {
+                    UseShellExecute = true
+                });
+            }
+        }
+        catch
         {
             try
             {
-                Process.Start(new ProcessStartInfo("cmd.exe", $"/c code \"{repoPath}\"")
+                Process.Start(new ProcessStartInfo("rundll32.exe", $"shell32.dll,OpenAs_RunDLL \"{repoPath}\"")
                 {
-                    CreateNoWindow = true,
-                    UseShellExecute = false
+                    UseShellExecute = true
                 });
             }
             catch { }
         }
     }
+
+    public static void OpenInEditor(string repoPath, CodeEditorType editor, string? customCommand)
+    {
+        if (string.IsNullOrWhiteSpace(repoPath) || !Directory.Exists(repoPath)) return;
+
+        try
+        {
+            switch (editor)
+            {
+                case CodeEditorType.VSCode:
+                    RunGuiApp("code", repoPath);
+                    break;
+                case CodeEditorType.Cursor:
+                    RunGuiApp("cursor", repoPath);
+                    break;
+                case CodeEditorType.Windsurf:
+                    RunGuiApp("windsurf", repoPath);
+                    break;
+                case CodeEditorType.AntigravityIDE:
+                    RunGuiApp("antigravity", repoPath);
+                    break;
+                case CodeEditorType.AntigravityCLI:
+                    RunTerminalApp("agy", repoPath);
+                    break;
+                case CodeEditorType.ClaudeCode:
+                    RunTerminalApp("claude", repoPath);
+                    break;
+                case CodeEditorType.Aider:
+                    RunTerminalApp("aider", repoPath);
+                    break;
+                case CodeEditorType.Rider:
+                    RunGuiApp("rider", repoPath);
+                    break;
+                case CodeEditorType.IntelliJ:
+                    RunGuiApp("idea", repoPath);
+                    break;
+                case CodeEditorType.PyCharm:
+                    RunGuiApp("pycharm", repoPath);
+                    break;
+                case CodeEditorType.WebStorm:
+                    RunGuiApp("webstorm", repoPath);
+                    break;
+                case CodeEditorType.VisualStudio:
+                    RunGuiApp("devenv", repoPath);
+                    break;
+                case CodeEditorType.Zed:
+                    RunGuiApp("zed", repoPath);
+                    break;
+                case CodeEditorType.SublimeText:
+                    RunGuiApp("subl", repoPath);
+                    break;
+                case CodeEditorType.Neovim:
+                    RunTerminalApp("nvim .", repoPath);
+                    break;
+                case CodeEditorType.SystemOpenWith:
+                    PromptOpenWith(repoPath);
+                    break;
+                case CodeEditorType.Custom:
+                    if (!string.IsNullOrWhiteSpace(customCommand))
+                    {
+                        string cmd = customCommand.Contains("{path}")
+                            ? customCommand.Replace("{path}", repoPath)
+                            : $"{customCommand} \"{repoPath}\"";
+                        Process.Start(new ProcessStartInfo("cmd.exe", $"/c {cmd}") { CreateNoWindow = true, UseShellExecute = false });
+                    }
+                    else
+                    {
+                        RunGuiApp("code", repoPath);
+                    }
+                    break;
+                default:
+                    PromptOpenWith(repoPath);
+                    break;
+            }
+        }
+        catch
+        {
+            PromptOpenWith(repoPath);
+        }
+    }
+
+    private static void RunGuiApp(string app, string repoPath)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo("cmd.exe", $"/c {app} \"{repoPath}\"")
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false
+            };
+            var p = Process.Start(psi);
+            if (p == null) PromptOpenWith(repoPath);
+        }
+        catch
+        {
+            PromptOpenWith(repoPath);
+        }
+    }
+
+    private static void RunTerminalApp(string app, string repoPath)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo("powershell.exe", $"-NoExit -Command \"Set-Location '{repoPath}'; {app}\"")
+            {
+                UseShellExecute = true
+            };
+            var p = Process.Start(psi);
+            if (p == null) PromptOpenWith(repoPath);
+        }
+        catch
+        {
+            PromptOpenWith(repoPath);
+        }
+    }
+
+    public static void OpenInVSCode(string repoPath) => OpenInEditor(repoPath, CodeEditorType.VSCode, null);
 
     public static void OpenInTerminal(string repoPath)
     {

@@ -20,9 +20,27 @@ public class GitWorkingTreeViewModel : ReactiveObject, IDisposable
     {
         this.model = model;
 
+        OpenEditorCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInEditor(ActivePath, model.PreferredEditor, model.CustomEditorCommand), outputScheduler: RxApp.MainThreadScheduler);
         OpenVSCodeCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInVSCode(ActivePath), outputScheduler: RxApp.MainThreadScheduler);
         OpenTerminalCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInTerminal(ActivePath), outputScheduler: RxApp.MainThreadScheduler);
         OpenExplorerCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInExplorer(ActivePath), outputScheduler: RxApp.MainThreadScheduler);
+        PromptOpenWithCommand = ReactiveCommand.Create(() => GitRepositoryService.PromptOpenWith(ActivePath), outputScheduler: RxApp.MainThreadScheduler);
+
+        CopyBranchCommand = ReactiveCommand.Create(async () =>
+        {
+            if (!string.IsNullOrWhiteSpace(Branch) && Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow?.Clipboard != null)
+            {
+                await desktop.MainWindow.Clipboard.SetTextAsync(Branch);
+            }
+        }, outputScheduler: RxApp.MainThreadScheduler);
+
+        CopyPathCommand = ReactiveCommand.Create(async () =>
+        {
+            if (!string.IsNullOrWhiteSpace(ActivePath) && Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow?.Clipboard != null)
+            {
+                await desktop.MainWindow.Clipboard.SetTextAsync(ActivePath);
+            }
+        }, outputScheduler: RxApp.MainThreadScheduler);
 
         AttachWatcher();
         Update();
@@ -80,9 +98,54 @@ public class GitWorkingTreeViewModel : ReactiveObject, IDisposable
         ? new SolidColorBrush(Color.Parse("#10B981"))
         : new SolidColorBrush(Color.Parse("#F59E0B"));
 
+    public ICommand OpenEditorCommand { get; }
     public ICommand OpenVSCodeCommand { get; }
     public ICommand OpenTerminalCommand { get; }
     public ICommand OpenExplorerCommand { get; }
+    public ICommand PromptOpenWithCommand { get; }
+    public ICommand CopyBranchCommand { get; }
+    public ICommand CopyPathCommand { get; }
+
+    public string EditorButtonLabel => model.PreferredEditor switch
+    {
+        CodeEditorType.VSCode => "Code",
+        CodeEditorType.Cursor => "Cursor",
+        CodeEditorType.Windsurf => "Windsurf",
+        CodeEditorType.AntigravityIDE => "Antigravity",
+        CodeEditorType.AntigravityCLI => "AGY",
+        CodeEditorType.ClaudeCode => "Claude",
+        CodeEditorType.Aider => "Aider",
+        CodeEditorType.Rider => "Rider",
+        CodeEditorType.IntelliJ => "IntelliJ",
+        CodeEditorType.PyCharm => "PyCharm",
+        CodeEditorType.WebStorm => "WebStorm",
+        CodeEditorType.VisualStudio => "VS",
+        CodeEditorType.Zed => "Zed",
+        CodeEditorType.SublimeText => "Sublime",
+        CodeEditorType.Neovim => "Neovim",
+        CodeEditorType.QuickPick => "Code...",
+        CodeEditorType.SystemOpenWith => "Open With",
+        CodeEditorType.Custom => "Edit",
+        _ => "Code"
+    };
+
+    public StreamGeometry EditorIcon => model.PreferredEditor switch
+    {
+        CodeEditorType.AntigravityIDE or CodeEditorType.AntigravityCLI => DevelopmentIcon.AntigravityGeometry,
+        CodeEditorType.ClaudeCode or CodeEditorType.Cursor or CodeEditorType.Windsurf or CodeEditorType.Aider => DevelopmentIcon.SparklesGeometry,
+        CodeEditorType.SystemOpenWith => DevelopmentIcon.OpenWithGeometry,
+        CodeEditorType.Neovim => DevelopmentIcon.TerminalGeometry,
+        _ => DevelopmentIcon.CodeGeometry
+    };
+
+    public string EditorTooltip => $"Open in {EditorButtonLabel}";
+
+    private bool isSmallView;
+    public bool IsSmallView
+    {
+        get => isSmallView;
+        set => this.RaiseAndSetIfChanged(ref isSmallView, value);
+    }
 
     private void AttachWatcher()
     {
@@ -132,7 +195,7 @@ public class GitWorkingTreeViewModel : ReactiveObject, IDisposable
             else if (status.Behind > 0)
                 syncStatusText = $"↓{status.Behind}";
             else
-                syncStatusText = "synced";
+                syncStatusText = "";
 
             // Change text
             string changeStatusText;

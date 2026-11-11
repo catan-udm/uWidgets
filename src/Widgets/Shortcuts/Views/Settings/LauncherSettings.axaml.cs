@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
+using Shortcuts.Services;
 using Shortcuts.ViewModels;
 using uWidgets.Core.Interfaces;
 
@@ -22,6 +23,40 @@ public partial class LauncherSettings : UserControl
     }
 
     private void Add_OnClick(object? sender, RoutedEventArgs e) => viewModel.AddShortcut();
+
+    private void SelectDiscoveredApp_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem { CommandParameter: DiscoveredApp app })
+        {
+            viewModel.AddShortcutFromDiscoveredApp(app);
+        }
+    }
+
+    private async void BrowseApp_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Select Application or Shortcut",
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Applications & Shortcuts (*.exe, *.lnk, *.bat, *.cmd)")
+                {
+                    Patterns = ["*.exe", "*.lnk", "*.bat", "*.cmd"]
+                }
+            ]
+        });
+
+        var selected = files.FirstOrDefault()?.TryGetLocalPath();
+        if (!string.IsNullOrEmpty(selected))
+        {
+            var name = System.IO.Path.GetFileNameWithoutExtension(selected);
+            viewModel.AddShortcutFromDiscoveredApp(new DiscoveredApp(name, selected, "App"));
+        }
+    }
 
     private void Remove_OnClick(object? sender, RoutedEventArgs e)
     {

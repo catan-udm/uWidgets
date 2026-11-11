@@ -43,6 +43,15 @@ public static class DevelopmentIcon
     public static Lazy<StreamGeometry> Globe = new(() => StreamGeometry.Parse(
         "M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 1.2A5.8 5.8 0 0 1 13.5 7H10a8.7 8.7 0 0 0-1.7-4.4c-.2-.3-.3-.4-.3-.4zm-2.8 0c0 .1-.2.2-.3.4A8.7 8.7 0 0 0 3.2 7h-2.1A5.8 5.8 0 0 1 5.2 2.2zM2.5 8h3.3c.1.9.4 1.8.8 2.6H3.3A5.8 5.8 0 0 1 2.5 8zm3.9 3.6c-.3.4-.6.8-.9 1.2a5.8 5.8 0 0 1-1.9-2.2h2.2c.2.4.4.7.6 1zm1.6 1.2c-.3 0-.6-.3-.9-.9A8.7 8.7 0 0 1 6.3 9h3.4c-.2 1.3-.7 2.4-1.2 3.1-.3.5-.6.7-.5.7z"));
 
+    public static Lazy<StreamGeometry> Sparkles = new(() => StreamGeometry.Parse(
+        "M8 1a.5.5 0 0 1 .447.276l1.248 2.496 2.755.401a.5.5 0 0 1 .277.853l-1.993 1.943.47 2.744a.5.5 0 0 1-.725.528L8 8.945l-2.464 1.297a.5.5 0 0 1-.725-.528l.47-2.744L3.288 5.026a.5.5 0 0 1 .277-.853l2.755-.401 1.248-2.496A.5.5 0 0 1 8 1z M2.5 11.5a.5.5 0 0 1 .447.276l.624 1.248 1.378.2a.5.5 0 0 1 .277.854l-.997.971.235 1.372a.5.5 0 0 1-.725.528L2.5 16.297l-1.232.648a.5.5 0 0 1-.725-.528l.235-1.372-.997-.971a.5.5 0 0 1 .277-.854l1.378-.2.624-1.248A.5.5 0 0 1 2.5 11.5z"));
+
+    public static Lazy<StreamGeometry> Antigravity = new(() => StreamGeometry.Parse(
+        "M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6zm0 2.3a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"));
+
+    public static Lazy<StreamGeometry> OpenWith = new(() => StreamGeometry.Parse(
+        "M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"));
+
     public static StreamGeometry CategoryGeometry => Category.Value;
     public static StreamGeometry DockerGeometry => Docker.Value;
     public static StreamGeometry NodeGeometry => NodeJs.Value;
@@ -56,4 +65,7 @@ public static class DevelopmentIcon
     public static StreamGeometry CodeGeometry => Code.Value;
     public static StreamGeometry FolderGeometry => Folder.Value;
     public static StreamGeometry GlobeGeometry => Globe.Value;
+    public static StreamGeometry SparklesGeometry => Sparkles.Value;
+    public static StreamGeometry AntigravityGeometry => Antigravity.Value;
+    public static StreamGeometry OpenWithGeometry => OpenWith.Value;
 }
