@@ -1,6 +1,11 @@
 namespace Media.Models;
 
 public record NowPlayingModel(
-    bool ShowVisualizer = true,
-    bool ShowMuteButton = true
-);
+    bool ShowTimeline = true,
+    bool ShowMuteButton = true,
+    bool PrefersMusicPlayer = true,
+    bool AllowBrowserMedia = true
+)
+{
+    public bool ShowVisualizer => ShowTimeline;
+}

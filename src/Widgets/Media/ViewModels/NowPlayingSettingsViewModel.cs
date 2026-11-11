@@ -9,16 +9,34 @@ public class NowPlayingSettingsViewModel(IWidgetLayoutProvider widgetLayoutProvi
 {
     private NowPlayingModel model = widgetLayoutProvider.Get().GetModel<NowPlayingModel>() ?? new NowPlayingModel();
 
+    public bool ShowTimeline
+    {
+        get => model.ShowTimeline;
+        set => Save(model with { ShowTimeline = value });
+    }
+
     public bool ShowVisualizer
     {
-        get => model.ShowVisualizer;
-        set => Save(model with { ShowVisualizer = value });
+        get => ShowTimeline;
+        set => ShowTimeline = value;
     }
 
     public bool ShowMuteButton
     {
         get => model.ShowMuteButton;
         set => Save(model with { ShowMuteButton = value });
+    }
+
+    public bool PrefersMusicPlayer
+    {
+        get => model.PrefersMusicPlayer;
+        set => Save(model with { PrefersMusicPlayer = value });
+    }
+
+    public bool AllowBrowserMedia
+    {
+        get => model.AllowBrowserMedia;
+        set => Save(model with { AllowBrowserMedia = value });
     }
 
     private void Save(NowPlayingModel updated)

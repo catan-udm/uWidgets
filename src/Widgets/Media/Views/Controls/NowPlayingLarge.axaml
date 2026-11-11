@@ -23,6 +23,14 @@
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
+        <Style Selector="Slider.timelineSlider">
+            <Setter Property="MinHeight" Value="18" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}" />
+        </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto,Auto,Auto">
@@ -58,24 +66,28 @@
         <Border Grid.Row="1"
                 Margin="0,12"
                 CornerRadius="20"
+                ClipToBounds="True"
                 Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch">
-            <Viewbox MaxWidth="128" MaxHeight="128" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12">
-                <Canvas Width="120" Height="120">
-                    <Ellipse Canvas.Left="6" Canvas.Top="6" Width="108" Height="108"
-                             Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                             StrokeThickness="3" Opacity="0.2" />
-                    <Ellipse Canvas.Left="20" Canvas.Top="20" Width="80" Height="80"
-                             Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                             StrokeThickness="1.5" StrokeDashArray="4,3" Opacity="0.25" />
-                    <Ellipse Canvas.Left="38" Canvas.Top="38" Width="44" Height="44"
-                             Fill="{DynamicResource SystemControlForegroundAccentBrush}" Opacity="0.22" />
-                    <PathIcon Canvas.Left="46" Canvas.Top="46" Width="28" Height="28"
-                              Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
-                              Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
-                </Canvas>
-            </Viewbox>
+            <Panel>
+                <Image Source="{Binding AlbumArt}" Stretch="UniformToFill" IsVisible="{Binding HasAlbumArt}" />
+                <Viewbox IsVisible="{Binding !HasAlbumArt}" MaxWidth="128" MaxHeight="128" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12">
+                    <Canvas Width="120" Height="120">
+                        <Ellipse Canvas.Left="6" Canvas.Top="6" Width="108" Height="108"
+                                 Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                 StrokeThickness="3" Opacity="0.2" />
+                        <Ellipse Canvas.Left="20" Canvas.Top="20" Width="80" Height="80"
+                                 Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                 StrokeThickness="1.5" StrokeDashArray="4,3" Opacity="0.25" />
+                        <Ellipse Canvas.Left="38" Canvas.Top="38" Width="44" Height="44"
+                                 Fill="{DynamicResource SystemControlForegroundAccentBrush}" Opacity="0.22" />
+                        <PathIcon Canvas.Left="46" Canvas.Top="46" Width="28" Height="28"
+                                  Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
+                                  Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
+                    </Canvas>
+                </Viewbox>
+            </Panel>
         </Border>
 
         <StackPanel Grid.Row="2" Spacing="2" Margin="0,0,0,10">
@@ -94,16 +106,32 @@
                        TextTrimming="CharacterEllipsis" />
         </StackPanel>
 
-        <ProgressBar Grid.Row="3"
-                     IsVisible="{Binding ShowVisualizer}"
-                     Minimum="0"
-                     Maximum="100"
-                     Value="{Binding PeakPercentage}"
-                     Height="6"
-                     MinWidth="40"
-                     CornerRadius="3"
-                     Margin="0,0,0,12"
-                     Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+        <Grid Grid.Row="3" RowDefinitions="Auto,Auto" IsVisible="{Binding ShowTimeline}" Margin="0,0,0,10">
+            <Slider x:Name="TimelineSlider"
+                    Grid.Row="0"
+                    Classes="timelineSlider"
+                    IsEnabled="{Binding CanSeek}"
+                    Minimum="0"
+                    Maximum="{Binding SliderMaximum}"
+                    Value="{Binding PositionSeconds}"
+                    ToolTip.Tip="{Binding TimelineTooltip}"
+                    Height="18"
+                    Margin="0" />
+            <Grid Grid.Row="1" ColumnDefinitions="*,*">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding PositionText}"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           Opacity="0.6"
+                           HorizontalAlignment="Left" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding DurationText}"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           Opacity="0.6"
+                           HorizontalAlignment="Right" />
+            </Grid>
+        </Grid>
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="14">
             <Button Classes="mediaBtn" Click="Prev_OnClick">

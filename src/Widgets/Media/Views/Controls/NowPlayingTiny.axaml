@@ -4,6 +4,17 @@
              x:Class="Media.Views.Controls.NowPlayingTiny"
              x:DataType="viewModels:NowPlayingViewModel"
              ToolTip.Tip="{Binding TooltipText}">
+    <UserControl.Styles>
+        <Style Selector="Slider.timelineSlider">
+            <Setter Property="MinHeight" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}" />
+        </Style>
+    </UserControl.Styles>
+
     <Grid RowDefinitions="*,Auto">
         <Button Grid.Row="0"
                 Width="38"
@@ -19,14 +30,16 @@
                 Click="PlayPause_OnClick">
             <PathIcon Width="15" Height="15" Foreground="White" Data="{Binding PlayPauseIcon}" />
         </Button>
-        <ProgressBar Grid.Row="1"
-                     IsVisible="{Binding ShowVisualizer}"
-                     Minimum="0"
-                     Maximum="100"
-                     Value="{Binding PeakPercentage}"
-                     Height="4"
-                     MinWidth="24"
-                     CornerRadius="2"
-                     Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+        <Slider x:Name="TimelineSlider"
+                Grid.Row="1"
+                Classes="timelineSlider"
+                IsVisible="{Binding ShowTimeline}"
+                IsEnabled="{Binding CanSeek}"
+                Minimum="0"
+                Maximum="{Binding SliderMaximum}"
+                Value="{Binding PositionSeconds}"
+                ToolTip.Tip="{Binding TimelineTooltip}"
+                Height="14"
+                Margin="4,0" />
     </Grid>
 </UserControl>

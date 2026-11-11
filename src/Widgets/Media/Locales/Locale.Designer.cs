@@ -76,9 +76,27 @@ namespace Media.Locales {
             }
         }
 
+        public static string Media_ShowTimeline {
+            get {
+                return ResourceManager.GetString("Media_ShowTimeline", resourceCulture);
+            }
+        }
+
         public static string Media_ShowVolume {
             get {
                 return ResourceManager.GetString("Media_ShowVolume", resourceCulture);
+            }
+        }
+
+        public static string Media_PrefersMusicPlayer {
+            get {
+                return ResourceManager.GetString("Media_PrefersMusicPlayer", resourceCulture);
+            }
+        }
+
+        public static string Media_AllowBrowserMedia {
+            get {
+                return ResourceManager.GetString("Media_AllowBrowserMedia", resourceCulture);
             }
         }
     }

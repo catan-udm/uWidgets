@@ -23,6 +23,14 @@
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
+        <Style Selector="Slider.timelineSlider">
+            <Setter Property="MinHeight" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}" />
+        </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto,Auto">
@@ -31,10 +39,14 @@
                     Width="26" Height="26"
                     CornerRadius="7"
                     Margin="0,0,8,0"
+                    ClipToBounds="True"
                     Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
-                <PathIcon Width="13" Height="13"
-                          Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
-                          Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
+                <Panel>
+                    <Image Source="{Binding AlbumArt}" Stretch="UniformToFill" IsVisible="{Binding HasAlbumArt}" />
+                    <PathIcon IsVisible="{Binding !HasAlbumArt}" Width="13" Height="13"
+                              Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
+                              Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
+                </Panel>
             </Border>
             <TextBlock Grid.Column="1"
                        Text="{Binding ArtistOrApp}"
@@ -54,16 +66,32 @@
                        TextTrimming="CharacterEllipsis" />
         </StackPanel>
 
-        <ProgressBar Grid.Row="2"
-                     IsVisible="{Binding ShowVisualizer}"
-                     Minimum="0"
-                     Maximum="100"
-                     Value="{Binding PeakPercentage}"
-                     Height="4"
-                     MinWidth="40"
-                     CornerRadius="2"
-                     Margin="0,0,0,8"
-                     Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+        <Grid Grid.Row="2" RowDefinitions="Auto,Auto" IsVisible="{Binding ShowTimeline}" Margin="0,2,0,8">
+            <Slider x:Name="TimelineSlider"
+                    Grid.Row="0"
+                    Classes="timelineSlider"
+                    IsEnabled="{Binding CanSeek}"
+                    Minimum="0"
+                    Maximum="{Binding SliderMaximum}"
+                    Value="{Binding PositionSeconds}"
+                    ToolTip.Tip="{Binding TimelineTooltip}"
+                    Height="16"
+                    Margin="0" />
+            <Grid Grid.Row="1" ColumnDefinitions="*,*">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding PositionText}"
+                           FontSize="10"
+                           FontWeight="SemiBold"
+                           Opacity="0.6"
+                           HorizontalAlignment="Left" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding DurationText}"
+                           FontSize="10"
+                           FontWeight="SemiBold"
+                           Opacity="0.6"
+                           HorizontalAlignment="Right" />
+            </Grid>
+        </Grid>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
             <Button Classes="mediaBtn" Click="Prev_OnClick">

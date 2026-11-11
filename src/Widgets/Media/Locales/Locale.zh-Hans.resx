@@ -28,9 +28,18 @@
         <value>系统音频</value>
     </data>
     <data name="Media_ShowVisualizer" xml:space="preserve">
-        <value>显示音量指示器</value>
+        <value>显示播放进度滑动条</value>
+    </data>
+    <data name="Media_ShowTimeline" xml:space="preserve">
+        <value>显示播放进度滑动条</value>
     </data>
     <data name="Media_ShowVolume" xml:space="preserve">
         <value>显示静音按钮</value>
+    </data>
+    <data name="Media_PrefersMusicPlayer" xml:space="preserve">
+        <value>优先桌面音乐播放器</value>
+    </data>
+    <data name="Media_AllowBrowserMedia" xml:space="preserve">
+        <value>允许浏览器媒体作为后备</value>
     </data>
 </root>

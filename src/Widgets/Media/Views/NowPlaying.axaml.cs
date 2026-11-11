@@ -1,3 +1,4 @@
+using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Media.Models;
@@ -6,7 +7,7 @@ using Media.Views.Controls;
 
 namespace Media.Views;
 
-public partial class NowPlaying : UserControl
+public partial class NowPlaying : UserControl, IDisposable
 {
     private readonly NowPlayingViewModel viewModel;
 
@@ -14,22 +15,27 @@ public partial class NowPlaying : UserControl
 
     public NowPlaying(NowPlayingModel model)
     {
+        InitializeComponent();
         viewModel = new NowPlayingViewModel(model);
+        DataContext = viewModel;
         Content = new NowPlayingSmall(viewModel);
         SizeChanged += OnSizeChanged;
         Unloaded += OnUnloaded;
-        InitializeComponent();
     }
 
     private void OnSizeChanged(object? sender, SizeChangedEventArgs e)
     {
-        Content = e.NewSize switch
+        var newType = e.NewSize switch
         {
-            { Width: <= 120 } or { Height: <= 120 } => new NowPlayingTiny(viewModel),
-            { Width: > 230, Height: > 230 } => new NowPlayingLarge(viewModel),
-            { Width: > 230 } => new NowPlayingWide(viewModel),
-            _ => new NowPlayingSmall(viewModel)
+            { Width: <= 120 } or { Height: <= 120 } => typeof(NowPlayingTiny),
+            { Width: > 230, Height: > 230 } => typeof(NowPlayingLarge),
+            { Width: > 230 } => typeof(NowPlayingWide),
+            _ => typeof(NowPlayingSmall)
         };
+
+        if (Content?.GetType() == newType) return;
+
+        Content = (Control?)Activator.CreateInstance(newType, viewModel);
     }
 
     public void Prev_OnClick(object? sender, RoutedEventArgs e) => viewModel.PreviousTrack();
@@ -42,8 +48,14 @@ public partial class NowPlaying : UserControl
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        Dispose();
+    }
+
+    public void Dispose()
+    {
         SizeChanged -= OnSizeChanged;
         Unloaded -= OnUnloaded;
         viewModel.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

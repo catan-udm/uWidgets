@@ -7,11 +7,17 @@
              x:DataType="viewModels:NowPlayingSettingsViewModel">
     <ScrollViewer>
         <StackPanel Orientation="Vertical" Spacing="5">
-            <controls:Setting Title="{x:Static locales:Locale.Media_ShowVisualizer}">
-                <ToggleSwitch IsChecked="{Binding ShowVisualizer}" />
+            <controls:Setting Title="{x:Static locales:Locale.Media_ShowTimeline}">
+                <ToggleSwitch IsChecked="{Binding ShowTimeline}" />
             </controls:Setting>
             <controls:Setting Title="{x:Static locales:Locale.Media_ShowVolume}">
                 <ToggleSwitch IsChecked="{Binding ShowMuteButton}" />
+            </controls:Setting>
+            <controls:Setting Title="{x:Static locales:Locale.Media_PrefersMusicPlayer}">
+                <ToggleSwitch IsChecked="{Binding PrefersMusicPlayer}" />
+            </controls:Setting>
+            <controls:Setting Title="{x:Static locales:Locale.Media_AllowBrowserMedia}">
+                <ToggleSwitch IsChecked="{Binding AllowBrowserMedia}" />
             </controls:Setting>
         </StackPanel>
     </ScrollViewer>

@@ -23,6 +23,14 @@
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
+        <Style Selector="Slider.timelineSlider">
+            <Setter Property="MinHeight" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}" />
+        </Style>
     </UserControl.Styles>
 
     <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="*,Auto">
@@ -30,19 +38,23 @@
                 Width="88" Height="88"
                 CornerRadius="18"
                 Margin="0,0,14,0"
+                ClipToBounds="True"
                 VerticalAlignment="Center"
                 Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
             <Panel>
-                <Ellipse Width="64" Height="64"
-                         Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                         StrokeThickness="1.5"
-                         Opacity="0.18" />
-                <Ellipse Width="22" Height="22"
-                         Fill="{DynamicResource SystemControlForegroundAccentBrush}"
-                         Opacity="0.2" />
-                <PathIcon Width="26" Height="26"
-                          Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
-                          Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
+                <Image Source="{Binding AlbumArt}" Stretch="UniformToFill" IsVisible="{Binding HasAlbumArt}" />
+                <Panel IsVisible="{Binding !HasAlbumArt}">
+                    <Ellipse Width="64" Height="64"
+                             Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                             StrokeThickness="1.5"
+                             Opacity="0.18" />
+                    <Ellipse Width="22" Height="22"
+                             Fill="{DynamicResource SystemControlForegroundAccentBrush}"
+                             Opacity="0.2" />
+                    <PathIcon Width="26" Height="26"
+                              Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
+                              Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
+                </Panel>
             </Panel>
         </Border>
 
@@ -78,23 +90,34 @@
             </Button>
         </StackPanel>
 
-        <Grid Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto" IsVisible="{Binding ShowVisualizer}" Margin="0,6,0,0">
-            <ProgressBar Grid.Column="0"
-                         Minimum="0"
-                         Maximum="100"
-                         Value="{Binding PeakPercentage}"
-                         Height="5"
-                         MinWidth="40"
-                         CornerRadius="2.5"
-                         VerticalAlignment="Center"
-                         Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
-            <TextBlock Grid.Column="1"
-                       Text="{Binding StatusText}"
+        <Grid Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+              ColumnDefinitions="Auto,*,Auto"
+              IsVisible="{Binding ShowTimeline}"
+              Margin="0,4,0,0">
+            <TextBlock Grid.Column="0"
+                       Text="{Binding PositionText}"
                        FontSize="10"
                        FontWeight="SemiBold"
                        Opacity="0.6"
-                       Margin="8,0,0,0"
-                       VerticalAlignment="Center" />
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,0" />
+            <Slider x:Name="TimelineSlider"
+                    Grid.Column="1"
+                    Classes="timelineSlider"
+                    IsEnabled="{Binding CanSeek}"
+                    Minimum="0"
+                    Maximum="{Binding SliderMaximum}"
+                    Value="{Binding PositionSeconds}"
+                    ToolTip.Tip="{Binding TimelineTooltip}"
+                    Height="16"
+                    VerticalAlignment="Center" />
+            <TextBlock Grid.Column="2"
+                       Text="{Binding DurationText}"
+                       FontSize="10"
+                       FontWeight="SemiBold"
+                       Opacity="0.6"
+                       VerticalAlignment="Center"
+                       Margin="8,0,0,0" />
         </Grid>
     </Grid>
 </UserControl>

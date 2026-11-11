@@ -1,5 +1,8 @@
 using System;
+using System.IO;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Media.Locales;
 using Media.Models;
 using Media.Services;
@@ -16,8 +19,16 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
     private readonly NowPlayingModel model;
     private string trackTitle = Locale.Media_NowPlaying_Title;
     private string artistOrApp = Locale.Media_SystemAudio;
+    private string album = "";
     private bool isPlaying;
     private double peakPercentage;
+    private double positionSeconds;
+    private double durationSeconds;
+    private bool canSeek;
+    private bool isUserDragging;
+    private Bitmap? albumArt;
+    private byte[]? currentThumbnailBytes;
+    private bool isUpdating;
 
     public NowPlayingViewModel(NowPlayingModel model)
     {
@@ -26,8 +37,46 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
         TimerService.Timer1Second.Subscribe(Update);
     }
 
-    public bool ShowVisualizer => model.ShowVisualizer;
+    public bool ShowTimeline => model.ShowTimeline;
+    public bool ShowVisualizer => model.ShowTimeline;
     public bool ShowMuteButton => model.ShowMuteButton;
+
+    public double PositionSeconds
+    {
+        get => positionSeconds;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref positionSeconds, value);
+            this.RaisePropertyChanged(nameof(PositionText));
+            this.RaisePropertyChanged(nameof(TimelineTooltip));
+            this.RaisePropertyChanged(nameof(StatusText));
+        }
+    }
+
+    public double DurationSeconds
+    {
+        get => durationSeconds;
+        private set
+        {
+            this.RaiseAndSetIfChanged(ref durationSeconds, Math.Max(0.0, value));
+            this.RaisePropertyChanged(nameof(SliderMaximum));
+            this.RaisePropertyChanged(nameof(DurationText));
+            this.RaisePropertyChanged(nameof(TimelineTooltip));
+            this.RaisePropertyChanged(nameof(StatusText));
+        }
+    }
+
+    public double SliderMaximum => DurationSeconds > 0 ? DurationSeconds : 1.0;
+
+    public bool CanSeek
+    {
+        get => canSeek;
+        private set => this.RaiseAndSetIfChanged(ref canSeek, value);
+    }
+
+    public string PositionText => FormatTime(PositionSeconds);
+    public string DurationText => FormatTime(DurationSeconds);
+    public string TimelineTooltip => $"{PositionText} / {DurationText}";
 
     public string TrackTitle
     {
@@ -45,6 +94,16 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
         private set
         {
             this.RaiseAndSetIfChanged(ref artistOrApp, value);
+            this.RaisePropertyChanged(nameof(TooltipText));
+        }
+    }
+
+    public string Album
+    {
+        get => album;
+        private set
+        {
+            this.RaiseAndSetIfChanged(ref album, value);
             this.RaisePropertyChanged(nameof(TooltipText));
         }
     }
@@ -70,34 +129,143 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
         }
     }
 
-    public StreamGeometry PlayPauseIcon => IsPlaying ? PauseGeometry : PlayGeometry;
-    public string TooltipText => $"{TrackTitle} — {ArtistOrApp}";
-    public string StatusText => IsPlaying ? $"{PeakPercentage:0}%" : Locale.Media_NoTrack;
-
-    public void PlayPause()
+    public Bitmap? AlbumArt
     {
-        MediaService.PlayPause();
+        get => albumArt;
+        private set
+        {
+            this.RaiseAndSetIfChanged(ref albumArt, value);
+            this.RaisePropertyChanged(nameof(HasAlbumArt));
+        }
+    }
+
+    public bool HasAlbumArt => AlbumArt != null;
+
+    public StreamGeometry PlayPauseIcon => IsPlaying ? PauseGeometry : PlayGeometry;
+
+    public string TooltipText => string.IsNullOrWhiteSpace(Album)
+        ? $"{TrackTitle} — {ArtistOrApp}"
+        : $"{TrackTitle} — {ArtistOrApp} ({Album})";
+
+    public string StatusText => IsPlaying
+        ? (DurationSeconds > 0 ? $"{PositionText} / {DurationText}" : "Playing")
+        : Locale.Media_NoTrack;
+
+    public void OnSeekStarted()
+    {
+        isUserDragging = true;
+    }
+
+    public async void OnSeekCompleted(double targetPositionSeconds)
+    {
+        if (!isUserDragging) return;
+        isUserDragging = false;
+
+        var clamped = Math.Clamp(targetPositionSeconds, 0.0, Math.Max(0.0, DurationSeconds));
+        PositionSeconds = clamped;
+        await MediaService.SeekAsync(clamped, model.PrefersMusicPlayer, model.AllowBrowserMedia);
+    }
+
+    public async void PlayPause()
+    {
+        await MediaService.PlayPauseAsync(model.PrefersMusicPlayer, model.AllowBrowserMedia);
         IsPlaying = !IsPlaying;
     }
 
-    public void NextTrack() => MediaService.NextTrack();
+    public async void NextTrack() =>
+        await MediaService.NextTrackAsync(model.PrefersMusicPlayer, model.AllowBrowserMedia);
 
-    public void PreviousTrack() => MediaService.PreviousTrack();
+    public async void PreviousTrack() =>
+        await MediaService.PreviousTrackAsync(model.PrefersMusicPlayer, model.AllowBrowserMedia);
 
     public void ToggleMute() => MediaService.ToggleMute();
 
-    private void Update()
+    private async void Update()
     {
-        var snapshot = MediaService.GetSnapshot();
-        TrackTitle = snapshot.Title;
-        ArtistOrApp = snapshot.ArtistOrApp;
-        IsPlaying = snapshot.IsPlaying;
-        PeakPercentage = Math.Clamp(snapshot.PeakLevel * 100.0, 0.0, 100.0);
+        if (isUpdating) return;
+        isUpdating = true;
+
+        try
+        {
+            var snapshot = await MediaService.GetSnapshotAsync(model.PrefersMusicPlayer, model.AllowBrowserMedia);
+
+            bool thumbnailChanged = !ByteArraysEqual(snapshot.ThumbnailBytes, currentThumbnailBytes);
+            Bitmap? newBitmap = null;
+
+            if (thumbnailChanged && snapshot.ThumbnailBytes != null)
+            {
+                try
+                {
+                    using var ms = new MemoryStream(snapshot.ThumbnailBytes);
+                    newBitmap = new Bitmap(ms);
+                }
+                catch
+                {
+                    newBitmap = null;
+                }
+            }
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                TrackTitle = snapshot.Title;
+                ArtistOrApp = snapshot.ArtistOrApp;
+                Album = snapshot.Album;
+                IsPlaying = snapshot.IsPlaying;
+                PeakPercentage = Math.Clamp(snapshot.PeakLevel * 100.0, 0.0, 100.0);
+
+                if (!isUserDragging)
+                {
+                    PositionSeconds = Math.Clamp(snapshot.PositionSeconds, 0.0, Math.Max(0.0, snapshot.DurationSeconds));
+                }
+                DurationSeconds = snapshot.DurationSeconds;
+                CanSeek = snapshot.CanSeek;
+
+                if (thumbnailChanged)
+                {
+                    var old = AlbumArt;
+                    AlbumArt = newBitmap;
+                    currentThumbnailBytes = snapshot.ThumbnailBytes;
+                    old?.Dispose();
+                }
+            });
+        }
+        catch
+        {
+            // Ignore background tick exceptions
+        }
+        finally
+        {
+            isUpdating = false;
+        }
+    }
+
+    private static string FormatTime(double totalSeconds)
+    {
+        if (double.IsNaN(totalSeconds) || double.IsInfinity(totalSeconds) || totalSeconds <= 0)
+            return "00:00";
+
+        var ts = TimeSpan.FromSeconds(totalSeconds);
+        return ts.TotalHours >= 1
+            ? $"{(int)ts.TotalHours}:{ts.Minutes:D2}:{ts.Seconds:D2}"
+            : $"{ts.Minutes:D2}:{ts.Seconds:D2}";
+    }
+
+    private static bool ByteArraysEqual(byte[]? a, byte[]? b)
+    {
+        if (ReferenceEquals(a, b)) return true;
+        if (a == null || b == null || a.Length != b.Length) return false;
+        return a.AsSpan().SequenceEqual(b.AsSpan());
     }
 
     public void Dispose()
     {
         TimerService.Timer1Second.Unsubscribe(Update);
+        if (albumArt != null)
+        {
+            albumArt.Dispose();
+            albumArt = null;
+        }
+        currentThumbnailBytes = null;
         GC.SuppressFinalize(this);
     }
 }
