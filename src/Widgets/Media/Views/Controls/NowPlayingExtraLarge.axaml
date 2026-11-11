@@ -1,0 +1,194 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Media.ViewModels"
+             x:Class="Media.Views.Controls.NowPlayingExtraLarge"
+             x:DataType="viewModels:NowPlayingViewModel">
+    <UserControl.Resources>
+        <GridLength x:Key="SliderPreContentMargin">0</GridLength>
+        <GridLength x:Key="SliderPostContentMargin">0</GridLength>
+        <x:Double x:Key="SliderHorizontalHeight">20</x:Double>
+        <x:Double x:Key="SliderTrackThemeHeight">4</x:Double>
+        <x:Double x:Key="SliderHorizontalThumbWidth">12</x:Double>
+        <x:Double x:Key="SliderHorizontalThumbHeight">12</x:Double>
+        <CornerRadius x:Key="SliderThumbCornerRadius">6</CornerRadius>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="Button.mediaBtn">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+            <Setter Property="CornerRadius" Value="19" />
+            <Setter Property="Width" Value="38" />
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.playBtn">
+            <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="CornerRadius" Value="24" />
+            <Setter Property="Width" Value="48" />
+            <Setter Property="Height" Value="48" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.muteBtn">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="15" />
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Opacity" Value="0.75" />
+        </Style>
+        <Style Selector="Button.muteBtn:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+            <Setter Property="Opacity" Value="1.0" />
+        </Style>
+        <Style Selector="Slider.timelineSlider">
+            <Setter Property="MinHeight" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="ClipToBounds" Value="False" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}" />
+        </Style>
+        <Style Selector="Slider.timelineSlider /template/ Thumb">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="12" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="ClipToBounds" Value="False" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="8,0">
+        <!-- Left: Large Square Album Art (180x180) -->
+        <Border Grid.Column="0"
+                Width="180" Height="180"
+                CornerRadius="20"
+                ClipToBounds="True"
+                Margin="0,0,24,0"
+                VerticalAlignment="Center"
+                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+            <Panel>
+                <Image Source="{Binding AlbumArt}" Stretch="UniformToFill" IsVisible="{Binding HasAlbumArt}" />
+                <Viewbox IsVisible="{Binding !HasAlbumArt}" MaxWidth="140" MaxHeight="140" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="14">
+                    <Canvas Width="120" Height="120">
+                        <Ellipse Canvas.Left="6" Canvas.Top="6" Width="108" Height="108"
+                                 Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                 StrokeThickness="3" Opacity="0.2" />
+                        <Ellipse Canvas.Left="20" Canvas.Top="20" Width="80" Height="80"
+                                 Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                 StrokeThickness="1.5" StrokeDashArray="4,3" Opacity="0.25" />
+                        <Ellipse Canvas.Left="38" Canvas.Top="38" Width="44" Height="44"
+                                 Fill="{DynamicResource SystemControlForegroundAccentBrush}" Opacity="0.22" />
+                        <PathIcon Canvas.Left="46" Canvas.Top="46" Width="28" Height="28"
+                                  Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
+                                  Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
+                    </Canvas>
+                </Viewbox>
+            </Panel>
+        </Border>
+
+        <!-- Right: Track Info, Timeline, Controls -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto,Auto" VerticalAlignment="Center">
+            <!-- Row 0: App / Artist Header & Mute Button -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Border Width="26" Height="26"
+                            CornerRadius="7"
+                            Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+                        <PathIcon Width="13" Height="13"
+                                  Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
+                                  Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
+                    </Border>
+                    <TextBlock Text="{Binding ArtistOrApp}"
+                               FontSize="13"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="260" />
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Classes="muteBtn"
+                        IsVisible="{Binding ShowMuteButton}"
+                        Click="Mute_OnClick"
+                        ToolTip.Tip="Mute / Unmute App Audio">
+                    <PathIcon Width="14" Height="14" Data="{Binding MuteIcon}" />
+                </Button>
+            </Grid>
+
+            <!-- Row 1: Track Title (Single line ellipsis) & Album/Artist -->
+            <StackPanel Grid.Row="1" Spacing="2" Margin="0,0,0,12">
+                <TextBlock Text="{Binding TrackTitle}"
+                           FontSize="20"
+                           FontWeight="Bold"
+                           MaxLines="1"
+                           TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding ArtistOrApp}"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Opacity="0.65"
+                           MaxLines="1"
+                           TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+
+            <!-- Row 2: Timeline Slider with Timestamps -->
+            <Grid Grid.Row="2"
+                  RowDefinitions="Auto,Auto"
+                  IsVisible="{Binding ShowTimeline}"
+                  Margin="0,0,0,14">
+                <Slider x:Name="TimelineSlider"
+                        Grid.Row="0"
+                        Classes="timelineSlider"
+                        IsEnabled="{Binding CanSeek}"
+                        Minimum="0"
+                        Maximum="{Binding SliderMaximum}"
+                        Value="{Binding PositionSeconds}"
+                        ToolTip.Tip="{Binding TimelineTooltip}"
+                        Height="20"
+                        ClipToBounds="False"
+                        Margin="0" />
+                <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,2,0,0">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding PositionText}"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               Opacity="0.6"
+                               HorizontalAlignment="Left" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding DurationText}"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               Opacity="0.6"
+                               HorizontalAlignment="Right" />
+                </Grid>
+            </Grid>
+
+            <!-- Row 3: Playback Controls Trio (Centered) -->
+            <StackPanel Grid.Row="3"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Spacing="20">
+                <Button Classes="mediaBtn" Click="Prev_OnClick">
+                    <PathIcon Width="14" Height="14"
+                              Data="M.5 3.5A.5.5 0 0 0 0 4v8a.5.5 0 0 0 1 0V8.753l6.267 3.636c.54.313 1.233-.066 1.233-.697v-2.94l6.267 3.636c.54.314 1.233-.065 1.233-.696V4.308c0-.63-.693-1.01-1.233-.696L8.5 7.248v-2.94c0-.63-.692-1.01-1.233-.696L1 7.248V4a.5.5 0 0 0-.5-.5" />
+                </Button>
+                <Button Classes="playBtn" Click="PlayPause_OnClick">
+                    <PathIcon Width="18" Height="18" Foreground="White" Data="{Binding PlayPauseIcon}" />
+                </Button>
+                <Button Classes="mediaBtn" Click="Next_OnClick">
+                    <PathIcon Width="14" Height="14"
+                              Data="M15.5 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V8.753l-6.267 3.636c-.54.313-1.233-.066-1.233-.697v-2.94l-6.267 3.636C.693 12.703 0 12.324 0 11.693V4.308c0-.63.693-1.01 1.233-.696L7.5 7.248v-2.94c0-.63.693-1.01 1.233-.696L15 7.248V4a.5.5 0 0 1 .5-.5" />
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

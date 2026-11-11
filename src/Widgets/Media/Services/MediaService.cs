@@ -300,7 +300,241 @@ public static class MediaService
         SendMediaKey(VK_MEDIA_PREV_TRACK);
     }
 
-    public static void ToggleMute() => SendMediaKey(VK_VOLUME_MUTE);
+    public static void ToggleMute(string? appOrProcess = null) => ToggleAppMute(appOrProcess);
+
+    public static bool ToggleAppMute(string? appOrProcess)
+    {
+        if (!OperatingSystem.IsWindows()) return false;
+
+        object? enumerator = null;
+        IMMDevice? device = null;
+        object? managerObj = null;
+        IAudioSessionEnumerator? sessionEnum = null;
+
+        try
+        {
+            var enumeratorType = Type.GetTypeFromCLSID(new Guid("BCDE0395-E52F-467C-8E3D-C4579291692E"));
+            if (enumeratorType == null) return false;
+
+            enumerator = Activator.CreateInstance(enumeratorType);
+            if (enumerator is not IMMDeviceEnumerator devEnum) return false;
+
+            devEnum.GetDefaultAudioEndpoint(0, 1, out device);
+            if (device == null) return false;
+
+            var iidManager = typeof(IAudioSessionManager2).GUID;
+            device.Activate(ref iidManager, 0, IntPtr.Zero, out managerObj);
+            if (managerObj is not IAudioSessionManager2 sessionManager) return false;
+
+            if (sessionManager.GetSessionEnumerator(out sessionEnum) != 0 || sessionEnum == null) return false;
+            sessionEnum.GetCount(out int count);
+
+            string targetName = NormalizeProcessTarget(appOrProcess);
+            bool toggled = false;
+            bool newMuteState = false;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (sessionEnum.GetSession(i, out var ctl) == 0 && ctl != null)
+                {
+                    try
+                    {
+                        if (ctl is IAudioSessionControl2 ctl2)
+                        {
+                            ctl2.GetProcessId(out uint pid);
+                            if (pid > 0)
+                            {
+                                string procName = "";
+                                try { procName = Process.GetProcessById((int)pid).ProcessName; } catch { }
+
+                                bool isMatch = false;
+                                if (!string.IsNullOrWhiteSpace(targetName))
+                                {
+                                    isMatch = procName.Contains(targetName, StringComparison.OrdinalIgnoreCase) ||
+                                              targetName.Contains(procName, StringComparison.OrdinalIgnoreCase);
+                                }
+
+                                if (isMatch && ctl is ISimpleAudioVolume vol)
+                                {
+                                    vol.GetMute(out bool currentMute);
+                                    var g = Guid.Empty;
+                                    vol.SetMute(!currentMute, ref g);
+                                    newMuteState = !currentMute;
+                                    toggled = true;
+                                }
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        Marshal.ReleaseComObject(ctl);
+                    }
+                }
+            }
+
+            if (!toggled)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    if (sessionEnum.GetSession(i, out var ctl) == 0 && ctl != null)
+                    {
+                        try
+                        {
+                            ctl.GetState(out int state);
+                            if (state == 1 && ctl is ISimpleAudioVolume vol)
+                            {
+                                vol.GetMute(out bool currentMute);
+                                var g = Guid.Empty;
+                                vol.SetMute(!currentMute, ref g);
+                                newMuteState = !currentMute;
+                                toggled = true;
+                                break;
+                            }
+                        }
+                        finally
+                        {
+                            Marshal.ReleaseComObject(ctl);
+                        }
+                    }
+                }
+            }
+
+            return newMuteState;
+        }
+        catch
+        {
+            return false;
+        }
+        finally
+        {
+            if (sessionEnum != null && Marshal.IsComObject(sessionEnum))
+            {
+                try { Marshal.ReleaseComObject(sessionEnum); } catch { }
+            }
+            if (managerObj != null && Marshal.IsComObject(managerObj))
+            {
+                try { Marshal.ReleaseComObject(managerObj); } catch { }
+            }
+            if (device != null && Marshal.IsComObject(device))
+            {
+                try { Marshal.ReleaseComObject(device); } catch { }
+            }
+            if (enumerator != null && Marshal.IsComObject(enumerator))
+            {
+                try { Marshal.ReleaseComObject(enumerator); } catch { }
+            }
+        }
+    }
+
+    public static bool IsAppMuted(string? appOrProcess)
+    {
+        if (!OperatingSystem.IsWindows()) return false;
+
+        object? enumerator = null;
+        IMMDevice? device = null;
+        object? managerObj = null;
+        IAudioSessionEnumerator? sessionEnum = null;
+
+        try
+        {
+            var enumeratorType = Type.GetTypeFromCLSID(new Guid("BCDE0395-E52F-467C-8E3D-C4579291692E"));
+            if (enumeratorType == null) return false;
+
+            enumerator = Activator.CreateInstance(enumeratorType);
+            if (enumerator is not IMMDeviceEnumerator devEnum) return false;
+
+            devEnum.GetDefaultAudioEndpoint(0, 1, out device);
+            if (device == null) return false;
+
+            var iidManager = typeof(IAudioSessionManager2).GUID;
+            device.Activate(ref iidManager, 0, IntPtr.Zero, out managerObj);
+            if (managerObj is not IAudioSessionManager2 sessionManager) return false;
+
+            if (sessionManager.GetSessionEnumerator(out sessionEnum) != 0 || sessionEnum == null) return false;
+            sessionEnum.GetCount(out int count);
+
+            string targetName = NormalizeProcessTarget(appOrProcess);
+
+            for (int i = 0; i < count; i++)
+            {
+                if (sessionEnum.GetSession(i, out var ctl) == 0 && ctl != null)
+                {
+                    try
+                    {
+                        if (ctl is IAudioSessionControl2 ctl2)
+                        {
+                            ctl2.GetProcessId(out uint pid);
+                            if (pid > 0)
+                            {
+                                string procName = "";
+                                try { procName = Process.GetProcessById((int)pid).ProcessName; } catch { }
+
+                                bool isMatch = false;
+                                if (!string.IsNullOrWhiteSpace(targetName))
+                                {
+                                    isMatch = procName.Contains(targetName, StringComparison.OrdinalIgnoreCase) ||
+                                              targetName.Contains(procName, StringComparison.OrdinalIgnoreCase);
+                                }
+
+                                if (isMatch && ctl is ISimpleAudioVolume vol)
+                                {
+                                    vol.GetMute(out bool isMuted);
+                                    if (isMuted) return true;
+                                }
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        Marshal.ReleaseComObject(ctl);
+                    }
+                }
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+        finally
+        {
+            if (sessionEnum != null && Marshal.IsComObject(sessionEnum))
+            {
+                try { Marshal.ReleaseComObject(sessionEnum); } catch { }
+            }
+            if (managerObj != null && Marshal.IsComObject(managerObj))
+            {
+                try { Marshal.ReleaseComObject(managerObj); } catch { }
+            }
+            if (device != null && Marshal.IsComObject(device))
+            {
+                try { Marshal.ReleaseComObject(device); } catch { }
+            }
+            if (enumerator != null && Marshal.IsComObject(enumerator))
+            {
+                try { Marshal.ReleaseComObject(enumerator); } catch { }
+            }
+        }
+    }
+
+    private static string NormalizeProcessTarget(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return "";
+        string lower = raw.ToLowerInvariant();
+        if (lower.Contains("spotify")) return "spotify";
+        if (lower.Contains("chrome")) return "chrome";
+        if (lower.Contains("edge")) return "msedge";
+        if (lower.Contains("firefox")) return "firefox";
+        if (lower.Contains("brave")) return "brave";
+        if (lower.Contains("vlc")) return "vlc";
+        if (lower.Contains("applemusic")) return "applemusic";
+        if (lower.Contains("musicbee")) return "musicbee";
+        if (lower.Contains("wmplayer")) return "wmplayer";
+
+        var name = Path.GetFileNameWithoutExtension(raw);
+        return string.IsNullOrWhiteSpace(name) ? raw : name;
+    }
 
     public static async Task<bool> SeekAsync(double positionSeconds, bool prefersMusicPlayer = true, bool allowBrowserMedia = true)
     {
@@ -434,7 +668,7 @@ public static class MediaService
 
         return peak > 0.005
             ? new MediaSnapshot(Locale.Media_NowPlaying_Title, Locale.Media_SystemAudio, "", true, peak, null, "")
-            : new MediaSnapshot(Locale.Media_NoTrack, Locale.Media_SystemAudio, "", false, 0.0, null, "");
+            : new MediaSnapshot(Locale.Media_NowPlaying_Title, Locale.Media_SystemAudio, "", false, 0.0, null, "");
     }
 
     private static (string Title, string Artist, string PlayerName) FindActivePlayerMetadata(bool allowBrowserMedia)
@@ -647,5 +881,79 @@ public static class MediaService
     private interface IAudioMeterInformation
     {
         int GetPeakValue(out float pfPeak);
+    }
+
+    [ComImport]
+    [Guid("77AA99A0-1BD6-484F-8BC7-2C654C9A9B6F")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IAudioSessionManager2
+    {
+        int GetAudioSessionControl(IntPtr sessionId, int streamFlags, out IntPtr sessionControl);
+        int GetSimpleAudioVolume(IntPtr sessionId, int streamFlags, out IntPtr audioVolume);
+        int GetSessionEnumerator(out IAudioSessionEnumerator sessionEnum);
+        int RegisterSessionNotification(IntPtr client);
+        int UnregisterSessionNotification(IntPtr client);
+        int RegisterDuckNotification(IntPtr sessionID, IntPtr duckNotification);
+        int UnregisterDuckNotification(IntPtr duckNotification);
+    }
+
+    [ComImport]
+    [Guid("E2F5BB11-0570-40CA-ACDD-3AA01277dee8")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IAudioSessionEnumerator
+    {
+        int GetCount(out int sessionCount);
+        int GetSession(int sessionIndex, out IAudioSessionControl session);
+    }
+
+    [ComImport]
+    [Guid("F4B1A599-7266-4319-A8CA-E70ACB11E8CD")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IAudioSessionControl
+    {
+        int GetState(out int state);
+        int GetDisplayName([MarshalAs(UnmanagedType.LPWStr)] out string name);
+        int SetDisplayName([MarshalAs(UnmanagedType.LPWStr)] string name, ref Guid eventContext);
+        int GetIconPath([MarshalAs(UnmanagedType.LPWStr)] out string path);
+        int SetIconPath([MarshalAs(UnmanagedType.LPWStr)] string path, ref Guid eventContext);
+        int GetGroupingParam(out Guid groupingParam);
+        int SetGroupingParam(ref Guid groupingParam, ref Guid eventContext);
+        int RegisterAudioSessionNotification(IntPtr client);
+        int UnregisterAudioSessionNotification(IntPtr client);
+    }
+
+    [ComImport]
+    [Guid("bfb7ff88-7239-4fc9-8fa2-07c950be9c6d")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IAudioSessionControl2 : IAudioSessionControl
+    {
+        #region IAudioSessionControl methods
+        new int GetState(out int state);
+        new int GetDisplayName([MarshalAs(UnmanagedType.LPWStr)] out string name);
+        new int SetDisplayName([MarshalAs(UnmanagedType.LPWStr)] string name, ref Guid eventContext);
+        new int GetIconPath([MarshalAs(UnmanagedType.LPWStr)] out string path);
+        new int SetIconPath([MarshalAs(UnmanagedType.LPWStr)] string path, ref Guid eventContext);
+        new int GetGroupingParam(out Guid groupingParam);
+        new int SetGroupingParam(ref Guid groupingParam, ref Guid eventContext);
+        new int RegisterAudioSessionNotification(IntPtr client);
+        new int UnregisterAudioSessionNotification(IntPtr client);
+        #endregion
+
+        int GetSessionIdentifier([MarshalAs(UnmanagedType.LPWStr)] out string pRetVal);
+        int GetSessionInstanceIdentifier([MarshalAs(UnmanagedType.LPWStr)] out string pRetVal);
+        int GetProcessId(out uint pRetVal);
+        int IsSystemSoundsSession();
+        int SetDuckingPreference(bool optOut);
+    }
+
+    [ComImport]
+    [Guid("87CE5498-686D-48E5-A449-04859073800F")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface ISimpleAudioVolume
+    {
+        int SetMasterVolume(float fLevel, ref Guid eventContext);
+        int GetMasterVolume(out float pfLevel);
+        int SetMute([MarshalAs(UnmanagedType.Bool)] bool bMute, ref Guid eventContext);
+        int GetMute([MarshalAs(UnmanagedType.Bool)] out bool pbMute);
     }
 }

@@ -3,6 +3,16 @@
              xmlns:viewModels="clr-namespace:Media.ViewModels"
              x:Class="Media.Views.Controls.NowPlayingWide"
              x:DataType="viewModels:NowPlayingViewModel">
+    <UserControl.Resources>
+        <GridLength x:Key="SliderPreContentMargin">0</GridLength>
+        <GridLength x:Key="SliderPostContentMargin">0</GridLength>
+        <x:Double x:Key="SliderHorizontalHeight">20</x:Double>
+        <x:Double x:Key="SliderTrackThemeHeight">4</x:Double>
+        <x:Double x:Key="SliderHorizontalThumbWidth">12</x:Double>
+        <x:Double x:Key="SliderHorizontalThumbHeight">12</x:Double>
+        <CornerRadius x:Key="SliderThumbCornerRadius">6</CornerRadius>
+    </UserControl.Resources>
+
     <UserControl.Styles>
         <Style Selector="Button.mediaBtn">
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
@@ -31,27 +41,26 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="Opacity" Value="0.7" />
+            <Setter Property="Opacity" Value="0.75" />
         </Style>
         <Style Selector="Button.muteBtn:pointerover">
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
             <Setter Property="Opacity" Value="1.0" />
         </Style>
         <Style Selector="Slider.timelineSlider">
-            <Setter Property="MinHeight" Value="14" />
-            <Setter Property="Height" Value="14" />
+            <Setter Property="MinHeight" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="ClipToBounds" Value="False" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}" />
         </Style>
         <Style Selector="Slider.timelineSlider /template/ Thumb">
-            <Setter Property="Width" Value="10" />
-            <Setter Property="Height" Value="10" />
-        </Style>
-        <Style Selector="Slider.timelineSlider:pointerover /template/ Thumb">
             <Setter Property="Width" Value="12" />
             <Setter Property="Height" Value="12" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="ClipToBounds" Value="False" />
         </Style>
     </UserControl.Styles>
 
@@ -96,19 +105,18 @@
                         Classes="muteBtn"
                         IsVisible="{Binding ShowMuteButton}"
                         Click="Mute_OnClick"
-                        ToolTip.Tip="Mute / Unmute">
-                    <PathIcon Width="12" Height="12"
-                              Data="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06m7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 1 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0" />
+                        ToolTip.Tip="Mute / Unmute App Audio">
+                    <PathIcon Width="12" Height="12" Data="{Binding MuteIcon}" />
                 </Button>
             </Grid>
 
-            <!-- Row 1: Track Title (Full width) -->
+            <!-- Row 1: Track Title (Single line ellipsis) -->
             <TextBlock Grid.Row="1"
                        Text="{Binding TrackTitle}"
-                       FontSize="16"
+                       FontSize="15"
                        FontWeight="Bold"
-                       MaxLines="2"
-                       TextWrapping="Wrap"
+                       MaxLines="1"
+                       TextWrapping="NoWrap"
                        TextTrimming="CharacterEllipsis"
                        VerticalAlignment="Center"
                        Margin="0,2,0,2" />
@@ -117,7 +125,7 @@
             <Grid Grid.Row="2"
                   ColumnDefinitions="Auto,*,Auto"
                   IsVisible="{Binding ShowTimeline}"
-                  Margin="0,2,0,6">
+                  Margin="0,2,0,4">
                 <TextBlock Grid.Column="0"
                            Text="{Binding PositionText}"
                            FontSize="10"
@@ -133,7 +141,8 @@
                         Maximum="{Binding SliderMaximum}"
                         Value="{Binding PositionSeconds}"
                         ToolTip.Tip="{Binding TimelineTooltip}"
-                        Height="14"
+                        Height="20"
+                        ClipToBounds="False"
                         VerticalAlignment="Center" />
                 <TextBlock Grid.Column="2"
                            Text="{Binding DurationText}"

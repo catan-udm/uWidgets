@@ -28,6 +28,7 @@ public partial class NowPlaying : UserControl, IDisposable
         var newType = e.NewSize switch
         {
             { Width: <= 120 } or { Height: <= 120 } => typeof(NowPlayingTiny),
+            { Width: > 450, Height: > 230 } => typeof(NowPlayingExtraLarge),
             { Width: > 230, Height: > 230 } => typeof(NowPlayingLarge),
             { Width: > 230 } => typeof(NowPlayingWide),
             _ => typeof(NowPlayingSmall)
