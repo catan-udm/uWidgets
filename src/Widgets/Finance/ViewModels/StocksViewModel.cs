@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Finance.Models;
 using Finance.Services;
 using ReactiveUI;
@@ -58,22 +59,31 @@ public class StocksViewModel : ReactiveObject, IDisposable
 
     private async Task UpdateAsync()
     {
-        var list = await StockPriceService.GetStockQuotesAsync(model.TrackedTickers);
-
-        var toRemove = Quotes.Where(q => list.All(l => l.Symbol != q.Symbol)).ToList();
-        foreach (var rem in toRemove) Quotes.Remove(rem);
-
-        foreach (var item in list)
+        try
         {
-            var existing = Quotes.FirstOrDefault(q => q.Symbol == item.Symbol);
-            if (existing != null)
+            var list = await StockPriceService.GetStockQuotesAsync(model.TrackedTickers);
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                existing.Update(item);
-            }
-            else
-            {
-                Quotes.Add(new StockItemViewModel(item));
-            }
+                var toRemove = Quotes.Where(q => list.All(l => l.Symbol != q.Symbol)).ToList();
+                foreach (var rem in toRemove) Quotes.Remove(rem);
+
+                foreach (var item in list)
+                {
+                    var existing = Quotes.FirstOrDefault(q => q.Symbol == item.Symbol);
+                    if (existing != null)
+                    {
+                        existing.Update(item);
+                    }
+                    else
+                    {
+                        Quotes.Add(new StockItemViewModel(item));
+                    }
+                }
+            });
+        }
+        catch (Exception)
+        {
         }
     }
 

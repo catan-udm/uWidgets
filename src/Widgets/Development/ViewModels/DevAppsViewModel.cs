@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows.Input;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Development.Models;
 using Development.Services;
 using ReactiveUI;
@@ -24,9 +25,9 @@ public class DevAppItemViewModel : ReactiveObject
                 Process.Start(new ProcessStartInfo(info.Url) { UseShellExecute = true });
             }
             catch { }
-        });
+        }, outputScheduler: RxApp.MainThreadScheduler);
 
-        StopCommand = ReactiveCommand.Create(() => killCallback(info.ProcessId));
+        StopCommand = ReactiveCommand.Create(() => killCallback(info.ProcessId), outputScheduler: RxApp.MainThreadScheduler);
     }
 
     public int ProcessId => info.ProcessId;
@@ -89,24 +90,34 @@ public class DevAppsViewModel : ReactiveObject, IDisposable
 
     private async Task UpdateAsync()
     {
-        var list = await DevProcessDetectorService.GetActiveDevAppsAsync();
-        HasApps = list.Count > 0;
-        HeaderSummary = list.Count > 0 ? $"{list.Count} Active Instance{(list.Count > 1 ? "s" : "")}" : "No Active Servers";
-
-        var toRemove = Apps.Where(a => list.All(l => l.Port != a.Port)).ToList();
-        foreach (var rem in toRemove) Apps.Remove(rem);
-
-        foreach (var item in list)
+        try
         {
-            var existing = Apps.FirstOrDefault(a => a.Port == item.Port);
-            if (existing != null)
+            var list = await DevProcessDetectorService.GetActiveDevAppsAsync();
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                existing.Update(item);
-            }
-            else
-            {
-                Apps.Add(new DevAppItemViewModel(item, HandleStopApp));
-            }
+                HasApps = list.Count > 0;
+                HeaderSummary = list.Count > 0 ? $"{list.Count} Active Instance{(list.Count > 1 ? "s" : "")}" : "No Active Servers";
+
+                var toRemove = Apps.Where(a => list.All(l => l.Port != a.Port)).ToList();
+                foreach (var rem in toRemove) Apps.Remove(rem);
+
+                foreach (var item in list)
+                {
+                    var existing = Apps.FirstOrDefault(a => a.Port == item.Port);
+                    if (existing != null)
+                    {
+                        existing.Update(item);
+                    }
+                    else
+                    {
+                        Apps.Add(new DevAppItemViewModel(item, HandleStopApp));
+                    }
+                }
+            });
+        }
+        catch (Exception)
+        {
         }
     }
 

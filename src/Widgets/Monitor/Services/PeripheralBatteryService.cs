@@ -138,29 +138,49 @@ public static class PeripheralBatteryService
                     if (ble == null) continue;
 
                     var gattResult = await ble.GetGattServicesForUuidAsync(GattServiceUuids.Battery, BluetoothCacheMode.Cached);
-                    if (gattResult.Status == GattCommunicationStatus.Success && gattResult.Services.Count > 0)
+                    IReadOnlyList<GattDeviceService>? services = null;
+                    try
                     {
-                        var service = gattResult.Services[0];
-                        var charResult = await service.GetCharacteristicsForUuidAsync(GattCharacteristicUuids.BatteryLevel, BluetoothCacheMode.Cached);
-                        if (charResult.Status == GattCommunicationStatus.Success && charResult.Characteristics.Count > 0)
+                        services = gattResult.Services;
+                    }
+                    catch { }
+
+                    if (services != null)
+                    {
+                        try
                         {
-                            var charac = charResult.Characteristics[0];
-                            var readResult = await charac.ReadValueAsync(BluetoothCacheMode.Cached);
-                            if (readResult.Status == GattCommunicationStatus.Success && readResult.Value != null)
+                            if (gattResult.Status == GattCommunicationStatus.Success && services.Count > 0)
                             {
-                                using var reader = DataReader.FromBuffer(readResult.Value);
-                                if (reader.UnconsumedBufferLength > 0)
+                                var service = services[0];
+                                var charResult = await service.GetCharacteristicsForUuidAsync(GattCharacteristicUuids.BatteryLevel, BluetoothCacheMode.Cached);
+                                if (charResult.Status == GattCommunicationStatus.Success && charResult.Characteristics.Count > 0)
                                 {
-                                    byte b = reader.ReadByte();
-                                    list.Add(new DeviceBatteryInfo(
-                                        DeviceId: devInfo.Id,
-                                        Name: string.IsNullOrWhiteSpace(devInfo.Name) ? "Bluetooth Device" : devInfo.Name,
-                                        Type: InferDeviceType(devInfo.Name),
-                                        BatteryLevel: b / 100.0,
-                                        IsCharging: false,
-                                        IsConnected: true
-                                    ));
+                                    var charac = charResult.Characteristics[0];
+                                    var readResult = await charac.ReadValueAsync(BluetoothCacheMode.Cached);
+                                    if (readResult.Status == GattCommunicationStatus.Success && readResult.Value != null)
+                                    {
+                                        using var reader = DataReader.FromBuffer(readResult.Value);
+                                        if (reader.UnconsumedBufferLength > 0)
+                                        {
+                                            byte b = reader.ReadByte();
+                                            list.Add(new DeviceBatteryInfo(
+                                                DeviceId: devInfo.Id,
+                                                Name: string.IsNullOrWhiteSpace(devInfo.Name) ? "Bluetooth Device" : devInfo.Name,
+                                                Type: InferDeviceType(devInfo.Name),
+                                                BatteryLevel: b / 100.0,
+                                                IsCharging: false,
+                                                IsConnected: true
+                                            ));
+                                        }
+                                    }
                                 }
+                            }
+                        }
+                        finally
+                        {
+                            foreach (var s in services)
+                            {
+                                try { s?.Dispose(); } catch { }
                             }
                         }
                     }

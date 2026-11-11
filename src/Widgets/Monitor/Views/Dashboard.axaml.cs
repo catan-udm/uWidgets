@@ -1,3 +1,4 @@
+using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Monitor.Models;
@@ -5,7 +6,7 @@ using Monitor.ViewModels;
 
 namespace Monitor.Views;
 
-public partial class Dashboard : UserControl
+public partial class Dashboard : UserControl, IDisposable
 {
     private readonly DashboardViewModel viewModel;
 
@@ -31,6 +32,11 @@ public partial class Dashboard : UserControl
     {
         SizeChanged -= OnSizeChanged;
         Unloaded -= OnUnloaded;
+        Dispose();
+    }
+
+    public void Dispose()
+    {
         viewModel.Dispose();
     }
 }

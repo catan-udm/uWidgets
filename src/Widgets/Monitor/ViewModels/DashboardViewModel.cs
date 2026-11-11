@@ -1,4 +1,5 @@
 using System;
+using Avalonia.Threading;
 using Monitor.Locales;
 using Monitor.Models;
 using Monitor.Services;
@@ -37,10 +38,21 @@ public class DashboardItemViewModel : ReactiveObject
 
     public async Task RefreshAsync()
     {
-        var value = await MetricService.GetMetricValue(type);
-        var icon = MetricService.GetMetricIcon(type);
-        if (value.HasValue)
-            Metric = new MetricViewModel(Math.Clamp(value.Value, 0d, 1d), icon);
+        try
+        {
+            var value = await MetricService.GetMetricValue(type);
+            var icon = MetricService.GetMetricIcon(type);
+            if (value.HasValue)
+            {
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    Metric = new MetricViewModel(Math.Clamp(value.Value, 0d, 1d), icon);
+                });
+            }
+        }
+        catch (Exception)
+        {
+        }
     }
 }
 
@@ -70,7 +82,13 @@ public class DashboardViewModel : ReactiveObject, IDisposable
 
     private async Task UpdateAsync()
     {
-        await Task.WhenAll(Items.Select(x => x.RefreshAsync()));
+        try
+        {
+            await Task.WhenAll(Items.Select(x => x.RefreshAsync()));
+        }
+        catch (Exception)
+        {
+        }
     }
 
     public void Dispose()

@@ -1,6 +1,8 @@
 using System.IO;
+using System.Threading;
 using System.Windows.Input;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Development.Models;
 using Development.Services;
 using ReactiveUI;
@@ -12,14 +14,15 @@ public class GitWorkingTreeViewModel : ReactiveObject, IDisposable
 {
     private readonly GitWorkingTreeModel model;
     private FileSystemWatcher? watcher;
+    private int isUpdating;
 
     public GitWorkingTreeViewModel(GitWorkingTreeModel model)
     {
         this.model = model;
 
-        OpenVSCodeCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInVSCode(ActivePath));
-        OpenTerminalCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInTerminal(ActivePath));
-        OpenExplorerCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInExplorer(ActivePath));
+        OpenVSCodeCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInVSCode(ActivePath), outputScheduler: RxApp.MainThreadScheduler);
+        OpenTerminalCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInTerminal(ActivePath), outputScheduler: RxApp.MainThreadScheduler);
+        OpenExplorerCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInExplorer(ActivePath), outputScheduler: RxApp.MainThreadScheduler);
 
         AttachWatcher();
         Update();
@@ -97,48 +100,72 @@ public class GitWorkingTreeViewModel : ReactiveObject, IDisposable
 
     private async Task UpdateAsync()
     {
-        var path = ActivePath;
-        if (string.IsNullOrEmpty(path))
-        {
-            HasRepo = false;
-            RepoName = "No Repository Configured";
-            Branch = "Click settings to add repo";
-            SyncStatus = "";
-            ChangeStatus = "";
-            IsClean = true;
+        if (Interlocked.CompareExchange(ref isUpdating, 1, 0) != 0)
             return;
-        }
 
-        var status = await GitRepositoryService.GetStatusAsync(path);
-        HasRepo = status.IsValidGitRepo;
-        RepoName = status.RepoName;
-        Branch = status.Branch;
-        IsClean = status.IsClean;
-
-        // Sync text
-        if (status.Ahead > 0 && status.Behind > 0)
-            SyncStatus = $"↑{status.Ahead} ↓{status.Behind}";
-        else if (status.Ahead > 0)
-            SyncStatus = $"↑{status.Ahead}";
-        else if (status.Behind > 0)
-            SyncStatus = $"↓{status.Behind}";
-        else
-            SyncStatus = "synced";
-
-        // Change text
-        if (status.IsClean)
+        try
         {
-            ChangeStatus = "✔ Clean";
-        }
-        else
-        {
-            var parts = new List<string>();
-            if (status.ModifiedCount > 0) parts.Add($"{status.ModifiedCount} modified");
-            if (status.UntrackedCount > 0) parts.Add($"{status.UntrackedCount} untracked");
-            ChangeStatus = string.Join(", ", parts);
-        }
+            var path = ActivePath;
+            if (string.IsNullOrEmpty(path))
+            {
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    HasRepo = false;
+                    RepoName = "No Repository Configured";
+                    Branch = "Click settings to add repo";
+                    SyncStatus = "";
+                    ChangeStatus = "";
+                    IsClean = true;
+                    this.RaisePropertyChanged(nameof(StatusBrush));
+                });
+                return;
+            }
 
-        this.RaisePropertyChanged(nameof(StatusBrush));
+            var status = await GitRepositoryService.GetStatusAsync(path);
+
+            // Sync text
+            string syncStatusText;
+            if (status.Ahead > 0 && status.Behind > 0)
+                syncStatusText = $"↑{status.Ahead} ↓{status.Behind}";
+            else if (status.Ahead > 0)
+                syncStatusText = $"↑{status.Ahead}";
+            else if (status.Behind > 0)
+                syncStatusText = $"↓{status.Behind}";
+            else
+                syncStatusText = "synced";
+
+            // Change text
+            string changeStatusText;
+            if (status.IsClean)
+            {
+                changeStatusText = "✔ Clean";
+            }
+            else
+            {
+                var parts = new List<string>();
+                if (status.ModifiedCount > 0) parts.Add($"{status.ModifiedCount} modified");
+                if (status.UntrackedCount > 0) parts.Add($"{status.UntrackedCount} untracked");
+                changeStatusText = string.Join(", ", parts);
+            }
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                HasRepo = status.IsValidGitRepo;
+                RepoName = status.RepoName;
+                Branch = status.Branch;
+                IsClean = status.IsClean;
+                SyncStatus = syncStatusText;
+                ChangeStatus = changeStatusText;
+                this.RaisePropertyChanged(nameof(StatusBrush));
+            });
+        }
+        catch (Exception)
+        {
+        }
+        finally
+        {
+            Volatile.Write(ref isUpdating, 0);
+        }
     }
 
     public void Dispose()

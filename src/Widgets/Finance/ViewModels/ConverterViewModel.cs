@@ -1,11 +1,14 @@
+using System;
+using System.Collections.Generic;
 using System.Windows.Input;
+using Avalonia.Threading;
 using Finance.Models;
 using Finance.Services;
 using ReactiveUI;
 
 namespace Finance.ViewModels;
 
-public class ConverterViewModel : ReactiveObject
+public class ConverterViewModel : ReactiveObject, IDisposable
 {
     private readonly ConverterModel model;
     private Dictionary<string, double> exchangeRates = new();
@@ -18,15 +21,21 @@ public class ConverterViewModel : ReactiveObject
         {
             (SourceCurrency, TargetCurrency) = (TargetCurrency, SourceCurrency);
             Calculate();
-        });
+        }, outputScheduler: RxApp.MainThreadScheduler);
 
         LoadRatesAsync();
     }
 
     private async void LoadRatesAsync()
     {
-        exchangeRates = await CurrencyExchangeService.GetExchangeRatesAsync();
-        Calculate();
+        try
+        {
+            exchangeRates = await CurrencyExchangeService.GetExchangeRatesAsync();
+            Calculate();
+        }
+        catch (Exception)
+        {
+        }
     }
 
     public List<string> Currencies { get; } =
@@ -100,8 +109,16 @@ public class ConverterViewModel : ReactiveObject
 
     private void Calculate()
     {
-        if (exchangeRates.Count == 0) return;
-        double res = CurrencyExchangeService.Convert(SourceAmount, SourceCurrency, TargetCurrency, exchangeRates);
-        ConvertedResult = $"{res:N2} {TargetCurrency}";
+        Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (exchangeRates.Count == 0) return;
+            double res = CurrencyExchangeService.Convert(SourceAmount, SourceCurrency, TargetCurrency, exchangeRates);
+            ConvertedResult = $"{res:N2} {TargetCurrency}";
+        });
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
     }
 }

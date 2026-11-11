@@ -177,6 +177,8 @@ public sealed class LiquidGlassSurface : Control
         LiquidGlassOptions options,
         long backdropVersion) : ICustomDrawOperation
     {
+        private static readonly object RenderSyncLock = new();
+
         private readonly Rect drawBounds = bounds;
         private readonly float offsetX = screenOffsetX;
         private readonly float offsetY = screenOffsetY;
@@ -221,17 +223,20 @@ public sealed class LiquidGlassSurface : Control
                     return;
 
                 using var lease = leaseFeature.Lease();
-                LiquidGlassRenderer.RenderCached(
-                    lease.SkCanvas,
-                    textures,
-                    (float)drawBounds.Width,
-                    (float)drawBounds.Height,
-                    offsetX,
-                    offsetY,
-                    scrW,
-                    scrH,
-                    scale,
-                    opts);
+                lock (RenderSyncLock)
+                {
+                    LiquidGlassRenderer.RenderCached(
+                        lease.SkCanvas,
+                        textures,
+                        (float)drawBounds.Width,
+                        (float)drawBounds.Height,
+                        offsetX,
+                        offsetY,
+                        scrW,
+                        scrH,
+                        scale,
+                        opts);
+                }
             }
             catch (Exception ex)
             {

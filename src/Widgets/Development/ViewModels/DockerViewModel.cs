@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Development.Models;
 using Development.Services;
 using ReactiveUI;
@@ -16,9 +17,9 @@ public class DockerContainerItemViewModel : ReactiveObject
     {
         this.info = info;
 
-        StartCommand = ReactiveCommand.CreateFromTask(() => actionCallback(info.Id, "start"));
-        StopCommand = ReactiveCommand.CreateFromTask(() => actionCallback(info.Id, "stop"));
-        RestartCommand = ReactiveCommand.CreateFromTask(() => actionCallback(info.Id, "restart"));
+        StartCommand = ReactiveCommand.CreateFromTask(() => actionCallback(info.Id, "start"), outputScheduler: RxApp.MainThreadScheduler);
+        StopCommand = ReactiveCommand.CreateFromTask(() => actionCallback(info.Id, "stop"), outputScheduler: RxApp.MainThreadScheduler);
+        RestartCommand = ReactiveCommand.CreateFromTask(() => actionCallback(info.Id, "restart"), outputScheduler: RxApp.MainThreadScheduler);
     }
 
     public string Id => info.Id;
@@ -83,43 +84,59 @@ public class DockerViewModel : ReactiveObject, IDisposable
 
     private async Task UpdateAsync()
     {
-        var (online, list) = await DockerEngineService.GetContainersAsync(model.ShowAllContainers);
-        IsDockerOnline = online;
-
-        if (!online)
+        try
         {
-            HeaderSummary = "Docker Offline";
-            Containers.Clear();
-            return;
+            var (online, list) = await DockerEngineService.GetContainersAsync(model.ShowAllContainers);
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                IsDockerOnline = online;
+
+                if (!online)
+                {
+                    HeaderSummary = "Docker Offline";
+                    Containers.Clear();
+                    return;
+                }
+
+                int running = list.Count(c => c.IsRunning);
+                HeaderSummary = $"{running}/{list.Count} Running";
+
+                // Remove old
+                var toRemove = Containers.Where(c => list.All(l => l.Id != c.Id)).ToList();
+                foreach (var rem in toRemove) Containers.Remove(rem);
+
+                // Add or update
+                foreach (var item in list)
+                {
+                    var existing = Containers.FirstOrDefault(c => c.Id == item.Id);
+                    if (existing != null)
+                    {
+                        existing.Update(item);
+                    }
+                    else
+                    {
+                        Containers.Add(new DockerContainerItemViewModel(item, HandleContainerActionAsync));
+                    }
+                }
+            });
         }
-
-        int running = list.Count(c => c.IsRunning);
-        HeaderSummary = $"{running}/{list.Count} Running";
-
-        // Remove old
-        var toRemove = Containers.Where(c => list.All(l => l.Id != c.Id)).ToList();
-        foreach (var rem in toRemove) Containers.Remove(rem);
-
-        // Add or update
-        foreach (var item in list)
+        catch (Exception)
         {
-            var existing = Containers.FirstOrDefault(c => c.Id == item.Id);
-            if (existing != null)
-            {
-                existing.Update(item);
-            }
-            else
-            {
-                Containers.Add(new DockerContainerItemViewModel(item, HandleContainerActionAsync));
-            }
         }
     }
 
     private async Task HandleContainerActionAsync(string id, string action)
     {
-        await DockerEngineService.ExecuteActionAsync(id, action);
-        await Task.Delay(500);
-        await UpdateAsync();
+        try
+        {
+            await DockerEngineService.ExecuteActionAsync(id, action);
+            await Task.Delay(500);
+            await UpdateAsync();
+        }
+        catch (Exception)
+        {
+        }
     }
 
     public void Dispose()

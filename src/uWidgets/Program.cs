@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using Avalonia.ReactiveUI;
 using System;
 using System.IO;
 using uWidgets.Core;
@@ -78,6 +79,7 @@ class Program
         return AppBuilder.Configure<App>()
             .UseWin32()
             .UsePlatformDetect()
+            .UseReactiveUI()
             .WithInterFont()
             .With(new Win32PlatformOptions
             {

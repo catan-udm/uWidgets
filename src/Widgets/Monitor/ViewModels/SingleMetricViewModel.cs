@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using Monitor.Models;
 using Monitor.Services;
 using ReactiveUI;
@@ -5,7 +6,7 @@ using uWidgets.Services;
 
 namespace Monitor.ViewModels;
 
-public class SingleMetricViewModel : ReactiveObject
+public class SingleMetricViewModel : ReactiveObject, IDisposable
 {
     private readonly SingleMetricModel model;
 
@@ -27,31 +28,48 @@ public class SingleMetricViewModel : ReactiveObject
 
     private async Task UpdateAsync()
     {
-        var value = await MetricService.GetMetricValue(model.Metric, model.TargetDeviceId);
-        var icon = MetricService.GetMetricIcon(model.Metric);
-
-        if (model.Metric == MetricType.BatteryLevel)
+        try
         {
-            if (string.IsNullOrEmpty(model.TargetDeviceId) || model.TargetDeviceId == "host_battery")
+            var value = await MetricService.GetMetricValue(model.Metric, model.TargetDeviceId);
+            var icon = MetricService.GetMetricIcon(model.Metric);
+
+            if (model.Metric == MetricType.BatteryLevel)
             {
-                var host = PeripheralBatteryService.GetHostBattery();
-                if (host != null && host.IsCharging)
+                if (string.IsNullOrEmpty(model.TargetDeviceId) || model.TargetDeviceId == "host_battery")
                 {
-                    icon = MetricIcon.BatteryCharging.Value;
+                    var host = PeripheralBatteryService.GetHostBattery();
+                    if (host != null && host.IsCharging)
+                    {
+                        icon = MetricIcon.BatteryCharging.Value;
+                    }
+                }
+                else
+                {
+                    var all = await PeripheralBatteryService.GetAllBatteriesAsync();
+                    var dev = all.FirstOrDefault(d => d.DeviceId == model.TargetDeviceId);
+                    if (dev != null)
+                    {
+                        icon = dev.Icon;
+                    }
                 }
             }
-            else
+
+            if (value.HasValue)
             {
-                var all = await PeripheralBatteryService.GetAllBatteriesAsync();
-                var dev = all.FirstOrDefault(d => d.DeviceId == model.TargetDeviceId);
-                if (dev != null)
+                await Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    icon = dev.Icon;
-                }
+                    Metric = new MetricViewModel(value.Value, icon);
+                });
             }
         }
+        catch (Exception)
+        {
+        }
+    }
 
-        if (value.HasValue)
-            Metric = new MetricViewModel(value.Value, icon);
+    public void Dispose()
+    {
+        TimerService.Timer1Second.Unsubscribe(Update);
+        GC.SuppressFinalize(this);
     }
 }

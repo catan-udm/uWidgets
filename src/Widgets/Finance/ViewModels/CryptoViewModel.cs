@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Finance.Models;
 using Finance.Services;
 using ReactiveUI;
@@ -65,22 +66,31 @@ public class CryptoViewModel : ReactiveObject, IDisposable
 
     private async Task UpdateAsync()
     {
-        var list = await CryptoPriceService.GetCryptoPricesAsync(model.TrackedCoins, model.FiatCurrency);
-
-        var toRemove = Coins.Where(c => list.All(l => l.Id != c.Id)).ToList();
-        foreach (var rem in toRemove) Coins.Remove(rem);
-
-        foreach (var item in list)
+        try
         {
-            var existing = Coins.FirstOrDefault(c => c.Id == item.Id);
-            if (existing != null)
+            var list = await CryptoPriceService.GetCryptoPricesAsync(model.TrackedCoins, model.FiatCurrency);
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                existing.Update(item);
-            }
-            else
-            {
-                Coins.Add(new CryptoItemViewModel(item));
-            }
+                var toRemove = Coins.Where(c => list.All(l => l.Id != c.Id)).ToList();
+                foreach (var rem in toRemove) Coins.Remove(rem);
+
+                foreach (var item in list)
+                {
+                    var existing = Coins.FirstOrDefault(c => c.Id == item.Id);
+                    if (existing != null)
+                    {
+                        existing.Update(item);
+                    }
+                    else
+                    {
+                        Coins.Add(new CryptoItemViewModel(item));
+                    }
+                }
+            });
+        }
+        catch (Exception)
+        {
         }
     }
 

@@ -175,7 +175,6 @@ jobs:
             --repo "${{ github.repository }}" `
             --title "$tag" `
             --notes-file release-notes.md `
-            --prerelease `
             .\src\uWidgets\bin\Publish\win-x86.zip `
             .\src\uWidgets\bin\Publish\win-x64.zip `
             .\src\uWidgets\bin\Publish\win-arm64.zip

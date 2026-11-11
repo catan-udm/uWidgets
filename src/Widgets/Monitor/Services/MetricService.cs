@@ -84,11 +84,19 @@ public static class MetricService
     {
         if (!OperatingSystem.IsWindows()) return null;
 
-        using var searcher = new ManagementObjectSearcher("select * from Win32_PerfFormattedData_PerfOS_Processor where Name='_Total'");
-        foreach (var o in searcher.Get())
+        try
         {
-            var obj = (ManagementObject)o;
-            return Convert.ToDouble(obj["PercentProcessorTime"]) / 100;
+            using var searcher = new ManagementObjectSearcher("select * from Win32_PerfFormattedData_PerfOS_Processor where Name='_Total'");
+            using var results = searcher.Get();
+            foreach (var o in results)
+            {
+                using var obj = (ManagementObject)o;
+                return Convert.ToDouble(obj["PercentProcessorTime"]) / 100;
+            }
+        }
+        catch
+        {
+            // Ignore
         }
 
         return null;
@@ -98,17 +106,25 @@ public static class MetricService
     {
         if (!OperatingSystem.IsWindows()) return null;
 
-        using var searcher = new ManagementObjectSearcher("select * from Win32_OperatingSystem");
-        foreach (var o in searcher.Get())
+        try
         {
-            var obj = (ManagementObject)o;
-            var totalVisibleMemory = Convert.ToDouble(obj["TotalVisibleMemorySize"]);
-            var freePhysicalMemory = Convert.ToDouble(obj["FreePhysicalMemory"]);
+            using var searcher = new ManagementObjectSearcher("select * from Win32_OperatingSystem");
+            using var results = searcher.Get();
+            foreach (var o in results)
+            {
+                using var obj = (ManagementObject)o;
+                var totalVisibleMemory = Convert.ToDouble(obj["TotalVisibleMemorySize"]);
+                var freePhysicalMemory = Convert.ToDouble(obj["FreePhysicalMemory"]);
 
-            if (!(totalVisibleMemory > 0)) continue;
+                if (!(totalVisibleMemory > 0)) continue;
 
-            var usedMemory = totalVisibleMemory - freePhysicalMemory;
-            return usedMemory / totalVisibleMemory;
+                var usedMemory = totalVisibleMemory - freePhysicalMemory;
+                return usedMemory / totalVisibleMemory;
+            }
+        }
+        catch
+        {
+            // Ignore
         }
 
         return null;
@@ -118,11 +134,19 @@ public static class MetricService
     {
         if (!OperatingSystem.IsWindows()) return null;
 
-        using var searcher = new ManagementObjectSearcher("select * from Win32_PerfFormattedData_PerfDisk_LogicalDisk where Name='_Total'");
-        foreach (var o in searcher.Get())
+        try
         {
-            var obj = (ManagementObject)o;
-            return Convert.ToDouble(obj["PercentDiskTime"]) / 100;
+            using var searcher = new ManagementObjectSearcher("select * from Win32_PerfFormattedData_PerfDisk_LogicalDisk where Name='_Total'");
+            using var results = searcher.Get();
+            foreach (var o in results)
+            {
+                using var obj = (ManagementObject)o;
+                return Convert.ToDouble(obj["PercentDiskTime"]) / 100;
+            }
+        }
+        catch
+        {
+            // Ignore
         }
 
         return null;
@@ -159,11 +183,12 @@ public static class MetricService
         try
         {
             using var searcher = new ManagementObjectSearcher("select UtilizationPercentage from Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine where Name like '%engtype_3D%'");
+            using var results = searcher.Get();
             double total = 0;
             int count = 0;
-            foreach (var o in searcher.Get())
+            foreach (var o in results)
             {
-                var obj = (ManagementObject)o;
+                using var obj = (ManagementObject)o;
                 total += Convert.ToDouble(obj["UtilizationPercentage"]);
                 count++;
             }
@@ -228,9 +253,10 @@ public static class MetricService
         try
         {
             using var searcher = new ManagementObjectSearcher("select EstimatedChargeRemaining from Win32_Battery");
-            foreach (var o in searcher.Get())
+            using var results = searcher.Get();
+            foreach (var o in results)
             {
-                var obj = (ManagementObject)o;
+                using var obj = (ManagementObject)o;
                 return Convert.ToInt32(obj["EstimatedChargeRemaining"]) / 100d;
             }
         }
@@ -246,35 +272,44 @@ public static class MetricService
     {
         if (!OperatingSystem.IsWindows()) return null;
 
-        double maxSpeed = 0;
-        double totalBytesSent = 0;
-        double totalBytesReceived = 0;
-
-        using (var searcher = new ManagementObjectSearcher("select * from Win32_PerfFormattedData_Tcpip_NetworkInterface"))
+        try
         {
-            foreach (var o in searcher.Get())
+            double maxSpeed = 0;
+            double totalBytesSent = 0;
+            double totalBytesReceived = 0;
+
+            using (var searcher = new ManagementObjectSearcher("select * from Win32_PerfFormattedData_Tcpip_NetworkInterface"))
             {
-                var obj = (ManagementObject)o;
-                totalBytesSent += Convert.ToDouble(obj["BytesSentPerSec"]);
-                totalBytesReceived += Convert.ToDouble(obj["BytesReceivedPerSec"]);
+                using var results = searcher.Get();
+                foreach (var o in results)
+                {
+                    using var obj = (ManagementObject)o;
+                    totalBytesSent += Convert.ToDouble(obj["BytesSentPerSec"]);
+                    totalBytesReceived += Convert.ToDouble(obj["BytesReceivedPerSec"]);
+                }
+            }
+
+            using (var searcher = new ManagementObjectSearcher("select * from Win32_NetworkAdapter where NetEnabled=true"))
+            {
+                using var results = searcher.Get();
+                foreach (var o in results)
+                {
+                    using var obj = (ManagementObject)o;
+                    maxSpeed = Convert.ToDouble(obj["Speed"]);
+                    break;
+                }
+            }
+
+            if (maxSpeed > 0)
+            {
+                var totalBitsPerSec = (totalBytesSent + totalBytesReceived) * 8;
+                var networkUsage = totalBitsPerSec / maxSpeed;
+                return networkUsage;
             }
         }
-
-        using (var searcher = new ManagementObjectSearcher("select * from Win32_NetworkAdapter where NetEnabled=true"))
+        catch
         {
-            foreach (var o in searcher.Get())
-            {
-                var obj = (ManagementObject)o;
-                maxSpeed = Convert.ToDouble(obj["Speed"]);
-                break;
-            }
-        }
-
-        if (maxSpeed > 0)
-        {
-            var totalBitsPerSec = (totalBytesSent + totalBytesReceived) * 8;
-            var networkUsage = totalBitsPerSec / maxSpeed;
-            return networkUsage;
+            // Ignore
         }
 
         return null;

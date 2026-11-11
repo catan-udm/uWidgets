@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Monitor.Models;
 using Monitor.Services;
 using ReactiveUI;
@@ -120,30 +121,39 @@ public class DeviceBatteriesViewModel : ReactiveObject, IDisposable
 
     private async Task UpdateAsync()
     {
-        var all = await PeripheralBatteryService.GetAllBatteriesAsync();
-        
-        // Remove devices that are no longer present
-        var toRemove = Devices.Where(d => all.All(a => a.DeviceId != d.DeviceId)).ToList();
-        foreach (var rem in toRemove)
+        try
         {
-            Devices.Remove(rem);
-        }
+            var all = await PeripheralBatteryService.GetAllBatteriesAsync();
 
-        // Add or update current devices
-        foreach (var info in all)
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                // Remove devices that are no longer present
+                var toRemove = Devices.Where(d => all.All(a => a.DeviceId != d.DeviceId)).ToList();
+                foreach (var rem in toRemove)
+                {
+                    Devices.Remove(rem);
+                }
+
+                // Add or update current devices
+                foreach (var info in all)
+                {
+                    var existing = Devices.FirstOrDefault(d => d.DeviceId == info.DeviceId);
+                    if (existing != null)
+                    {
+                        existing.Update(info);
+                    }
+                    else
+                    {
+                        Devices.Add(new DeviceBatteryItemViewModel(info));
+                    }
+                }
+
+                HasDevices = Devices.Count > 0;
+            });
+        }
+        catch (Exception)
         {
-            var existing = Devices.FirstOrDefault(d => d.DeviceId == info.DeviceId);
-            if (existing != null)
-            {
-                existing.Update(info);
-            }
-            else
-            {
-                Devices.Add(new DeviceBatteryItemViewModel(info));
-            }
         }
-
-        HasDevices = Devices.Count > 0;
     }
 
     public void Dispose()

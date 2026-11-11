@@ -181,17 +181,23 @@ public static class MediaService
     {
         if (!OperatingSystem.IsWindows()) return 0.0;
 
+        object? enumerator = null;
+        IMMDevice? device = null;
+        object? meterObj = null;
+
         try
         {
             var enumeratorType = Type.GetTypeFromCLSID(new Guid("BCDE0395-E52F-467C-8E3D-C4579291692E"));
             if (enumeratorType == null) return 0.0;
 
-            var enumerator = (IMMDeviceEnumerator)Activator.CreateInstance(enumeratorType)!;
-            enumerator.GetDefaultAudioEndpoint(0, 1, out var device);
+            enumerator = Activator.CreateInstance(enumeratorType);
+            if (enumerator is not IMMDeviceEnumerator devEnum) return 0.0;
+
+            devEnum.GetDefaultAudioEndpoint(0, 1, out device);
             if (device == null) return 0.0;
 
             var iidMeter = typeof(IAudioMeterInformation).GUID;
-            device.Activate(ref iidMeter, 0, IntPtr.Zero, out var meterObj);
+            device.Activate(ref iidMeter, 0, IntPtr.Zero, out meterObj);
             if (meterObj is IAudioMeterInformation meter)
             {
                 meter.GetPeakValue(out var peak);
@@ -201,6 +207,21 @@ public static class MediaService
         catch
         {
             // Ignore COM audio query failures
+        }
+        finally
+        {
+            if (meterObj != null && Marshal.IsComObject(meterObj))
+            {
+                try { Marshal.ReleaseComObject(meterObj); } catch { }
+            }
+            if (device != null && Marshal.IsComObject(device))
+            {
+                try { Marshal.ReleaseComObject(device); } catch { }
+            }
+            if (enumerator != null && Marshal.IsComObject(enumerator))
+            {
+                try { Marshal.ReleaseComObject(enumerator); } catch { }
+            }
         }
 
         return 0.0;

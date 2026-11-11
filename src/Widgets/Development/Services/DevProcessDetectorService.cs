@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Management;
 using System.Runtime.InteropServices;
@@ -7,6 +8,7 @@ namespace Development.Services;
 
 public static class DevProcessDetectorService
 {
+    private static readonly ConcurrentDictionary<int, (string Framework, string AppName)> ProcessCache = new();
     private const int AF_INET = 2;
     private const int TCP_TABLE_OWNER_PID_ALL = 5;
     private const int MIB_TCP_STATE_LISTEN = 2;
@@ -54,9 +56,17 @@ public static class DevProcessDetectorService
             try
             {
                 var listeningPorts = GetListeningPorts();
-                if (listeningPorts.Count == 0) return results;
 
                 // Inspect candidate processes
+                var currentPids = new HashSet<int>(listeningPorts.Select(p => p.Pid));
+                foreach (var cachedPid in ProcessCache.Keys)
+                {
+                    if (!currentPids.Contains(cachedPid))
+                        ProcessCache.TryRemove(cachedPid, out _);
+                }
+
+                if (listeningPorts.Count == 0) return results;
+
                 foreach (var (port, pid) in listeningPorts)
                 {
                     try
@@ -74,13 +84,17 @@ public static class DevProcessDetectorService
                         long memoryMb = 0;
                         try { memoryMb = proc.WorkingSet64 / (1024 * 1024); } catch { }
 
-                        string cmdLine = GetCommandLine(pid);
-                        var (framework, appName) = IdentifyFrameworkAndApp(procName, cmdLine);
+                        if (!ProcessCache.TryGetValue(pid, out var cachedInfo))
+                        {
+                            string cmdLine = GetCommandLine(pid);
+                            cachedInfo = IdentifyFrameworkAndApp(procName, cmdLine);
+                            ProcessCache[pid] = cachedInfo;
+                        }
 
                         results.Add(new DevAppInstanceInfo(
                             ProcessId: pid,
-                            AppName: appName,
-                            Framework: framework,
+                            AppName: cachedInfo.AppName,
+                            Framework: cachedInfo.Framework,
                             Port: port,
                             MemoryWorkingSetMb: memoryMb,
                             Url: $"http://localhost:{port}"
@@ -107,7 +121,8 @@ public static class DevProcessDetectorService
         int bufferSize = 0;
 
         _ = GetExtendedTcpTable(IntPtr.Zero, ref bufferSize, true, AF_INET, TCP_TABLE_OWNER_PID_ALL);
-        if (bufferSize <= 0) return list;
+        int rowSize = Marshal.SizeOf<MIB_TCPROW_OWNER_PID>();
+        if (bufferSize < 4 + rowSize) return list;
 
         IntPtr buffer = Marshal.AllocHGlobal(bufferSize);
         try
@@ -116,8 +131,8 @@ public static class DevProcessDetectorService
             if (ret == 0)
             {
                 int numEntries = Marshal.ReadInt32(buffer);
+                numEntries = Math.Max(0, Math.Min(numEntries, (bufferSize - 4) / rowSize));
                 IntPtr rowPtr = IntPtr.Add(buffer, 4);
-                int rowSize = Marshal.SizeOf<MIB_TCPROW_OWNER_PID>();
 
                 for (int i = 0; i < numEntries; i++)
                 {
@@ -147,9 +162,10 @@ public static class DevProcessDetectorService
         try
         {
             using var searcher = new ManagementObjectSearcher($"SELECT CommandLine FROM Win32_Process WHERE ProcessId = {pid}");
-            foreach (var o in searcher.Get())
+            using var results = searcher.Get();
+            foreach (var o in results)
             {
-                var obj = (ManagementObject)o;
+                using var obj = (ManagementObject)o;
                 return obj["CommandLine"]?.ToString() ?? "";
             }
         }

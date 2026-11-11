@@ -1,3 +1,4 @@
+using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Monitor.Models;
@@ -5,7 +6,7 @@ using Monitor.ViewModels;
 
 namespace Monitor.Views;
 
-public partial class SingleMetric : UserControl
+public partial class SingleMetric : UserControl, IDisposable
 {
     public SingleMetric() :
         this(new SingleMetricModel(MetricType.CpuUsage)) {}
@@ -22,6 +23,12 @@ public partial class SingleMetric : UserControl
     {
         SizeChanged -= OnSizeChanged;
         Unloaded -= OnUnloaded;
+        Dispose();
+    }
+
+    public void Dispose()
+    {
+        (DataContext as IDisposable)?.Dispose();
     }
 
     private void OnSizeChanged(object? sender, SizeChangedEventArgs e)

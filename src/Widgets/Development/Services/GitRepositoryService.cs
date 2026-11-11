@@ -129,6 +129,7 @@ public static class GitRepositoryService
             watcher.Created += HandleEvent;
             watcher.Deleted += HandleEvent;
             watcher.Renamed += (_, e) => HandleEvent(null!, e);
+            watcher.Disposed += (_, _) => debounceTimer.Dispose();
 
             return watcher;
         }

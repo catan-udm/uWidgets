@@ -98,9 +98,27 @@ public partial class Widget : Window
         UpdateLiquidGlassState(appSettingsProvider.Get());
     }
 
+    private void DisposeContent()
+    {
+        if (ContentPresenter == null) return;
+        var content = ContentPresenter.Content;
+        if (content == null) return;
+
+        var dc = (content as Control)?.DataContext;
+        if (dc is IDisposable dcDisposable)
+        {
+            dcDisposable.Dispose();
+        }
+        if (content is IDisposable contentDisposable && !ReferenceEquals(contentDisposable, dc))
+        {
+            contentDisposable.Dispose();
+        }
+        ContentPresenter.Content = null;
+    }
+
     private void OnClosed(object? sender, EventArgs e)
     {
-        InteropService.UnpinWindowFromDesktop(this);
+        OnUnloaded(sender, new RoutedEventArgs());
     }
 
     private bool UseEffectiveNativeFrame => appSettingsProvider.Get().Theme.UseNativeFrame && !appSettingsProvider.Get().Theme.LiquidGlass;
@@ -196,6 +214,7 @@ public partial class Widget : Window
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        DisposeContent();
         InteropService.UnpinWindowFromDesktop(this);
         PointerPressed -= OnPointerPressed;
         PointerReleased -= OnPointerReleased;
@@ -213,7 +232,10 @@ public partial class Widget : Window
     private void OnWidgetLayoutUpdated(object? sender, WidgetLayout? oldLayout, WidgetLayout newLayout)
     {
         if (!Equals(oldLayout?.Settings, newLayout.Settings))
+        {
+            DisposeContent();
             ContentPresenter.Content = userControl();
+        }
     }
 
     public void OnPointerPressed(object? sender, PointerPressedEventArgs e)
