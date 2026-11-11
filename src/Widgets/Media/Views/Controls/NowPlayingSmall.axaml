@@ -16,34 +16,57 @@
         <Style Selector="Button.playBtn">
             <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
             <Setter Property="Foreground" Value="White" />
-            <Setter Property="CornerRadius" Value="18" />
-            <Setter Property="Width" Value="36" />
-            <Setter Property="Height" Value="36" />
+            <Setter Property="CornerRadius" Value="19" />
+            <Setter Property="Width" Value="38" />
+            <Setter Property="Height" Value="38" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
+        <Style Selector="Button.muteBtn">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Opacity" Value="0.7" />
+        </Style>
+        <Style Selector="Button.muteBtn:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+            <Setter Property="Opacity" Value="1.0" />
+        </Style>
         <Style Selector="Slider.timelineSlider">
-            <Setter Property="MinHeight" Value="16" />
-            <Setter Property="Height" Value="16" />
+            <Setter Property="MinHeight" Value="14" />
+            <Setter Property="Height" Value="14" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}" />
         </Style>
+        <Style Selector="Slider.timelineSlider /template/ Thumb">
+            <Setter Property="Width" Value="10" />
+            <Setter Property="Height" Value="10" />
+        </Style>
+        <Style Selector="Slider.timelineSlider:pointerover /template/ Thumb">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="12" />
+        </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto,Auto">
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
+        <!-- Row 0: Header with Album Art, Artist/Source, and Mute Button -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,4">
             <Border Grid.Column="0"
-                    Width="26" Height="26"
-                    CornerRadius="7"
+                    Width="36" Height="36"
+                    CornerRadius="9"
                     Margin="0,0,8,0"
                     ClipToBounds="True"
                     Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
                 <Panel>
                     <Image Source="{Binding AlbumArt}" Stretch="UniformToFill" IsVisible="{Binding HasAlbumArt}" />
-                    <PathIcon IsVisible="{Binding !HasAlbumArt}" Width="13" Height="13"
+                    <PathIcon IsVisible="{Binding !HasAlbumArt}" Width="16" Height="16"
                               Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
                               Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
                 </Panel>
@@ -55,18 +78,33 @@
                        Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
                        VerticalAlignment="Center"
                        TextTrimming="CharacterEllipsis" />
+            <Button Grid.Column="2"
+                    Classes="muteBtn"
+                    IsVisible="{Binding ShowMuteButton}"
+                    Click="Mute_OnClick"
+                    VerticalAlignment="Center"
+                    ToolTip.Tip="Mute / Unmute">
+                <PathIcon Width="12" Height="12"
+                          Data="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06m7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 1 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0" />
+            </Button>
         </Grid>
 
-        <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,4">
-            <TextBlock Text="{Binding TrackTitle}"
-                       FontSize="15"
-                       FontWeight="Bold"
-                       MaxLines="2"
-                       TextWrapping="Wrap"
-                       TextTrimming="CharacterEllipsis" />
-        </StackPanel>
+        <!-- Row 1: Track Title (Full width) -->
+        <TextBlock Grid.Row="1"
+                   Text="{Binding TrackTitle}"
+                   FontSize="14"
+                   FontWeight="Bold"
+                   MaxLines="2"
+                   TextWrapping="Wrap"
+                   TextTrimming="CharacterEllipsis"
+                   VerticalAlignment="Center"
+                   Margin="0,2,0,4" />
 
-        <Grid Grid.Row="2" RowDefinitions="Auto,Auto" IsVisible="{Binding ShowTimeline}" Margin="0,2,0,8">
+        <!-- Row 2: Slim Timeline Slider with Timestamps -->
+        <Grid Grid.Row="2"
+              RowDefinitions="Auto,Auto"
+              IsVisible="{Binding ShowTimeline}"
+              Margin="0,0,0,6">
             <Slider x:Name="TimelineSlider"
                     Grid.Row="0"
                     Classes="timelineSlider"
@@ -75,9 +113,9 @@
                     Maximum="{Binding SliderMaximum}"
                     Value="{Binding PositionSeconds}"
                     ToolTip.Tip="{Binding TimelineTooltip}"
-                    Height="16"
+                    Height="14"
                     Margin="0" />
-            <Grid Grid.Row="1" ColumnDefinitions="*,*">
+            <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,1,0,0">
                 <TextBlock Grid.Column="0"
                            Text="{Binding PositionText}"
                            FontSize="10"
@@ -93,7 +131,11 @@
             </Grid>
         </Grid>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+        <!-- Row 3: Centered Playback Controls Trio (126px width, fits 136px perfectly) -->
+        <StackPanel Grid.Row="3"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    Spacing="14">
             <Button Classes="mediaBtn" Click="Prev_OnClick">
                 <PathIcon Width="12" Height="12"
                           Data="M.5 3.5A.5.5 0 0 0 0 4v8a.5.5 0 0 0 1 0V8.753l6.267 3.636c.54.313 1.233-.066 1.233-.697v-2.94l6.267 3.636c.54.314 1.233-.065 1.233-.696V4.308c0-.63-.693-1.01-1.233-.696L8.5 7.248v-2.94c0-.63-.692-1.01-1.233-.696L1 7.248V4a.5.5 0 0 0-.5-.5" />
@@ -104,10 +146,6 @@
             <Button Classes="mediaBtn" Click="Next_OnClick">
                 <PathIcon Width="12" Height="12"
                           Data="M15.5 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V8.753l-6.267 3.636c-.54.313-1.233-.066-1.233-.697v-2.94l-6.267 3.636C.693 12.703 0 12.324 0 11.693V4.308c0-.63.693-1.01 1.233-.696L7.5 7.248v-2.94c0-.63.693-1.01 1.233-.696L15 7.248V4a.5.5 0 0 1 .5-.5" />
-            </Button>
-            <Button Classes="mediaBtn" IsVisible="{Binding ShowMuteButton}" Click="Mute_OnClick">
-                <PathIcon Width="12" Height="12"
-                          Data="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06m7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 1 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0" />
             </Button>
         </StackPanel>
     </Grid>
