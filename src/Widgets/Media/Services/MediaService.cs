@@ -38,6 +38,21 @@ public static class MediaService
     private static GlobalSystemMediaTransportControlsSessionManager? sessionManager;
     private static DateTime lastSessionManagerAttempt = DateTime.MinValue;
 
+    // Track-key and thumbnail cache for R1
+    private static string? cachedTrackKey;
+    private static byte[]? cachedThumbnailBytes;
+
+    // Paused session and snapshot persistence for R3
+    private static string? lastActiveSessionAppId;
+    private static MediaSnapshot? lastValidSnapshot;
+    private static DateTime lastValidSnapshotTime = DateTime.MinValue;
+
+    private static void HandleComException(COMException? ex)
+    {
+        sessionManager = null;
+        lastSessionManagerAttempt = DateTime.MinValue;
+    }
+
     private static readonly HashSet<string> BrowserKeywords = new(StringComparer.OrdinalIgnoreCase)
     {
         "chrome",
@@ -107,6 +122,11 @@ public static class MediaService
             sessionManager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
             return sessionManager;
         }
+        catch (COMException ex)
+        {
+            HandleComException(ex);
+            return null;
+        }
         catch
         {
             return null;
@@ -122,6 +142,11 @@ public static class MediaService
         try
         {
             sessions = manager.GetSessions();
+        }
+        catch (COMException ex)
+        {
+            HandleComException(ex);
+            return null;
         }
         catch
         {
@@ -143,6 +168,7 @@ public static class MediaService
             var playingMusic = musicSessions.FirstOrDefault(s =>
             {
                 try { return s.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing; }
+                catch (COMException ex) { HandleComException(ex); return false; }
                 catch { return false; }
             });
             if (playingMusic != null) return playingMusic;
@@ -153,15 +179,38 @@ public static class MediaService
                 var playingBrowser = browserSessions.FirstOrDefault(s =>
                 {
                     try { return s.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing; }
+                    catch (COMException ex) { HandleComException(ex); return false; }
                     catch { return false; }
                 });
                 if (playingBrowser != null) return playingBrowser;
+            }
+
+            // R3: If no session is currently playing, prioritize the previously active session (even when Paused)
+            // over arbitrary idle background players or browsers.
+            if (!string.IsNullOrEmpty(lastActiveSessionAppId))
+            {
+                var lastActive = sessions.FirstOrDefault(s =>
+                    string.Equals(s.SourceAppUserModelId, lastActiveSessionAppId, StringComparison.OrdinalIgnoreCase));
+                if (lastActive != null && (!IsBrowserApp(lastActive.SourceAppUserModelId) || allowBrowserMedia))
+                {
+                    try
+                    {
+                        var status = lastActive.GetPlaybackInfo()?.PlaybackStatus;
+                        if (status != null && status != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Closed && status != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Stopped)
+                        {
+                            return lastActive;
+                        }
+                    }
+                    catch (COMException ex) { HandleComException(ex); }
+                    catch { }
+                }
             }
 
             // 1C. Any non-browser player PAUSED
             var pausedMusic = musicSessions.FirstOrDefault(s =>
             {
                 try { return s.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Paused; }
+                catch (COMException ex) { HandleComException(ex); return false; }
                 catch { return false; }
             });
             if (pausedMusic != null) return pausedMusic;
@@ -172,6 +221,7 @@ public static class MediaService
                 var pausedBrowser = browserSessions.FirstOrDefault(s =>
                 {
                     try { return s.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Paused; }
+                    catch (COMException ex) { HandleComException(ex); return false; }
                     catch { return false; }
                 });
                 if (pausedBrowser != null) return pausedBrowser;
@@ -185,6 +235,7 @@ public static class MediaService
                     var status = s.GetPlaybackInfo()?.PlaybackStatus;
                     return status != null && status != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Closed && status != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Stopped;
                 }
+                catch (COMException ex) { HandleComException(ex); return false; }
                 catch { return false; }
             });
             if (activeMusic != null) return activeMusic;
@@ -202,6 +253,7 @@ public static class MediaService
         {
             currentSession = manager.GetCurrentSession();
         }
+        catch (COMException ex) { HandleComException(ex); }
         catch { }
 
         if (currentSession != null)
@@ -214,6 +266,7 @@ public static class MediaService
                     if (currentSession.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing)
                         return currentSession;
                 }
+                catch (COMException ex) { HandleComException(ex); }
                 catch { }
             }
         }
@@ -223,9 +276,30 @@ public static class MediaService
             bool isBrowser = IsBrowserApp(s.SourceAppUserModelId);
             if (isBrowser && !allowBrowserMedia) return false;
             try { return s.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing; }
+            catch (COMException ex) { HandleComException(ex); return false; }
             catch { return false; }
         });
         if (anyPlaying != null) return anyPlaying;
+
+        // R3: If no session is playing, prioritize the previously active session (even when Paused)
+        if (!string.IsNullOrEmpty(lastActiveSessionAppId))
+        {
+            var lastActive = sessions.FirstOrDefault(s =>
+                string.Equals(s.SourceAppUserModelId, lastActiveSessionAppId, StringComparison.OrdinalIgnoreCase));
+            if (lastActive != null && (!IsBrowserApp(lastActive.SourceAppUserModelId) || allowBrowserMedia))
+            {
+                try
+                {
+                    var status = lastActive.GetPlaybackInfo()?.PlaybackStatus;
+                    if (status != null && status != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Closed && status != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Stopped)
+                    {
+                        return lastActive;
+                    }
+                }
+                catch (COMException ex) { HandleComException(ex); }
+                catch { }
+            }
+        }
 
         if (currentSession != null && (!IsBrowserApp(currentSession.SourceAppUserModelId) || allowBrowserMedia))
         {
@@ -267,6 +341,7 @@ public static class MediaService
                     var success = await session.TryTogglePlayPauseAsync();
                     if (success) return;
                 }
+                catch (COMException ex) { HandleComException(ex); }
                 catch { }
             }
         }
@@ -287,6 +362,7 @@ public static class MediaService
                     var success = await session.TrySkipNextAsync();
                     if (success) return;
                 }
+                catch (COMException ex) { HandleComException(ex); }
                 catch { }
             }
         }
@@ -307,6 +383,7 @@ public static class MediaService
                     var success = await session.TrySkipPreviousAsync();
                     if (success) return;
                 }
+                catch (COMException ex) { HandleComException(ex); }
                 catch { }
             }
         }
@@ -564,6 +641,11 @@ public static class MediaService
                     var success = await session.TryChangePlaybackPositionAsync(ticks);
                     return success;
                 }
+                catch (COMException ex)
+                {
+                    HandleComException(ex);
+                    return false;
+                }
                 catch
                 {
                     return false;
@@ -587,11 +669,80 @@ public static class MediaService
         }
     }
 
+    private static bool ShouldRetainLastSnapshot(bool allowBrowserMedia)
+    {
+        if (lastValidSnapshot == null) return false;
+
+        // If within 5 seconds of last valid snapshot, always retain to ride out transient glitches or pause transitions
+        if ((DateTime.UtcNow - lastValidSnapshotTime).TotalSeconds < 5)
+            return true;
+
+        // Check if the session still exists in GSMTC
+        if (sessionManager != null)
+        {
+            try
+            {
+                var sessions = sessionManager.GetSessions();
+                if (sessions != null && sessions.Any(s =>
+                    string.Equals(s.SourceAppUserModelId, lastActiveSessionAppId, StringComparison.OrdinalIgnoreCase) &&
+                    (!IsBrowserApp(s.SourceAppUserModelId) || allowBrowserMedia)))
+                {
+                    return true;
+                }
+            }
+            catch (COMException ex)
+            {
+                HandleComException(ex);
+            }
+            catch { }
+        }
+
+        // Check if the player process is still running
+        if (!string.IsNullOrWhiteSpace(lastActiveSessionAppId))
+        {
+            try
+            {
+                string procTarget = NormalizeProcessTarget(lastActiveSessionAppId);
+                if (!string.IsNullOrWhiteSpace(procTarget))
+                {
+                    var procs = Process.GetProcessesByName(procTarget);
+                    try
+                    {
+                        if (procs.Length > 0)
+                        {
+                            return true;
+                        }
+                    }
+                    finally
+                    {
+                        foreach (var p in procs)
+                        {
+                            try { p.Dispose(); } catch { }
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        return false;
+    }
+
     public static async Task<MediaSnapshot> GetSnapshotAsync(bool prefersMusicPlayer = true, bool allowBrowserMedia = true)
     {
         var peak = GetSystemAudioPeak();
 
-        var manager = await GetSessionManagerAsync();
+        GlobalSystemMediaTransportControlsSessionManager? manager = null;
+        try
+        {
+            manager = await GetSessionManagerAsync();
+        }
+        catch (COMException ex)
+        {
+            HandleComException(ex);
+        }
+        catch { }
+
         if (manager != null)
         {
             var session = ResolvePrioritizedSession(manager, prefersMusicPlayer, allowBrowserMedia);
@@ -612,9 +763,35 @@ public static class MediaService
                     if (string.IsNullOrWhiteSpace(artist))
                         artist = FormatAppId(session.SourceAppUserModelId);
 
-                    byte[]? thumbnail = await ReadThumbnailBytesAsync(mediaProperties?.Thumbnail);
+                    // Track-key caching for thumbnails (R1)
+                    string trackKey = $"{session.SourceAppUserModelId}|{title}|{artist}|{album}";
+                    byte[]? thumbnail = null;
 
-                    // Extract timeline properties & seek capability
+                    if (!string.IsNullOrWhiteSpace(title))
+                    {
+                        if (string.Equals(trackKey, cachedTrackKey, StringComparison.Ordinal) && cachedThumbnailBytes != null)
+                        {
+                            // Cache hit: avoid expensive 1-second IPC stream reading
+                            thumbnail = cachedThumbnailBytes;
+                        }
+                        else
+                        {
+                            // Track changed or previous thumbnail was null: read from stream
+                            thumbnail = await ReadThumbnailBytesAsync(mediaProperties?.Thumbnail);
+                            if (thumbnail != null)
+                            {
+                                cachedThumbnailBytes = thumbnail;
+                                cachedTrackKey = trackKey;
+                            }
+                            else if (!string.Equals(trackKey, cachedTrackKey, StringComparison.Ordinal))
+                            {
+                                cachedTrackKey = trackKey;
+                                cachedThumbnailBytes = null;
+                            }
+                        }
+                    }
+
+                    // Extract timeline properties & seek capability (R2)
                     double positionSeconds = 0;
                     double durationSeconds = 0;
                     bool canSeek = false;
@@ -633,7 +810,8 @@ public static class MediaService
                             if (isPlaying && timeline.LastUpdatedTime > DateTimeOffset.MinValue)
                             {
                                 var elapsed = DateTimeOffset.UtcNow - timeline.LastUpdatedTime;
-                                if (elapsed.TotalSeconds > 0 && elapsed.TotalSeconds < 60)
+                                // Removed the arbitrary && elapsed.TotalSeconds < 60 cap (R2)
+                                if (elapsed.TotalSeconds > 0)
                                 {
                                     pos += elapsed;
                                 }
@@ -641,23 +819,47 @@ public static class MediaService
                             positionSeconds = Math.Clamp(pos.TotalSeconds, 0, durationSeconds);
                         }
                     }
+                    catch (COMException ex)
+                    {
+                        HandleComException(ex);
+                    }
                     catch { }
+
+                    // If paused or timeline temporarily unavailable, retain duration/position from last valid snapshot
+                    if (durationSeconds <= 0 && lastValidSnapshot != null && lastValidSnapshot.DurationSeconds > 0 &&
+                        string.Equals(session.SourceAppUserModelId, lastValidSnapshot.SourceAppUserModelId, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(title, lastValidSnapshot.Title, StringComparison.Ordinal))
+                    {
+                        durationSeconds = lastValidSnapshot.DurationSeconds;
+                        positionSeconds = lastValidSnapshot.PositionSeconds;
+                        canSeek = lastValidSnapshot.CanSeek;
+                    }
 
                     if (!string.IsNullOrWhiteSpace(title))
                     {
-                        return new MediaSnapshot(
+                        var snapshot = new MediaSnapshot(
                             Title: title,
                             ArtistOrApp: artist,
                             Album: album,
                             IsPlaying: isPlaying,
                             PeakLevel: peak,
-                            ThumbnailBytes: thumbnail,
+                            ThumbnailBytes: thumbnail ?? (string.Equals(trackKey, cachedTrackKey, StringComparison.Ordinal) ? cachedThumbnailBytes : null),
                             SourceAppUserModelId: session.SourceAppUserModelId ?? "",
                             PositionSeconds: positionSeconds,
                             DurationSeconds: durationSeconds,
                             CanSeek: canSeek
                         );
+
+                        lastValidSnapshot = snapshot;
+                        lastValidSnapshotTime = DateTime.UtcNow;
+                        lastActiveSessionAppId = session.SourceAppUserModelId;
+
+                        return snapshot;
                     }
+                }
+                catch (COMException ex)
+                {
+                    HandleComException(ex);
                 }
                 catch
                 {
@@ -666,11 +868,21 @@ public static class MediaService
             }
         }
 
+        // R3: If paused or session temporarily unavailable, retain last valid snapshot
+        if (ShouldRetainLastSnapshot(allowBrowserMedia) && lastValidSnapshot != null)
+        {
+            return lastValidSnapshot with
+            {
+                IsPlaying = false,
+                PeakLevel = peak
+            };
+        }
+
         // Win32 Process Scraper Fallback
         var fallback = FindActivePlayerMetadata(allowBrowserMedia);
         if (!string.IsNullOrWhiteSpace(fallback.Title))
         {
-            return new MediaSnapshot(
+            var fallbackSnapshot = new MediaSnapshot(
                 Title: fallback.Title,
                 ArtistOrApp: fallback.Artist,
                 Album: "",
@@ -679,6 +891,12 @@ public static class MediaService
                 ThumbnailBytes: null,
                 SourceAppUserModelId: fallback.PlayerName
             );
+
+            lastValidSnapshot = fallbackSnapshot;
+            lastValidSnapshotTime = DateTime.UtcNow;
+            lastActiveSessionAppId = fallback.PlayerName;
+
+            return fallbackSnapshot;
         }
 
         return peak > 0.005

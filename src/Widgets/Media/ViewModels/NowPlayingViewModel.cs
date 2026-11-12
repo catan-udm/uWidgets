@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -19,6 +21,8 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
     private static readonly StreamGeometry SpeakerMuteGeometry = StreamGeometry.Parse("M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06m7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 1 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0");
 
     private readonly NowPlayingModel model;
+    private readonly ILyricsService? lyricsService;
+    private int activeLyricsFetchId;
     private string trackTitle = Locale.Media_NowPlaying_Title;
     private string artistOrApp = Locale.Media_SystemAudio;
     private string album = "";
@@ -34,9 +38,20 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
     private byte[]? currentThumbnailBytes;
     private bool isUpdating;
 
-    public NowPlayingViewModel(NowPlayingModel model)
+    // Hysteresis / grace period (R3)
+    private int fallbackGraceTicks;
+    private const int FallbackGracePeriodTicks = 5;
+
+    // Extensible lyrics fields (R4)
+    private string? currentLyrics;
+    private string? currentLyricLine;
+    private bool isLyricsLoading;
+    private CancellationTokenSource? lyricsCts;
+
+    public NowPlayingViewModel(NowPlayingModel model, ILyricsService? lyricsService = null)
     {
         this.model = model;
+        this.lyricsService = lyricsService;
         Update();
         TimerService.Timer1Second.Subscribe(Update);
     }
@@ -166,6 +181,69 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
         ? $"{PositionText} / {DurationText}"
         : "";
 
+    public string? CurrentLyrics
+    {
+        get => currentLyrics;
+        private set
+        {
+            this.RaiseAndSetIfChanged(ref currentLyrics, value);
+            this.RaisePropertyChanged(nameof(HasLyrics));
+        }
+    }
+
+    public string? CurrentLyricLine
+    {
+        get => currentLyricLine;
+        private set => this.RaiseAndSetIfChanged(ref currentLyricLine, value);
+    }
+
+    public bool HasLyrics => !string.IsNullOrWhiteSpace(CurrentLyrics);
+
+    public bool IsLyricsLoading
+    {
+        get => isLyricsLoading;
+        private set => this.RaiseAndSetIfChanged(ref isLyricsLoading, value);
+    }
+
+    public async Task FetchLyricsAsync(string title, string artist, double duration, CancellationToken ct = default)
+    {
+        if (lyricsService == null || string.IsNullOrWhiteSpace(title))
+        {
+            CurrentLyrics = null;
+            CurrentLyricLine = null;
+            IsLyricsLoading = false;
+            return;
+        }
+
+        int fetchId = Interlocked.Increment(ref activeLyricsFetchId);
+
+        try
+        {
+            IsLyricsLoading = true;
+            var lyrics = await lyricsService.GetLyricsAsync(title, artist, duration, ct);
+            if (!ct.IsCancellationRequested && fetchId == activeLyricsFetchId)
+            {
+                CurrentLyrics = lyrics;
+                CurrentLyricLine = null;
+            }
+        }
+        catch
+        {
+            if (!ct.IsCancellationRequested && fetchId == activeLyricsFetchId)
+            {
+                CurrentLyrics = null;
+                CurrentLyricLine = null;
+            }
+        }
+        finally
+        {
+            if (fetchId == activeLyricsFetchId)
+            {
+                IsLyricsLoading = false;
+            }
+        }
+    }
+
     public void OnSeekStarted()
     {
         isUserDragging = true;
@@ -197,26 +275,81 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
 
     private async void Update()
     {
-        if (isUpdating) return;
+        if (isUpdating)
+        {
+            // If an update is in progress, smoothly advance position locally if actively playing
+            if (isPlaying && durationSeconds > 0 && !isUserDragging)
+            {
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    if (positionSeconds < durationSeconds)
+                    {
+                        PositionSeconds = Math.Min(durationSeconds, positionSeconds + 1.0);
+                    }
+                });
+            }
+            return;
+        }
         isUpdating = true;
 
         try
         {
             var snapshot = await MediaService.GetSnapshotAsync(model.PrefersMusicPlayer, model.AllowBrowserMedia);
 
+            bool isFallbackSnapshot = string.Equals(snapshot.Title, Locale.Media_NowPlaying_Title, StringComparison.OrdinalIgnoreCase);
+
+            // R3 Hysteresis: add grace period before falling back to system audio default text
+            if (isFallbackSnapshot)
+            {
+                bool hasActiveTrack = !string.Equals(trackTitle, Locale.Media_NowPlaying_Title, StringComparison.OrdinalIgnoreCase);
+                if (hasActiveTrack && fallbackGraceTicks < FallbackGracePeriodTicks)
+                {
+                    fallbackGraceTicks++;
+                    // In grace period: update peak meter, mark paused, but do not clear track metadata or album art
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        IsPlaying = false;
+                        PeakPercentage = Math.Clamp(snapshot.PeakLevel * 100.0, 0.0, 100.0);
+                    });
+                    return;
+                }
+            }
+            else
+            {
+                fallbackGraceTicks = 0;
+            }
+
+            bool trackChanged = !string.Equals(snapshot.Title, trackTitle, StringComparison.Ordinal)
+                || !string.Equals(snapshot.ArtistOrApp, artistOrApp, StringComparison.Ordinal)
+                || !string.Equals(snapshot.Album, album, StringComparison.Ordinal);
+
             bool thumbnailChanged = !ByteArraysEqual(snapshot.ThumbnailBytes, currentThumbnailBytes);
             Bitmap? newBitmap = null;
+            bool decodeFailed = false;
 
-            if (thumbnailChanged && snapshot.ThumbnailBytes != null)
+            if (thumbnailChanged)
             {
-                try
+                if (snapshot.ThumbnailBytes != null && snapshot.ThumbnailBytes.Length > 0)
                 {
-                    using var ms = new MemoryStream(snapshot.ThumbnailBytes);
-                    newBitmap = new Bitmap(ms);
+                    try
+                    {
+                        using var ms = new MemoryStream(snapshot.ThumbnailBytes);
+                        newBitmap = new Bitmap(ms);
+                    }
+                    catch
+                    {
+                        // Decode failed: flag so currentThumbnailBytes is not updated (prevents cache poisoning)
+                        newBitmap = null;
+                        decodeFailed = true;
+                    }
                 }
-                catch
+                else
                 {
-                    newBitmap = null;
+                    // R1: Do not wipe AlbumArt if snapshot.ThumbnailBytes is momentarily null but the track is still active
+                    if (!trackChanged && !isFallbackSnapshot && albumArt != null)
+                    {
+                        thumbnailChanged = false;
+                    }
                 }
             }
 
@@ -230,21 +363,93 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
                 IsPlaying = snapshot.IsPlaying;
                 PeakPercentage = Math.Clamp(snapshot.PeakLevel * 100.0, 0.0, 100.0);
 
+                // R2: Assign DurationSeconds and CanSeek BEFORE assigning PositionSeconds!
+                // Prevents Avalonia Slider's TwoWay binding from coercing PositionSeconds to 1.0/0.0 when SliderMaximum is default 1.0
+                if (snapshot.DurationSeconds > 0)
+                {
+                    DurationSeconds = snapshot.DurationSeconds;
+                    CanSeek = snapshot.CanSeek;
+                }
+                else if (isFallbackSnapshot)
+                {
+                    DurationSeconds = 0;
+                    CanSeek = false;
+                }
+                // Else retain previous duration/canSeek when paused or during transient 0
+
+                // R2: Timeline position tracking and local smooth advancement
                 if (!isUserDragging)
                 {
-                    PositionSeconds = Math.Clamp(snapshot.PositionSeconds, 0.0, Math.Max(0.0, snapshot.DurationSeconds));
+                    if (snapshot.PositionSeconds > 0)
+                    {
+                        PositionSeconds = Math.Clamp(snapshot.PositionSeconds, 0.0, SliderMaximum);
+                    }
+                    else if (trackChanged || isFallbackSnapshot)
+                    {
+                        PositionSeconds = 0;
+                    }
+                    else if (snapshot.IsPlaying && DurationSeconds > 0 && PositionSeconds > 0 && PositionSeconds < DurationSeconds)
+                    {
+                        // Smoothly advance locally during active playback
+                        PositionSeconds = Math.Min(DurationSeconds, PositionSeconds + 1.0);
+                    }
+                    else if (!snapshot.IsPlaying && PositionSeconds > 0)
+                    {
+                        // Retain position when paused
+                    }
+                    else
+                    {
+                        PositionSeconds = Math.Clamp(snapshot.PositionSeconds, 0.0, SliderMaximum);
+                    }
                 }
-                DurationSeconds = snapshot.DurationSeconds;
-                CanSeek = snapshot.CanSeek;
 
+                // R1: Safely update AlbumArt and dispose old bitmaps without render-thread contention
                 if (thumbnailChanged)
                 {
-                    var old = AlbumArt;
-                    AlbumArt = newBitmap;
-                    currentThumbnailBytes = snapshot.ThumbnailBytes;
-                    old?.Dispose();
+                    if (decodeFailed)
+                    {
+                        if (trackChanged || isFallbackSnapshot)
+                        {
+                            var old = AlbumArt;
+                            AlbumArt = null;
+                            if (old != null)
+                            {
+                                Dispatcher.UIThread.Post(() => old.Dispose(), DispatcherPriority.Background);
+                            }
+                        }
+                        currentThumbnailBytes = snapshot.ThumbnailBytes;
+                    }
+                    else
+                    {
+                        var old = AlbumArt;
+                        AlbumArt = newBitmap;
+                        currentThumbnailBytes = snapshot.ThumbnailBytes;
+                        if (old != null)
+                        {
+                            Dispatcher.UIThread.Post(() => old.Dispose(), DispatcherPriority.Background);
+                        }
+                    }
                 }
             });
+
+            // R4: Trigger lyrics update on track change
+            if (trackChanged && lyricsService != null && !isFallbackSnapshot)
+            {
+                lyricsCts?.Cancel();
+                lyricsCts?.Dispose();
+                lyricsCts = new CancellationTokenSource();
+                _ = FetchLyricsAsync(snapshot.Title, snapshot.ArtistOrApp, snapshot.DurationSeconds, lyricsCts.Token);
+            }
+            else if (isFallbackSnapshot && lyricsService != null)
+            {
+                Interlocked.Increment(ref activeLyricsFetchId);
+                lyricsCts?.Cancel();
+                lyricsCts?.Dispose();
+                lyricsCts = null;
+                CurrentLyrics = null;
+                CurrentLyricLine = null;
+                IsLyricsLoading = false;
+            }
         }
         catch
         {
@@ -277,6 +482,11 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
     public void Dispose()
     {
         TimerService.Timer1Second.Unsubscribe(Update);
+        Interlocked.Increment(ref activeLyricsFetchId);
+        lyricsCts?.Cancel();
+        lyricsCts?.Dispose();
+        lyricsCts = null;
+        IsLyricsLoading = false;
         if (albumArt != null)
         {
             albumArt.Dispose();
