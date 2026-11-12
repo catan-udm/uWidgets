@@ -57,6 +57,7 @@ public class AssemblyProvider : IAssemblyProvider
         var fileName = Path.GetFileName(filePath);
         return !fileName.StartsWith("System.", StringComparison.OrdinalIgnoreCase) &&
                !fileName.StartsWith("Microsoft.", StringComparison.OrdinalIgnoreCase) &&
+               !fileName.StartsWith("WinRT.", StringComparison.OrdinalIgnoreCase) &&
                !fileName.StartsWith("TimeZone", StringComparison.OrdinalIgnoreCase) &&
                !fileName.StartsWith("Avalonia", StringComparison.OrdinalIgnoreCase) &&
                !fileName.StartsWith("uWidgets", StringComparison.OrdinalIgnoreCase) &&
@@ -163,7 +164,15 @@ public class AssemblyProvider : IAssemblyProvider
 
     private class PluginLoadContext(string pluginPath) : AssemblyLoadContext(true)
     {
+        private static readonly object SharedLoadLock = new();
+        private static readonly HashSet<string> SharedWinRtAssemblies = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "WinRT.Runtime",
+            "Microsoft.Windows.SDK.NET"
+        };
+
         private readonly AssemblyDependencyResolver resolver = new(pluginPath);
+        private readonly string pluginDirectory = Path.GetDirectoryName(pluginPath) ?? Const.WidgetsFolder;
 
         protected override Assembly? Load(AssemblyName assemblyName)
         {
@@ -174,7 +183,52 @@ public class AssemblyProvider : IAssemblyProvider
             }
 
             var assemblyPath = resolver.ResolveAssemblyToPath(assemblyName);
-            return assemblyPath != null ? LoadFromAssemblyPath(assemblyPath) : null;
+            if (assemblyPath == null && !string.IsNullOrEmpty(assemblyName.Name))
+            {
+                var localPath = Path.Combine(pluginDirectory, $"{assemblyName.Name}.dll");
+                if (File.Exists(localPath))
+                {
+                    assemblyPath = localPath;
+                }
+            }
+
+            if (assemblyPath == null)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrEmpty(assemblyName.Name) && SharedWinRtAssemblies.Contains(assemblyName.Name))
+            {
+                return LoadSharedWinRtAssembly(assemblyName.Name, assemblyPath);
+            }
+
+            return LoadFromAssemblyPath(assemblyPath);
+        }
+
+        private static Assembly LoadSharedWinRtAssembly(string assemblyName, string assemblyPath)
+        {
+            lock (SharedLoadLock)
+            {
+                var loaded = Default.Assemblies.FirstOrDefault(a =>
+                    string.Equals(a.GetName().Name, assemblyName, StringComparison.OrdinalIgnoreCase));
+                if (loaded != null)
+                {
+                    return loaded;
+                }
+
+                // Ensure WinRT.Runtime is loaded into Default before Microsoft.Windows.SDK.NET triggers resolution
+                if (assemblyName.Equals("Microsoft.Windows.SDK.NET", StringComparison.OrdinalIgnoreCase) &&
+                    Default.Assemblies.All(a => !string.Equals(a.GetName().Name, "WinRT.Runtime", StringComparison.OrdinalIgnoreCase)))
+                {
+                    var winrtPath = Path.Combine(Path.GetDirectoryName(assemblyPath)!, "WinRT.Runtime.dll");
+                    if (File.Exists(winrtPath))
+                    {
+                        Default.LoadFromAssemblyPath(winrtPath);
+                    }
+                }
+
+                return Default.LoadFromAssemblyPath(assemblyPath);
+            }
         }
 
         protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)

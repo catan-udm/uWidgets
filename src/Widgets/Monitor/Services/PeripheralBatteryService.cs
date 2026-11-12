@@ -179,9 +179,10 @@ public static class PeripheralBatteryService
             var peripheralBatteries = await Task.Run(GetPeripheralsAsync);
             result.AddRange(peripheralBatteries);
         }
-        catch
+        catch (Exception ex)
         {
             // Fail gracefully if Bluetooth/PnP services are unavailable
+            System.Diagnostics.Debug.WriteLine($"[Monitor] GetPeripheralsAsync failed: {ex}");
         }
 
         return result;
@@ -265,9 +266,10 @@ public static class PeripheralBatteryService
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
             // Ignore device enumeration exceptions
+            System.Diagnostics.Debug.WriteLine($"[Monitor] PnP battery enumeration failed: {ex}");
         }
 
         // Secondary fallback for BLE devices exposing GATT 0x180F
@@ -346,9 +348,10 @@ public static class PeripheralBatteryService
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
             // Ignore BLE query errors
+            System.Diagnostics.Debug.WriteLine($"[Monitor] BLE battery enumeration failed: {ex}");
         }
 
         return list;
