@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 
 namespace uWidgets.Core.Models;
 
@@ -39,5 +40,30 @@ public record WidgetLayout(string Type, string SubType, int X, int Y, int Width,
         {
             return null;
         }
+    }
+
+    public virtual bool Equals(WidgetLayout? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Type == other.Type
+            && SubType == other.SubType
+            && X == other.X
+            && Y == other.Y
+            && Width == other.Width
+            && Height == other.Height
+            && JsonElementsEqual(Settings, other.Settings);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Type, SubType, X, Y, Width, Height);
+    }
+
+    private static bool JsonElementsEqual(JsonElement? a, JsonElement? b)
+    {
+        if (!a.HasValue && !b.HasValue) return true;
+        if (!a.HasValue || !b.HasValue) return false;
+        return a.Value.ValueKind == b.Value.ValueKind && a.Value.GetRawText() == b.Value.GetRawText();
     }
 }

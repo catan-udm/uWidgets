@@ -231,7 +231,9 @@ public partial class Widget : Window
 
     private void OnWidgetLayoutUpdated(object? sender, WidgetLayout? oldLayout, WidgetLayout newLayout)
     {
-        if (!Equals(oldLayout?.Settings, newLayout.Settings))
+        var oldJson = oldLayout?.Settings?.GetRawText();
+        var newJson = newLayout.Settings?.GetRawText();
+        if (oldJson != newJson)
         {
             DisposeContent();
             ContentPresenter.Content = userControl();

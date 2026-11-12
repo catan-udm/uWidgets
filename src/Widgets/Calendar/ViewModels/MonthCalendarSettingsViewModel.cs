@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json;
 using Calendar.Models;
 using ReactiveUI;
@@ -5,10 +6,10 @@ using uWidgets.Core.Interfaces;
 
 namespace Calendar.ViewModels;
 
-public class MonthCalendarSettingsViewModel(IWidgetLayoutProvider widgetLayoutProvider) : ReactiveObject
+public class MonthCalendarSettingsViewModel(IWidgetLayoutProvider? widgetLayoutProvider) : ReactiveObject
 {
     public MonthCalendarModel Model =>
-        widgetLayoutProvider.Get().GetModel<MonthCalendarModel>() 
+        widgetLayoutProvider?.Get()?.GetModel<MonthCalendarModel>() 
         ?? new MonthCalendarModel(DayOfWeek.Monday);
 
     public DayOfWeek[] Days => Enum.GetValues<DayOfWeek>();
@@ -18,6 +19,7 @@ public class MonthCalendarSettingsViewModel(IWidgetLayoutProvider widgetLayoutPr
         get => Model.FirstDayOfWeek;
         set
         {
+            if (widgetLayoutProvider == null) return;
             var newModel = Model with { FirstDayOfWeek = value };
             var newSettings = widgetLayoutProvider.Get() with
             {

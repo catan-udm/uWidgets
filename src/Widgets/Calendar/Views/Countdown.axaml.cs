@@ -11,15 +11,16 @@ public partial class Countdown : UserControl
 {
     private readonly CountdownViewModel viewModel;
 
-    public Countdown() : this(new CountdownModel(
-        Locale.Calendar_Countdown_DefaultEvent,
-        new DateTime(DateTime.Now.Year + 1, 1, 1),
-        new DateTime(DateTime.Now.Year, 1, 1),
-        true))
+    public Countdown() : this((CountdownModel?)null)
     { }
 
-    public Countdown(CountdownModel model)
+    public Countdown(CountdownModel? model)
     {
+        model ??= new CountdownModel(
+            Locale.Calendar_Countdown_DefaultEvent,
+            new DateTime(DateTime.Now.Year + 1, 1, 1),
+            new DateTime(DateTime.Now.Year, 1, 1),
+            true);
         viewModel = new CountdownViewModel(model);
         DataContext = viewModel;
         SizeChanged += OnSizeChanged;

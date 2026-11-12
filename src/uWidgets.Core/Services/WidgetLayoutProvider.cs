@@ -20,7 +20,21 @@ public class WidgetLayoutProvider(ILayoutProvider layoutProvider, WidgetLayout w
     {
         DataChanging?.Invoke(this, widgetLayout, data);
         var layout = layoutProvider.Get();
-        var index = layout.IndexOf(widgetLayout);
+        var index = layout.FindIndex(item => 
+            item.Type == widgetLayout.Type && 
+            item.SubType == widgetLayout.SubType && 
+            item.X == widgetLayout.X && 
+            item.Y == widgetLayout.Y);
+
+        if (index == -1)
+        {
+            index = layout.FindIndex(item => item.Type == widgetLayout.Type && item.SubType == widgetLayout.SubType);
+        }
+
+        if (index == -1)
+        {
+            index = layout.IndexOf(widgetLayout);
+        }
 
         if (index == -1) return;
         
@@ -35,7 +49,21 @@ public class WidgetLayoutProvider(ILayoutProvider layoutProvider, WidgetLayout w
     public void Remove()
     {
         var layout = layoutProvider.Get();
-        layout.Remove(widgetLayout);
-        layoutProvider.Save(layout);
+        var index = layout.FindIndex(item => 
+            item.Type == widgetLayout.Type && 
+            item.SubType == widgetLayout.SubType && 
+            item.X == widgetLayout.X && 
+            item.Y == widgetLayout.Y);
+
+        if (index == -1)
+        {
+            index = layout.IndexOf(widgetLayout);
+        }
+
+        if (index != -1)
+        {
+            layout.RemoveAt(index);
+            layoutProvider.Save(layout);
+        }
     }
 }

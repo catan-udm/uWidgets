@@ -6,9 +6,14 @@ namespace Calendar.Views.Settings;
 
 public partial class CountdownSettings : UserControl
 {
+    public CountdownSettings() : this(null!)
+    {
+    }
+
     public CountdownSettings(IWidgetLayoutProvider widgetLayoutProvider)
     {
         DataContext = new CountdownSettingsViewModel(widgetLayoutProvider);
         InitializeComponent();
     }
 }
+
