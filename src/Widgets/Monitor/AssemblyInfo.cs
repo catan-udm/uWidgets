@@ -6,7 +6,7 @@ using Monitor.Views.Settings;
 using uWidgets.Core.Models.Attributes;
 
 [assembly: AssemblyCompany("creewick")]
-[assembly: AssemblyVersion("1.1.0")]
+[assembly: AssemblyVersion("1.1.1")]
 
 [assembly: WidgetInfo(typeof(SingleMetric), typeof(SingleMetricModel), typeof(SingleMetricSettings), "Monitor_SingleMetric_Title", "Monitor_SingleMetric_Subtitle")]
 [assembly: WidgetInfo(typeof(Dashboard), typeof(DashboardModel), typeof(DashboardSettings), "Monitor_Dashboard_Title", "Monitor_Dashboard_Subtitle")]

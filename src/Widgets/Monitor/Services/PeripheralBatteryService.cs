@@ -71,6 +71,29 @@ public static class PeripheralBatteryService
     public static bool IsGenericName(string? name) =>
         string.IsNullOrWhiteSpace(name) || GenericNames.Contains(name.Trim());
 
+    private static readonly string[] AccessoryNameSuffixes =
+    {
+        " Hands-Free AG",
+        " Hands-Free",
+        " Avrcp Transport",
+        " Bluetooth Audio",
+        " Stereo"
+    };
+
+    public static string CleanDeviceName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return name;
+
+        foreach (var s in AccessoryNameSuffixes)
+        {
+            if (name.EndsWith(s, StringComparison.OrdinalIgnoreCase))
+            {
+                name = name.Substring(0, name.Length - s.Length).Trim();
+            }
+        }
+        return name;
+    }
+
     public static string ResolveAccessoryModelName(DeviceInformation d, string? fallbackManufacturer = null)
     {
         string? model = null;
@@ -171,21 +194,23 @@ public static class PeripheralBatteryService
     private static async Task<List<DeviceBatteryInfo>> GetPeripheralsAsync()
     {
         var list = new List<DeviceBatteryInfo>();
+        var seenContainers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         try
         {
-            // Query devices with battery property and model/friendly identification
+            // Query present devices with battery property and model/friendly identification
             var properties = new[]
             {
                 "System.ItemNameDisplay",
                 "System.Devices.ModelName",
                 "System.Devices.FriendlyName",
                 "System.Devices.DeviceManufacturer",
+                "System.Devices.ContainerId",
                 BatteryLevelPropKey
             };
-            var selector = $"System.Devices.Aep.IsConnected:=System.StructuredQueryType.Boolean#True";
+            var selector = "System.Devices.Present:=System.StructuredQueryType.Boolean#True";
             
-            var devices = await DeviceInformation.FindAllAsync(selector, properties);
+            var devices = await DeviceInformation.FindAllAsync(selector, properties, DeviceInformationKind.Device);
 
             foreach (var d in devices)
             {
@@ -193,12 +218,45 @@ public static class PeripheralBatteryService
                 {
                     if (Convert.ToInt32(batteryVal) is var pct and >= 0 and <= 100)
                     {
-                        var name = ResolveAccessoryModelName(d);
+                        string name = ResolveAccessoryModelName(d);
+                        string containerKey = d.Id;
+
+                        if (d.Properties.TryGetValue("System.Devices.ContainerId", out var cIdObj) && cIdObj is Guid cGuid)
+                        {
+                            containerKey = cGuid.ToString();
+                            if (!seenContainers.Add(containerKey))
+                            {
+                                continue;
+                            }
+
+                            try
+                            {
+                                var container = await DeviceInformation.CreateFromIdAsync(
+                                    "{" + cGuid.ToString() + "}",
+                                    new[] { "System.ItemNameDisplay", "System.Devices.FriendlyName", "System.Devices.ModelName" },
+                                    DeviceInformationKind.DeviceContainer);
+
+                                if (container != null && !IsGenericName(container.Name))
+                                {
+                                    name = container.Name;
+                                }
+                            }
+                            catch { }
+                        }
+                        else
+                        {
+                            if (!seenContainers.Add(containerKey))
+                            {
+                                continue;
+                            }
+                        }
+
+                        name = CleanDeviceName(name);
 
                         list.Add(new DeviceBatteryInfo(
                             DeviceId: d.Id,
                             Name: name,
-                            Type: InferDeviceType(name),
+                            Type: InferDeviceType(name, d.Id),
                             BatteryLevel: pct / 100.0,
                             IsCharging: false,
                             IsConnected: true
@@ -258,11 +316,12 @@ public static class PeripheralBatteryService
                                         {
                                             byte b = reader.ReadByte();
                                             var resolvedName = await ResolveBleModelNameAsync(ble, devInfo.Name);
+                                            resolvedName = CleanDeviceName(resolvedName);
 
                                             list.Add(new DeviceBatteryInfo(
                                                 DeviceId: devInfo.Id,
                                                 Name: resolvedName,
-                                                Type: InferDeviceType(resolvedName),
+                                                Type: InferDeviceType(resolvedName, devInfo.Id),
                                                 BatteryLevel: b / 100.0,
                                                 IsCharging: false,
                                                 IsConnected: true
@@ -357,14 +416,27 @@ public static class PeripheralBatteryService
         return "Wireless Accessory";
     }
 
-    public static DeviceType InferDeviceType(string? name)
+    public static DeviceType InferDeviceType(string? name, string? deviceId = null)
     {
+        if (!string.IsNullOrEmpty(deviceId))
+        {
+            var lowerId = deviceId.ToLowerInvariant();
+            // Hands-Free Profile (0000111e), Headset Profile (00001108), A2DP Audio Sink (0000110b)
+            if (lowerId.Contains("0000111e") || lowerId.Contains("00001108") || lowerId.Contains("0000110b"))
+            {
+                return DeviceType.Headset;
+            }
+        }
+
         if (string.IsNullOrWhiteSpace(name)) return DeviceType.Other;
 
         var lower = name.ToLowerInvariant();
         if (lower.Contains("headset") || lower.Contains("headphone") || lower.Contains("earbud") ||
             lower.Contains("airpods") || lower.Contains("buds") || lower.Contains("wh-") || lower.Contains("wf-") ||
-            lower.Contains("soundcore") || lower.Contains("jabra") || lower.Contains("bose") || lower.Contains("sony"))
+            lower.Contains("soundcore") || lower.Contains("jabra") || lower.Contains("bose") || lower.Contains("sony") ||
+            lower.Contains("hands-free") || lower.Contains("handsfree") || lower.Contains("earphone") ||
+            lower.Contains("audio") || lower.Contains("studio") || lower.Contains("ugreen") || lower.Contains("sennheiser") ||
+            lower.Contains("shokz") || lower.Contains("jbl") || lower.Contains("beats") || lower.Contains("anker"))
         {
             return DeviceType.Headset;
         }
