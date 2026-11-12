@@ -60,6 +60,14 @@ class Program
                 }
             }
 
+            try
+            {
+                SkiaSharp.SKGraphics.SetResourceCacheTotalByteLimit(8 * 1024 * 1024);
+            }
+            catch
+            {
+            }
+
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args);
         }
@@ -81,6 +89,7 @@ class Program
             .UsePlatformDetect()
             .UseReactiveUI()
             .WithInterFont()
+            .With(new SkiaOptions { MaxGpuResourceSizeBytes = 16 * 1024 * 1024 })
             .With(new Win32PlatformOptions
             {
                 CompositionMode = new[] { Win32CompositionMode.WinUIComposition },
