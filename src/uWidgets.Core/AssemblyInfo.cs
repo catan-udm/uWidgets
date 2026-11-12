@@ -3,4 +3,4 @@
 [assembly: AssemblyTitle("uWidgets.Core")]
 [assembly: AssemblyDescription("Core functionality for uWidgets")]
 [assembly: AssemblyCompany("creewick")]
-[assembly: AssemblyVersion("0.5.1")]
+[assembly: AssemblyVersion("0.6.0")]

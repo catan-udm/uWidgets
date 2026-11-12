@@ -1,0 +1,108 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pages="clr-namespace:uWidgets.Views.Pages"
+             x:Class="uWidgets.Views.Pages.HelpAndGuide"
+             x:DataType="pages:HelpAndGuide">
+    <UserControl.Styles>
+        <Style Selector="Border.GuideCard">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolTipBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Orientation="Vertical" Spacing="12">
+        <!-- Welcome Tour Replay -->
+        <Border Classes="GuideCard">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="4" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <TextBlock FontSize="15" FontWeight="SemiBold" Text="Interactive Welcome Tour &amp; Starter Packs" />
+                    <TextBlock FontSize="12" Opacity="0.75" TextWrapping="Wrap"
+                               Text="Re-open the 3-step onboarding walkthrough or apply a curated Essential, Developer, or Minimalist starter pack." />
+                </StackPanel>
+                <Button Grid.Column="1" Classes="accent" VerticalAlignment="Center"
+                        Content="Launch Welcome Tour" Click="ReplayWelcome_OnClick" />
+            </Grid>
+        </Border>
+
+        <!-- How to Use Desktop Gestures -->
+        <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" Text="How to Use Desktop Widgets" />
+        <Border Classes="GuideCard">
+            <StackPanel Spacing="10">
+                <StackPanel Spacing="2">
+                    <TextBlock FontWeight="SemiBold" Text="Move &amp; Grid Snapping" />
+                    <TextBlock FontSize="12" Opacity="0.78" TextWrapping="Wrap"
+                               Text="Left-click and drag anywhere on a widget to reposition it—including across multiple monitors. Release to snap to your grid." />
+                </StackPanel>
+                <Separator />
+                <StackPanel Spacing="2">
+                    <TextBlock FontWeight="SemiBold" Text="Resize (Handle or Right-Click)" />
+                    <TextBlock FontSize="12" Opacity="0.78" TextWrapping="Wrap"
+                               Text="Hover near the bottom-right corner and drag the resize grip, or right-click a widget and select Small, Medium, Large, or Extra Large." />
+                </StackPanel>
+                <Separator />
+                <StackPanel Spacing="2">
+                    <TextBlock FontWeight="SemiBold" Text="Configure Widget Data" />
+                    <TextBlock FontSize="12" Opacity="0.78" TextWrapping="Wrap"
+                               Text="Right-click any widget and choose Edit to customize cities, stocks, timezones, Git repositories, photos, or countdowns." />
+                </StackPanel>
+                <Separator />
+                <StackPanel Spacing="2">
+                    <TextBlock FontWeight="SemiBold" Text="Typing in Notes &amp; Reminders" />
+                    <TextBlock FontSize="12" Opacity="0.78" TextWrapping="Wrap"
+                               Text="Single-click drags a widget; double-click inside a Note or Reminder text box when you want to type. Press Esc or Enter to finish." />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Global Shortcuts -->
+        <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" Text="Global Keyboard Shortcuts" />
+        <Border Classes="GuideCard">
+            <StackPanel Spacing="8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Open uWidgets Settings" />
+                    <Border Grid.Column="1" Padding="8,3" CornerRadius="4" Background="{DynamicResource SettingsBackground}">
+                        <TextBlock FontFamily="Consolas" FontSize="12" Text="{Binding OpenSettingsHotkey}" />
+                    </Border>
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Show / Hide All Desktop Widgets (Boss Key)" />
+                    <Border Grid.Column="1" Padding="8,3" CornerRadius="4" Background="{DynamicResource SettingsBackground}">
+                        <TextBlock FontFamily="Consolas" FontSize="12" Text="{Binding ToggleWidgetsHotkey}" />
+                    </Border>
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Lock / Unlock Widget Positions" />
+                    <Border Grid.Column="1" Padding="8,3" CornerRadius="4" Background="{DynamicResource SettingsBackground}">
+                        <TextBlock FontFamily="Consolas" FontSize="12" Text="{Binding ToggleLockHotkey}" />
+                    </Border>
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Search Settings" />
+                    <Border Grid.Column="1" Padding="8,3" CornerRadius="4" Background="{DynamicResource SettingsBackground}">
+                        <TextBlock FontFamily="Consolas" FontSize="12" Text="Ctrl+F" />
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- System Tray & Storage -->
+        <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" Text="System Tray, Storage &amp; Troubleshooting" />
+        <Border Classes="GuideCard">
+            <StackPanel Spacing="8">
+                <TextBlock FontSize="12" Opacity="0.8" TextWrapping="Wrap"
+                           Text="{Binding StoragePathDescription}" />
+                <TextBlock FontSize="12" Opacity="0.8" TextWrapping="Wrap"
+                           Text="Portable Mode: Place an empty portable.dat file next to uWidgets.exe to store settings and layouts beside the executable." />
+                <TextBlock FontSize="12" Opacity="0.8" TextWrapping="Wrap"
+                           Text="Offscreen Widgets: If you disconnect a monitor, open Widget Manager &gt; Active Widgets and click Center to recover any widget." />
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                    <Button Content="Open Data Folder" Click="OpenDataFolder_OnClick" />
+                    <Button Content="Open Logs Folder" Click="OpenLogsFolder_OnClick" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

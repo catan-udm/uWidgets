@@ -10,7 +10,7 @@
                    Text="{Binding CityName}" />
 
         <!-- Bottom row: Temperature, Icon, and Details -->
-        <Grid Grid.Row="1" RowDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
+        <Grid Grid.Row="1" RowDefinitions="Auto,*,Auto,Auto,Auto" VerticalAlignment="Center">
             <TextBlock Grid.Row="0" FontSize="38" LetterSpacing="-1" Margin="-2,-2,0,0"
                        Text="{Binding CurrentTemperature}" />
             <PathIcon Grid.Row="1" HorizontalAlignment="Left" Width="20" Height="20" Margin="0,2,0,2"
@@ -21,6 +21,13 @@
                        Text="{Binding CurrentCondition}" />
             <TextBlock Grid.Row="3" FontSize="12" FontWeight="Bold" Opacity="0.5"
                        Text="{Binding CurrentMinMax}" />
+            <Grid Grid.Row="4" ColumnDefinitions="*,Auto" Margin="0,4,0,0" IsVisible="{Binding HasErrorBanner}">
+                <TextBlock Grid.Column="0" Text="{Binding StatusBadgeText}" FontSize="9.5" Opacity="0.7"
+                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,4,0" />
+                <Button Grid.Column="1" Content="{Binding RetryButtonText}"
+                        Command="{Binding RetryCommand}" IsEnabled="{Binding CanRetry}"
+                        FontSize="9.5" Padding="6,2" CornerRadius="4" />
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

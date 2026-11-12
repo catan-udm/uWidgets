@@ -86,15 +86,16 @@ public partial class Widget : Window
     {
         Position = new PixelPoint(widgetLayoutProvider.Get().X, widgetLayoutProvider.Get().Y);
         Scale();
-        InteropService.PinWindowToDesktop(this);
+        InteropService.ApplyLayeringMode(this, appSettingsProvider.Get().Layout.LayeringMode);
         UpdateLiquidGlassState(appSettingsProvider.Get());
+        RecoverIfOffscreen();
     }
 
     private void OnActivated(object? sender, EventArgs e)
     {
         Position = new PixelPoint(widgetLayoutProvider.Get().X, widgetLayoutProvider.Get().Y);
         Scale();
-        InteropService.PinWindowToDesktop(this);
+        InteropService.ApplyLayeringMode(this, appSettingsProvider.Get().Layout.LayeringMode);
         UpdateLiquidGlassState(appSettingsProvider.Get());
     }
 
@@ -122,6 +123,8 @@ public partial class Widget : Window
     }
 
     private bool UseEffectiveNativeFrame => appSettingsProvider.Get().Theme.UseNativeFrame && !appSettingsProvider.Get().Theme.LiquidGlass;
+    public Guid WidgetId => widgetLayoutProvider.Get().Id;
+    public WidgetLayout CurrentLayout => widgetLayoutProvider.Get();
     public bool ShowEditButton => editWidgetWindow != null;
     public string Edit => $"{Locale.Widget_Edit} \"{widgetLayoutProvider.Get().Type}\"";
     public CornerRadius Radius => UseEffectiveNativeFrame
@@ -139,13 +142,74 @@ public partial class Widget : Window
     {
         if (editWidgetWindow == null) return;
         await editWidgetWindow.Invoke().ShowDialog(this);
-        InteropService.EnforceDesktopZOrder(this);
+        if (appSettingsProvider.Get().Layout.LayeringMode == LayeringMode.DesktopPinned)
+            InteropService.EnforceDesktopZOrder(this);
     }
     public void ResizeSmall() => _ = Resize(2, 2);
     public void ResizeMedium() => _ = Resize(4, 2);
     public void ResizeLarge() => _ = Resize(4, 4);
     public void ResizeExtraLarge() => _ = Resize(8, 4);
-    public void OpenSettings() => settingsWindow.Invoke().Show();
+    public void OpenSettings()
+    {
+        var settings = settingsWindow.Invoke();
+        settings.Show();
+        if (settings.WindowState == WindowState.Minimized)
+            settings.WindowState = WindowState.Normal;
+        settings.Activate();
+    }
+
+    public void RecoverIfOffscreen()
+    {
+        var screens = Screens.All;
+        if (screens.Count == 0) return;
+
+        var scaling = Screens.ScreenFromWindow(this)?.Scaling ?? RenderScaling;
+        var widgetRect = new PixelRect(
+            Position.X,
+            Position.Y,
+            Math.Max(1, (int)(Width * scaling)),
+            Math.Max(1, (int)(Height * scaling)));
+
+        var isVisibleOnAnyScreen = false;
+        foreach (var screen in screens)
+        {
+            var intersection = screen.WorkingArea.Intersect(widgetRect);
+            if (intersection.Width >= 32 && intersection.Height >= 32)
+            {
+                isVisibleOnAnyScreen = true;
+                break;
+            }
+        }
+
+        if (!isVisibleOnAnyScreen)
+            ResetToCenter();
+    }
+
+    public void ResetToCenter()
+    {
+        var primary = Screens.Primary ?? (Screens.All.Count > 0 ? Screens.All[0] : null);
+        if (primary == null) return;
+
+        var work = primary.WorkingArea;
+        var scaling = primary.Scaling;
+        var targetX = work.X + Math.Max(0, (work.Width - (int)(Width * scaling)) / 2);
+        var targetY = work.Y + Math.Max(0, (work.Height - (int)(Height * scaling)) / 2);
+
+        Position = new PixelPoint(targetX, targetY);
+        AfterMove();
+    }
+
+    public async Task HighlightAsync()
+    {
+        var originalOpacity = Opacity;
+        for (var i = 0; i < 3; i++)
+        {
+            Opacity = 0.35;
+            await Task.Delay(140);
+            Opacity = originalOpacity;
+            await Task.Delay(140);
+        }
+    }
 
     private void OnPointerReleased(object? sender, PointerReleasedEventArgs e) => AfterMove();
 
@@ -166,6 +230,9 @@ public partial class Widget : Window
     {
         if (oldData?.Layout.LockSize != newData.Layout.LockSize)
             SetMinMaxSize(newData.Layout.LockSize);
+
+        if (oldData?.Layout.LayeringMode != newData.Layout.LayeringMode)
+            InteropService.ApplyLayeringMode(this, newData.Layout.LayeringMode);
 
         if (oldData?.Dimensions != newData.Dimensions)
         {

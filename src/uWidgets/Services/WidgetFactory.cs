@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Avalonia.Controls;
+using Microsoft.Extensions.DependencyInjection;
 using uWidgets.Core.Interfaces;
 using uWidgets.Core.Models;
 using uWidgets.Core.Models.Attributes;
@@ -11,16 +12,25 @@ using uWidgets.Views;
 
 namespace uWidgets.Services;
 
-public class WidgetFactory(IAssemblyProvider assemblyProvider, ILayoutProvider layoutProvider) 
+public class WidgetFactory(
+    IAssemblyProvider assemblyProvider,
+    ILayoutProvider layoutProvider,
+    WidgetRegistry widgetRegistry,
+    IServiceProvider serviceProvider) 
     : IWidgetFactory<Window, UserControl>
 {
     public IEnumerable<Window> Create() => layoutProvider.Get().Select(CreateInternal);
     
     public Window Add(WidgetLayout widgetLayout)
     {
-        layoutProvider.Save(layoutProvider.Get().Append(widgetLayout).ToList());
+        var sanitized = widgetLayout.Id == Guid.Empty
+            ? widgetLayout with { Id = Guid.NewGuid() }
+            : widgetLayout;
+        var list = layoutProvider.Get().ToList();
+        list.Add(sanitized);
+        layoutProvider.Save(list);
         
-        return CreateInternal(widgetLayout);
+        return CreateInternal(sanitized);
     }
 
     public UserControl CreateControl(Type type)
@@ -36,15 +46,19 @@ public class WidgetFactory(IAssemblyProvider assemblyProvider, ILayoutProvider l
         var assembly = assemblyProvider.LoadAssembly(widgetLayout.Type);
         var widgetInfo = GetWidgetInfo(assembly, widgetLayout.SubType);
         var widgetControl = () => CreateWidgetControl(widgetInfo.ViewType, widgetLayoutProvider, widgetLayoutProvider.Get().GetModel(widgetInfo.ModelType));
-        var settingsWindow = () => (Settings) assemblyProvider.Activate(typeof(Settings));
+        var settingsWindow = () => serviceProvider.GetRequiredService<Settings>();
         
         var editWidgetWindow = widgetInfo.EditModelViewType != null 
             ? () => CreateEditWidgetWindow(widgetLayoutProvider, widgetInfo.EditModelViewType)
             : (Func<EditWidget>?) null;
         
-        if (editWidgetWindow != null)
-            return (Widget) assemblyProvider.Activate(typeof(Widget), widgetLayoutProvider, widgetControl, settingsWindow, editWidgetWindow);
-        return (Widget) assemblyProvider.Activate(typeof(Widget), widgetLayoutProvider, widgetControl, settingsWindow);
+        var widget = editWidgetWindow != null
+            ? (Widget) assemblyProvider.Activate(typeof(Widget), widgetLayoutProvider, widgetControl, settingsWindow, editWidgetWindow)
+            : (Widget) assemblyProvider.Activate(typeof(Widget), widgetLayoutProvider, widgetControl, settingsWindow);
+
+        widgetRegistry.Register(widget);
+        widget.Closed += (_, _) => widgetRegistry.Unregister(widget);
+        return widget;
     }
 
     private UserControl CreateWidgetControl(Type type, WidgetLayoutProvider? widgetLayoutProvider, object? model)

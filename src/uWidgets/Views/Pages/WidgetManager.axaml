@@ -1,0 +1,144 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:uWidgets.ViewModels"
+             x:Class="uWidgets.Views.Pages.WidgetManager"
+             x:DataType="viewModels:WidgetManagerViewModel">
+    <UserControl.Styles>
+        <Style Selector="Border.ManagerCard">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolTipBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="14" />
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Spacing="12">
+        <Border IsVisible="{Binding HasStatusMessage}"
+                CornerRadius="6" Padding="12,8"
+                Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundAccentBrush}" BorderThickness="1.5">
+            <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" TextWrapping="Wrap" />
+        </Border>
+
+        <TabControl>
+            <!-- Tab 1: Active Widgets -->
+            <TabItem Header="Active Widgets">
+                <StackPanel Spacing="10" Margin="0,12,0,0">
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                        <TextBlock VerticalAlignment="Center" Opacity="0.8" Text="{Binding ActiveWidgetsSummary}" Margin="0,0,8,0" />
+                        <Button Grid.Column="1" Content="Recover Offscreen" Click="RecoverOffscreen_OnClick" Margin="0,0,8,0" />
+                        <Button Grid.Column="2" Content="Show / Hide All" Click="ToggleAll_OnClick" />
+                    </Grid>
+
+                    <Border Classes="ManagerCard" IsVisible="{Binding HasNoActiveWidgets}" Padding="24">
+                        <StackPanel Spacing="6" HorizontalAlignment="Center">
+                            <TextBlock FontWeight="SemiBold" HorizontalAlignment="Center"
+                                       Text="No widgets on your desktop yet" />
+                            <TextBlock FontSize="12" Opacity="0.75" HorizontalAlignment="Center"
+                                       Text="Switch to the Widget Catalog tab or click any category in the sidebar to place your first widget." />
+                        </StackPanel>
+                    </Border>
+
+                    <ItemsControl ItemsSource="{Binding ActiveWidgets}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="viewModels:ActiveWidgetItemViewModel">
+                                <Border Classes="ManagerCard" Margin="0,0,0,6">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Spacing="3" VerticalAlignment="Center" Margin="0,0,12,0">
+                                            <TextBlock FontWeight="SemiBold" Text="{Binding DisplayTitle}" />
+                                            <TextBlock FontSize="12" Opacity="0.75" Text="{Binding CoordinatesText}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <Button Content="Highlight" Click="HighlightWidget_OnClick" />
+                                            <Button Content="Center" Click="CenterWidget_OnClick" />
+                                            <Button Content="{Binding VisibilityLabel}" Click="ToggleWidgetVisibility_OnClick" />
+                                            <Button Content="Edit" IsVisible="{Binding CanEdit}" Click="EditWidget_OnClick" />
+                                            <Button Content="Remove" Click="RemoveWidget_OnClick" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </TabItem>
+
+            <!-- Tab 2: Widget Catalog (All 11 Modules / 27 Views) -->
+            <TabItem Header="Widget Catalog">
+                <StackPanel Spacing="10" Margin="0,12,0,0">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0" Margin="0,0,8,0"
+                                 Watermark="Search all widgets (clock, weather, git, crypto, notes...)"
+                                 Text="{Binding CatalogSearch, Mode=TwoWay}"
+                                 Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                 BorderThickness="1" CornerRadius="4" Padding="10,6" />
+                        <ComboBox Grid.Column="1" MinWidth="140"
+                                  ItemsSource="{Binding Categories}"
+                                  SelectedItem="{Binding SelectedCategory}" />
+                    </Grid>
+
+                    <ItemsControl ItemsSource="{Binding FilteredCatalog}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="viewModels:CatalogWidgetItemViewModel">
+                                <Border Classes="ManagerCard" Margin="0,0,0,6">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Spacing="2" VerticalAlignment="Center" Margin="0,0,12,0">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock FontWeight="SemiBold" Text="{Binding Title}" />
+                                                <Border Padding="6,1" CornerRadius="4" Background="{DynamicResource SettingsBackground}">
+                                                    <TextBlock FontSize="11" Opacity="0.8" Text="{Binding ModuleDisplayName}" />
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock FontSize="12" Opacity="0.75" TextWrapping="Wrap" Text="{Binding Subtitle}" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Classes="accent" VerticalAlignment="Center"
+                                                Content="Add to Desktop" Click="AddCatalogWidget_OnClick" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </TabItem>
+
+            <!-- Tab 3: Layout Profiles -->
+            <TabItem Header="Layout Profiles">
+                <StackPanel Spacing="12" Margin="0,12,0,0">
+                    <Border Classes="ManagerCard">
+                        <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                            <TextBox Grid.Column="0" Margin="0,0,8,0"
+                                     Watermark="New profile name (e.g. Work Setup)..."
+                                     Text="{Binding ProfileNameInput, Mode=TwoWay}"
+                                     Background="{DynamicResource SettingsBackground}"
+                                     BorderThickness="1" CornerRadius="4" Padding="10,6" />
+                            <Button Grid.Column="1" Margin="0,0,8,0" Classes="accent" Content="Save Current Layout" Click="SaveProfile_OnClick" />
+                            <Button Grid.Column="2" Margin="0,0,8,0" Content="Export JSON" Click="ExportLayout_OnClick" />
+                            <Button Grid.Column="3" Content="Import JSON" Click="ImportLayout_OnClick" />
+                        </Grid>
+                    </Border>
+
+                    <ItemsControl ItemsSource="{Binding Profiles}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="viewModels:LayoutProfileItemViewModel">
+                                <Border Classes="ManagerCard" Margin="0,0,0,6">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Spacing="2" VerticalAlignment="Center" Margin="0,0,12,0">
+                                            <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                                            <TextBlock FontSize="12" Opacity="0.75"
+                                                       Text="{Binding WidgetCount, StringFormat={}{0} widget(s) saved}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                            <Button Classes="accent" Content="Apply Profile" Click="ApplyProfile_OnClick" />
+                                            <Button Content="Delete" Click="DeleteProfile_OnClick" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </StackPanel>
+</UserControl>

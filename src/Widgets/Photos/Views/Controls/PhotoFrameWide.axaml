@@ -41,10 +41,10 @@
                     </Canvas>
                 </Viewbox>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
-                    <TextBlock Text="{x:Static locales:Locale.Photos_Frame_Title}"
+                    <TextBlock Text="{Binding PlaceholderTitle}"
                                FontSize="15"
                                FontWeight="Bold" />
-                    <TextBlock Text="{x:Static locales:Locale.Photos_Placeholder}"
+                    <TextBlock Text="{Binding PlaceholderDescription}"
                                FontSize="12"
                                Opacity="0.65"
                                TextWrapping="Wrap" />

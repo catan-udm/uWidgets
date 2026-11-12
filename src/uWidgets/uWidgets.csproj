@@ -46,6 +46,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <AvaloniaResource Include="Assets\**" />
+    </ItemGroup>
+
+    <ItemGroup>
       <None Update="app.manifest">
         <DependentUpon>App.axaml</DependentUpon>
       </None>

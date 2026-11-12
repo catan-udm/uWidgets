@@ -1,0 +1,82 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls"
+             xmlns:viewModels="clr-namespace:uWidgets.ViewModels"
+             xmlns:locales="clr-namespace:uWidgets.Locales"
+             x:Class="uWidgets.Views.Pages.VisualEffects"
+             x:DataType="viewModels:VisualEffectsViewModel">
+    <StackPanel Orientation="Vertical" Spacing="6">
+        <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6" Text="Liquid Glass Effect" />
+        <controls:Setting Icon="{DynamicResource LiquidGlass}"
+                          Title="{x:Static locales:Locale.Settings_Appearance_LiquidGlass_Title}"
+                          Subtitle="{x:Static locales:Locale.Settings_Appearance_LiquidGlass_Subtitle}">
+            <ToggleSwitch IsChecked="{Binding LiquidGlass}" />
+        </controls:Setting>
+
+        <!-- Friendly Glass Presets -->
+        <StackPanel Orientation="Vertical" Spacing="8" Margin="0,12,0,0" IsVisible="{Binding LiquidGlass}">
+            <TextBlock FontSize="14" FontWeight="SemiBold" Text="Glass Presets" />
+            <Grid ColumnDefinitions="*,*,*">
+                <Button Grid.Column="0" HorizontalAlignment="Stretch" Padding="12" CornerRadius="6" Margin="0,0,8,0"
+                        Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                        Click="PresetSubtle_OnClick">
+                    <StackPanel Spacing="3">
+                        <TextBlock FontWeight="SemiBold" Text="Subtle Frost" />
+                        <TextBlock FontSize="11" Opacity="0.75" TextWrapping="Wrap"
+                                   Text="Soft, clean desktop blur with minimal edge bending." />
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="1" HorizontalAlignment="Stretch" Padding="12" CornerRadius="6" Margin="4,0,4,0"
+                        Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                        Click="PresetBalanced_OnClick">
+                    <StackPanel Spacing="3">
+                        <TextBlock FontWeight="SemiBold" Text="Frosted Meniscus" />
+                        <TextBlock FontSize="11" Opacity="0.75" TextWrapping="Wrap"
+                                   Text="Balanced curved glass border and subtle prism rim." />
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="2" HorizontalAlignment="Stretch" Padding="12" CornerRadius="6" Margin="8,0,0,0"
+                        Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                        Click="PresetCrystal_OnClick">
+                    <StackPanel Spacing="3">
+                        <TextBlock FontWeight="SemiBold" Text="High Refraction Crystal" />
+                        <TextBlock FontSize="11" Opacity="0.75" TextWrapping="Wrap"
+                                   Text="Deep optical refraction and vivid edge dispersion." />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- Collapsible Advanced Optics Tuning -->
+            <Expander Header="Optics Fine-Tuning (Advanced)" Margin="0,8,0,0" HorizontalAlignment="Stretch">
+                <StackPanel Orientation="Vertical" Spacing="3" Margin="0,6,0,0">
+                    <controls:Setting Icon="{DynamicResource LiquidGlass}"
+                                      Title="Edge Bevel Thickness"
+                                      Subtitle="Width of the curved glass rim along widget borders (default: 50 px)">
+                        <NumericUpDown MinWidth="130" Minimum="8" Maximum="120" Increment="2" FormatString="0.#" Value="{Binding RefThickness}" />
+                    </controls:Setting>
+                    <controls:Setting Icon="{DynamicResource LiquidGlass}"
+                                      Title="Refraction Intensity"
+                                      Subtitle="Strength of background warping through the glass rim (default: 1.50)">
+                        <NumericUpDown MinWidth="130" Minimum="1.05" Maximum="2.60" Increment="0.05" FormatString="0.00" Value="{Binding RefFactor}" />
+                    </controls:Setting>
+                    <controls:Setting Icon="{DynamicResource LiquidGlass}"
+                                      Title="Rainbow Prism Glare"
+                                      Subtitle="Color separation intensity along curved glass edges (default: 160)">
+                        <NumericUpDown MinWidth="130" Minimum="0" Maximum="400" Increment="10" FormatString="0" Value="{Binding RefDispersion}" />
+                    </controls:Setting>
+                    <controls:Setting Icon="{DynamicResource WidgetRadius}"
+                                      Title="Corner Bevel Ratio"
+                                      Subtitle="Inner bevel curve relative to corner radius (default: 0.85)">
+                        <NumericUpDown MinWidth="130" Minimum="0.10" Maximum="1.00" Increment="0.05" FormatString="0.00" Value="{Binding ShapeRadius}" />
+                    </controls:Setting>
+                    <controls:Setting Icon="{DynamicResource WidgetRadius}"
+                                      Title="Corner Smoothing"
+                                      Subtitle="Squircle curve smoothness from circular (2.0) to crisp (8.0) (default: 4.0)">
+                        <NumericUpDown MinWidth="130" Minimum="2.0" Maximum="8.0" Increment="0.2" FormatString="0.0#" Value="{Binding ShapeRoundness}" />
+                    </controls:Setting>
+                    <Button Margin="0,6,0,0" HorizontalAlignment="Right" Content="Reset Optics to Default" Click="ResetOptics_OnClick" />
+                </StackPanel>
+            </Expander>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

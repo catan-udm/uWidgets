@@ -15,6 +15,7 @@
                                               Height="42"
                                               VerticalContentAlignment="Center"
                                               Text="{Binding Title}"
+                                              Watermark="Title..."
                                               LostFocus="UpdateTitle"
                                               FontSize="18"
                                               FontWeight="Bold" />
@@ -44,6 +45,7 @@
                                       Padding="14,10"
                                       FontSize="14"
                                       Text="{Binding Content}"
+                                      Watermark="Take a note (double-click to type)..."
                                       LostFocus="UpdateContent"
                                       AcceptsReturn="True"
                                       TextWrapping="Wrap" />

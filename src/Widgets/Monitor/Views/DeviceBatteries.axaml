@@ -14,7 +14,9 @@
                           Margin="8,6">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="viewModels:DeviceBatteryItemViewModel">
-                        <Grid ColumnDefinitions="Auto,2*,1*" VerticalAlignment="Center" Margin="0,5">
+                        <Grid ColumnDefinitions="Auto,2*,1*" VerticalAlignment="Center" Margin="0,5"
+                              Background="Transparent"
+                              ToolTip.Tip="{Binding TooltipText}">
                             <!-- 1. Device Icon -->
                             <PathIcon Grid.Column="0" Data="{Binding Icon}"
                                       Width="16" Height="16" Margin="0,0,8,0"
@@ -53,6 +55,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="viewModels:DeviceBatteryItemViewModel">
+                        <Border Background="Transparent" ToolTip.Tip="{Binding TooltipText}">
                         <Viewbox Stretch="Uniform" MaxWidth="58" MaxHeight="58" Margin="4">
                             <Canvas Width="60" Height="60">
                                 <!-- Background Circular Track -->
@@ -85,6 +88,7 @@
                                 </Path>
                             </Canvas>
                         </Viewbox>
+                        </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

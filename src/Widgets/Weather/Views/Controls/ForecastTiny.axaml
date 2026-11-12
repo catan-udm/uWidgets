@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:Weather.ViewModels"
              x:Class="Weather.Views.Controls.ForecastTiny"
-             x:DataType="viewModels:ForecastViewModel">
+             x:DataType="viewModels:ForecastViewModel"
+             ToolTip.Tip="{Binding StatusTooltip}">
     <Viewbox VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
         <TextBlock LetterSpacing="-1" Text="{Binding CurrentTemperature}" />
     </Viewbox>

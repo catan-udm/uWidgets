@@ -27,74 +27,77 @@
 
 ## Features
 
-6 types of fully customizable widgets
+11 modular widget categories featuring **26 customizable desktop widget views**, guided first-launch onboarding, global hotkeys, and system tray controls.
+
+> **Documentation:** [User Guide](docs/USER_GUIDE.md) ・ [Widget Catalog](docs/WIDGET_CATALOG.md) ・ [Shortcuts & Gestures](docs/SHORTCUTS.md) ・ [Troubleshooting](docs/TROUBLESHOOTING.md) ・ [Widget Development](docs/WIDGET_DEVELOPMENT.md)
 
 <img src=".github/images/clock-light.png#gh-light-mode-only" width="100" alt="Clock" align="left">
 <img src=".github/images/clock-dark.png#gh-dark-mode-only" width="100" alt="Clock" align="left">
 
 ### Clock
-**Views**: 3 styles of Analog Clock, Digital Clock, World Clock <br>
-**Features**: Timezone selector, 12/24 hour modes, Show/hide seconds
+**Views**: 3 styles of Analog Clock (`AnalogI`, `AnalogII`, `AnalogIII`), Digital Clock, World Clock, Pomodoro, Stopwatch <br>
+**Features**: Timezone selector, 12/24-hour modes, show/hide seconds, built-in focus & stopwatch timers
 
 <img src=".github/images/calendar-light.png#gh-light-mode-only" width="100" alt="Calendar" align="left">
 <img src=".github/images/calendar-dark.png#gh-dark-mode-only" width="100" alt="Calendar" align="left">
 
 ### Calendar
-**Views**: Day View, Month View <br>
-**Features**: First day of week selector
+**Views**: Date, Month, Countdown <br>
+**Features**: First day of week selector and target date countdowns
 
 <img src=".github/images/notes-light.png#gh-light-mode-only" width="100" alt="Notes" align="left">
 <img src=".github/images/notes-dark.png#gh-dark-mode-only" width="100" alt="Notes" align="left">
 
 ### Notes
 **Views**: Note <br>
-**Features**: Interactive text node, custom header
+**Features**: Interactive desktop sticky note with custom header, timestamps, character counter, and inline editing
 
 <img src=".github/images/reminders-light.png#gh-light-mode-only" width="100" alt="Reminders" align="left">
 <img src=".github/images/reminders-dark.png#gh-dark-mode-only" width="100" alt="Reminders" align="left">
 
 ### Reminders
 **Views**: List <br>
-**Features**: Interactive to-do list, custom header, automatic items counter
+**Features**: Interactive to-do checklist, custom list title, pending/total item counters
 
 <img src=".github/images/weather-light.png#gh-light-mode-only" width="100" alt="Weather" align="left">
 <img src=".github/images/weather-dark.png#gh-dark-mode-only" width="100" alt="Weather" align="left">
 
 ### Weather
 **Views**: Forecast, Temperature, UV Index, Sunset & Sunrise, Pressure, Air Quality <br>
-**Features**: Forecast up to 7 days, Search city by name
+**Features**: Forecast up to 7 days, city search, offline cached fallback & rate-limit retry cooldown
 
 <img src=".github/images/monitor-light.png#gh-light-mode-only" width="100" alt="Monitor" align="left">
 <img src=".github/images/monitor-dark.png#gh-dark-mode-only" width="100" alt="Monitor" align="left">
 
 ### Monitor
-**Views**: Single Metric <br>
-**Features**: CPU usage, RAM usage, Disk usage, Network usage, Battery level
+**Views**: Single Metric, Dashboard, Device Batteries <br>
+**Features**: CPU, RAM, Disk, Network, system & Bluetooth peripheral battery levels with hover tooltips
 
-### Themes
+### Development, Finance, Media, Photos & Shortcuts
+- **Development**: `GitWorkingTree` (branch, sync/dirty indicators, Editor/Terminal/Folder launchers), `Docker`, `DevApps`
+- **Finance**: `Crypto`, `Stocks`, and interactive currency `Converter`
+- **Media**: `NowPlaying` Windows media session controls & artwork
+- **Photos**: `PhotoFrame` single image or timed folder slideshow with captions and missing-file guidance
+- **Shortcuts**: `Launcher` customizable quick-access shortcuts with custom icons
 
-- ☀️ **Light** and 🌑 **Dark** theme support
-  
-- 💧 **Transparency** effects
+### Quality of Life & Customization
 
-- 🎨 **Accent** color picker
+- **Guided Onboarding**: First-launch Welcome Tour with 4 curated Starter Packs (*Essential*, *Developer*, *Minimalist*, *Clean Slate*)
+- **Widget Manager & Profiles**: Inspect active widgets, highlight/locate or recover off-screen widgets across monitors, and save/export/import JSON layout profiles
+- **Global Hotkeys & System Tray**: Toggle all widgets (`Win+Shift+W`), toggle Master Lock (`Win+Alt+L`), and open Settings (`Ctrl+Shift+U`), plus `Ctrl+F` settings search
+- **Themes & Visual Effects**: Light/Dark theme, 8 templates, accent color, monochrome mode, opacity/corner radius sliders, and Liquid Glass presets
 
-- 🔲 **Monochrome** theme
-
-<img src=".github/images/sizes-light.png#gh-light-mode-only" width="50%" alt="Weather" align="right">
-<img src=".github/images/sizes-dark.png#gh-dark-mode-only" width="50%" alt="Weather" align="right">
+<img src=".github/images/sizes-light.png#gh-light-mode-only" width="50%" alt="Sizes" align="right">
+<img src=".github/images/sizes-dark.png#gh-dark-mode-only" width="50%" alt="Sizes" align="right">
 
 ### Sizes
 
-You can set size of each individual widget.
-There are 4 presets:
+You can set the size of each individual widget using presets or manual corner-handle resizing:
 
 - Small (2×2)
 - Medium (4×2)
 - Large (4×4)
 - Extra Large (8×4)
-
-You can also resize the widget by it's corner to set the desired size manually.
 
 ### Grid
 
@@ -156,24 +159,24 @@ You can change the grid cell **size** and **margin** between widgets, or disable
 - Windows 8.1 or later 
 - [.NET 8.0 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 
-## Installation
+## Installation & Quickstart
 
 1. Download the [latest release](https://github.com/creewick/uWidgets/releases)
-2. Extract the archive
-3. Launch `uWidgets.exe`
+2. Extract the archive and launch `uWidgets.exe`
+3. Follow the 3-step **Welcome Wizard** to pick a Starter Pack and review desktop gestures
+4. *(Optional Portable Mode)* Place an empty `portable.dat` file next to `uWidgets.exe` (or set `UWIDGETS_PORTABLE=1`) to store settings beside the executable instead of `%APPDATA%\uWidgets`
 
 ## Uninstallation
 
-1. Delete `uWidgets` folder
-
-The app's portable and doesn't store any data outside that folder
+1. Quit uWidgets from the System Tray icon
+2. Delete the `uWidgets` folder (and `%APPDATA%\uWidgets` if not running in portable mode)
 
 ## Contributing
 
 uWidgets is built with modularity in mind.<br/>
 That means you can create your own widgets using C#.
 
-Check the [API Reference](https://github.com/creewick/uWidgets/wiki/API)
+Check the [Widget Development Guide](docs/WIDGET_DEVELOPMENT.md) and the [API Reference](https://github.com/creewick/uWidgets/wiki/API)
 
 ### Contributors
 

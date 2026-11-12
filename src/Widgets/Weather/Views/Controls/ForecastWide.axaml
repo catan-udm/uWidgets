@@ -23,6 +23,13 @@
                 <TextBlock FontSize="13" FontWeight="Bold" Opacity="0.5"
                            HorizontalAlignment="Right"
                            Text="{Binding CurrentMinMax}" />
+                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" Margin="0,2,0,0"
+                            IsVisible="{Binding HasErrorBanner}">
+                    <TextBlock Text="{Binding StatusBadgeText}" FontSize="10" Opacity="0.7" VerticalAlignment="Center" />
+                    <Button Content="{Binding RetryButtonText}"
+                            Command="{Binding RetryCommand}" IsEnabled="{Binding CanRetry}"
+                            FontSize="10" Padding="6,2" CornerRadius="4" />
+                </StackPanel>
             </StackPanel>
         </Grid>
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
@@ -16,17 +17,46 @@ public partial class Settings : Window
     private readonly SettingsViewModel viewModel;
 
     public Settings(IAppSettingsProvider appSettingsProvider, IAssemblyProvider assemblyProvider, 
-        ILayoutProvider layoutProvider, IWidgetFactory<Window, UserControl> widgetFactory)
+        ILayoutProvider layoutProvider, IWidgetFactory<Window, UserControl> widgetFactory, IServiceProvider serviceProvider)
     {
-        viewModel = new SettingsViewModel(appSettingsProvider, assemblyProvider, layoutProvider, widgetFactory);
+        viewModel = new SettingsViewModel(appSettingsProvider, assemblyProvider, layoutProvider, widgetFactory, serviceProvider);
         DataContext = viewModel;
         Resized += OnResized;
         KeyDown += OnKeyDown;
         Unloaded += OnUnloaded;
         InitializeComponent();
-        ListBox.SelectedItem = SettingsViewModel.MenuItems[1];
+        ListBox.SelectedItem = SettingsViewModel.MenuItems[0];
     }
     
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        if (e.CloseReason == WindowCloseReason.WindowClosing &&
+            Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
+            desktop.ShutdownMode == ShutdownMode.OnExplicitShutdown)
+        {
+            e.Cancel = true;
+            Hide();
+            return;
+        }
+
+        base.OnClosing(e);
+    }
+
+    public void ShowAndActivate()
+    {
+        Show();
+        if (WindowState == WindowState.Minimized)
+            WindowState = WindowState.Normal;
+        Activate();
+    }
+
+    public void NavigateToPage(Type pageType)
+    {
+        var item = viewModel.AllItems.FirstOrDefault(p => p.Type == pageType);
+        if (item != null)
+            ListBox.SelectedItem = item;
+    }
+
     private void Restart(object? sender, RoutedEventArgs e)
     {
         var executablePath = Process.GetCurrentProcess().MainModule?.FileName;
@@ -54,7 +84,20 @@ public partial class Settings : Window
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        AppTitle.Text = "UwUidgets";
+        if (e.Key == Key.F && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            SplitView.IsPaneOpen = true;
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape && SearchBox.IsFocused)
+        {
+            viewModel.SearchQuery = string.Empty;
+            e.Handled = true;
+        }
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
@@ -66,6 +109,9 @@ public partial class Settings : Window
     private void OnResized(object? sender, WindowResizedEventArgs e) => 
         SplitView.IsPaneOpen = Width >= 800;
 
-    private void OnMenuItemChanged(object? _, SelectionChangedEventArgs e) => 
-        viewModel.SetCurrentPage(e.AddedItems[0] as PageViewModel);
+    private void OnMenuItemChanged(object? _, SelectionChangedEventArgs e)
+    {
+        if (e.AddedItems.Count > 0)
+            viewModel.SetCurrentPage(e.AddedItems[0] as PageViewModel);
+    }
 }

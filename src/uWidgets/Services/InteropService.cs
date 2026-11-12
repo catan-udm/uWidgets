@@ -81,6 +81,8 @@ public class InteropService
     private static IntPtr minimizeHookHandle;
     private static DispatcherTimer? desktopWatchdogTimer;
     private static bool isSyncingZOrder;
+    private static bool systemEventsSubscribed;
+    private static bool isSessionLocked;
 
     [StructLayout(LayoutKind.Sequential)]
     private struct WINDOWPOS
@@ -220,6 +222,28 @@ public class InteropService
             StopDesktopHooks();
     }
 
+    public static void ApplyLayeringMode(Window window, uWidgets.Core.Models.Settings.LayeringMode mode)
+    {
+        switch (mode)
+        {
+            case uWidgets.Core.Models.Settings.LayeringMode.Normal:
+                UnpinWindowFromDesktop(window);
+                window.Topmost = false;
+                RemoveWindowFromAltTab(window);
+                break;
+            case uWidgets.Core.Models.Settings.LayeringMode.AlwaysOnTop:
+                UnpinWindowFromDesktop(window);
+                window.Topmost = true;
+                RemoveWindowFromAltTab(window);
+                break;
+            case uWidgets.Core.Models.Settings.LayeringMode.DesktopPinned:
+            default:
+                window.Topmost = false;
+                PinWindowToDesktop(window);
+                break;
+        }
+    }
+
     public static void EnforceDesktopZOrder(Window window)
     {
         if (!OperatingSystem.IsWindows())
@@ -353,8 +377,20 @@ public class InteropService
             {
                 Interval = TimeSpan.FromMilliseconds(250)
             };
-            desktopWatchdogTimer.Tick += (_, _) => SyncPinnedWidgetsZOrder();
-            desktopWatchdogTimer.Start();
+            desktopWatchdogTimer.Tick += (_, _) =>
+            {
+                if (!isSessionLocked)
+                    SyncPinnedWidgetsZOrder();
+            };
+            if (!isSessionLocked)
+                desktopWatchdogTimer.Start();
+        }
+
+        if (!systemEventsSubscribed && OperatingSystem.IsWindows())
+        {
+            SystemEvents.SessionSwitch += OnSessionSwitch;
+            SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
+            systemEventsSubscribed = true;
         }
     }
 
@@ -379,6 +415,45 @@ public class InteropService
             desktopWatchdogTimer.Stop();
             desktopWatchdogTimer = null;
         }
+
+        if (systemEventsSubscribed && OperatingSystem.IsWindows())
+        {
+            SystemEvents.SessionSwitch -= OnSessionSwitch;
+            SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
+            systemEventsSubscribed = false;
+        }
+    }
+
+    private static void OnSessionSwitch(object sender, SessionSwitchEventArgs e)
+    {
+        if (!OperatingSystem.IsWindows()) return;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (e.Reason == SessionSwitchReason.SessionLock)
+            {
+                isSessionLocked = true;
+                desktopWatchdogTimer?.Stop();
+            }
+            else if (e.Reason == SessionSwitchReason.SessionUnlock)
+            {
+                isSessionLocked = false;
+                desktopWatchdogTimer?.Start();
+                SyncPinnedWidgetsZOrder();
+            }
+        });
+    }
+
+    private static void OnDisplaySettingsChanged(object? sender, EventArgs e)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            foreach (var entry in new List<PinnedWidgetEntry>(PinnedWidgets.Values))
+            {
+                if (entry.Window is Views.Widget widget)
+                    widget.RecoverIfOffscreen();
+            }
+        }, DispatcherPriority.Background);
     }
 
     private static void OnWinEvent(

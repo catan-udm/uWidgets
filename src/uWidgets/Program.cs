@@ -15,12 +15,14 @@ class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        StorageService.Initialize();
+
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
         {
             try
             {
                 var ex = e.ExceptionObject as Exception;
-                var fileName = Path.Combine(Const.CurrentFolder, "crash_log.txt");
+                var fileName = Path.Combine(Const.LogsFolder, "crash_log.txt");
                 File.WriteAllText(fileName, $"[{DateTime.UtcNow:O}] UnhandledException: {ex?.Message}{Environment.NewLine}{ex?.StackTrace}");
             }
             catch
@@ -32,7 +34,7 @@ class Program
         {
             try
             {
-                var fileName = Path.Combine(Const.CurrentFolder, "crash_log.txt");
+                var fileName = Path.Combine(Const.LogsFolder, "crash_log.txt");
                 File.AppendAllText(fileName, $"[{DateTime.UtcNow:O}] UnobservedTaskException: {e.Exception.Message}{Environment.NewLine}{e.Exception.StackTrace}");
                 e.SetObserved();
             }
@@ -52,7 +54,7 @@ class Program
                 // Non-fatal if MyDockFinder is not installed or locked
                 try
                 {
-                    var fileName = Path.Combine(Const.CurrentFolder, "crash_log.txt");
+                    var fileName = Path.Combine(Const.LogsFolder, "crash_log.txt");
                     File.AppendAllText(fileName, $"[{DateTime.UtcNow:O}] GlossyGlass StartEngine warning: {ex.Message}{Environment.NewLine}{ex.StackTrace}{Environment.NewLine}");
                 }
                 catch
@@ -73,8 +75,14 @@ class Program
         }
         catch (Exception e)
         {
-            var fileName = Path.Combine(Const.CurrentFolder, "crash_log.txt");
-            File.WriteAllText(fileName, $"[{DateTime.UtcNow:O}] Fatal: {e.Message}{Environment.NewLine}{e.StackTrace}");
+            try
+            {
+                var fileName = Path.Combine(Const.LogsFolder, "crash_log.txt");
+                File.WriteAllText(fileName, $"[{DateTime.UtcNow:O}] Fatal: {e.Message}{Environment.NewLine}{e.StackTrace}");
+            }
+            catch
+            {
+            }
             throw;
         }
     }
@@ -82,6 +90,7 @@ class Program
     // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()
     {
+        StorageService.Initialize();
         var settings = new AppSettingsProvider().Get();
         
         return AppBuilder.Configure<App>()

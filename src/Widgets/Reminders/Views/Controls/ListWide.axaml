@@ -11,10 +11,16 @@
                    VerticalAlignment="Top" HorizontalAlignment="Left" Text="{Binding Count}" />
         <controls:ClickThroughTextBox Grid.Row="2" Grid.Column="0" Padding="0" Margin="0 0 8 0" 
                                       MinHeight="16" MinWidth="90" MaxWidth="110" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"
-                                      Text="{Binding ListName}" LostFocus="ListNameChanged"
+                                      Text="{Binding ListName}" Watermark="List title..." LostFocus="ListNameChanged"
                                       Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
         <ScrollViewer Grid.Row="0" Grid.Column="1" Grid.RowSpan="2">
             <StackPanel>
+                <TextBlock Text="No reminders yet. Click below to add one."
+                           IsVisible="{Binding !Count}"
+                           Opacity="0.55"
+                           FontSize="11"
+                           TextWrapping="Wrap"
+                           Margin="0,8" />
                 <ItemsControl ItemsSource="{Binding Reminders}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="models:ReminderModel">
@@ -57,7 +63,7 @@
                 <Ellipse Width="16" Height="16" StrokeThickness="1" StrokeDashArray="2,2"
                          Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" />
             </Canvas>
-            <controls:ClickThroughTextBox Grid.Column="1" LostFocus="CreateReminder" Padding="8,6,0,6" />
+            <controls:ClickThroughTextBox Grid.Column="1" LostFocus="CreateReminder" Padding="8,6,0,6" Watermark="Add a new reminder..." />
         </Grid>
     </Grid>
 </UserControl>

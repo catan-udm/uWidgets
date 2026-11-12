@@ -39,6 +39,9 @@ public class PhotoFrameViewModel : ReactiveObject, IDisposable
             this.RaiseAndSetIfChanged(ref currentBitmap, value);
             this.RaisePropertyChanged(nameof(HasImage));
             this.RaisePropertyChanged(nameof(ShowPlaceholder));
+            this.RaisePropertyChanged(nameof(HasLoadError));
+            this.RaisePropertyChanged(nameof(PlaceholderTitle));
+            this.RaisePropertyChanged(nameof(PlaceholderDescription));
             this.RaisePropertyChanged(nameof(CurrentFileName));
             this.RaisePropertyChanged(nameof(DisplayCaption));
             this.RaisePropertyChanged(nameof(HasDisplayCaption));
@@ -62,6 +65,35 @@ public class PhotoFrameViewModel : ReactiveObject, IDisposable
     public bool HasImage => CurrentBitmap != null;
     public bool HasSecondaryImage => SecondaryBitmap != null;
     public bool ShowPlaceholder => CurrentBitmap == null;
+    public bool HasLoadError => !string.IsNullOrWhiteSpace(model.Path) && CurrentBitmap == null;
+    public string PlaceholderTitle
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(model.Path))
+                return "No Photo Selected";
+            if (imageFiles.Count == 0)
+                return "Image or Folder Not Found";
+            return "Unable to Load Image";
+        }
+    }
+    public string PlaceholderDescription
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(model.Path))
+                return "Right-click this widget and choose Edit to pick a photo or folder.";
+            if (imageFiles.Count == 0)
+            {
+                var target = Path.GetFileName(model.Path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                if (string.IsNullOrWhiteSpace(target)) target = model.Path;
+                return $"No supported images found at '{target}'. Choose another image or folder in Edit.";
+            }
+
+            var currentFile = Path.GetFileName(imageFiles[Math.Clamp(currentIndex, 0, imageFiles.Count - 1)]);
+            return $"Failed to decode '{currentFile}'. Choose another image in Edit.";
+        }
+    }
     public bool HasMultipleImages => imageFiles.Count > 1;
     public bool HasCaption => !string.IsNullOrWhiteSpace(model.Caption);
     public string Caption => model.Caption;

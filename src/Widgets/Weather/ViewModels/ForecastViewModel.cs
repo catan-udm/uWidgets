@@ -1,5 +1,7 @@
+using System.Windows.Input;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Threading;
 using ReactiveUI;
 using uWidgets.Services;
 using Weather.Models;
@@ -12,40 +14,153 @@ public class ForecastViewModel : ReactiveObject, IDisposable
 {
     private readonly ForecastModel model;
     private readonly OpenMeteoWeatherProvider provider;
+    private readonly DispatcherTimer cooldownTimer;
+    private int cooldownSecondsRemaining;
+    private bool isFetching;
+    private DateTime? lastSuccessAt;
 
     public ForecastViewModel(ForecastModel model)
     {
         provider = new OpenMeteoWeatherProvider();
         this.model = model;
+
+        cooldownTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        cooldownTimer.Tick += OnCooldownTick;
+
+        RetryCommand = ReactiveCommand.CreateFromTask(RetryAsync, outputScheduler: RxApp.MainThreadScheduler);
+
         TimerService.Timer1Hour.Subscribe(UpdateForecast);
         UpdateForecast();
+    }
+
+    public ICommand RetryCommand { get; }
+
+    private void OnCooldownTick(object? sender, EventArgs e)
+    {
+        if (cooldownSecondsRemaining > 0)
+        {
+            cooldownSecondsRemaining--;
+            this.RaisePropertyChanged(nameof(CanRetry));
+            this.RaisePropertyChanged(nameof(RetryButtonText));
+            UpdateStatusText();
+        }
+
+        if (cooldownSecondsRemaining <= 0)
+        {
+            cooldownTimer.Stop();
+        }
+    }
+
+    private async Task RetryAsync()
+    {
+        if (!CanRetry) return;
+        await UpdateForecastAsync();
     }
 
     private void UpdateForecast() => _ = UpdateForecastAsync();
 
     private async Task UpdateForecastAsync()
     {
-        var forecast = await provider.GetForecastAsync(model.Latitude, model.Longitude, model.TemperatureUnit);
-        if (forecast is null) return;
+        if (isFetching) return;
+        isFetching = true;
+        Dispatcher.UIThread.Post(() => this.RaisePropertyChanged(nameof(CanRetry)));
 
-        var currentHour = DateTime.Now.Hour;
+        try
+        {
+            var result = await provider.GetForecastWithStatusAsync(model.Latitude, model.Longitude, model.TemperatureUnit);
 
-        CurrentTemperature = $"{forecast.Current.Temperature:0}°";
-        CurrentIcon = forecast.Hourly.IsDay[currentHour] > 0 ? WeatherIconProvider.GetIcon(forecast.Current.WeatherCode) : WeatherIcon.Night.Value;
-        CurrentCondition = GetCondition(forecast.Current.WeatherCode);
-        CurrentMinMax = $"{forecast.Daily.Max[0]:0}°  {forecast.Daily.Min[0]:0}°";
-        CurrentMin = $"{forecast.Daily.Min[0]:0}";
-        CurrentMax = $"{forecast.Daily.Max[0]:0}";
-        TemperatureMetric = new(forecast.Daily.Min.Min(), forecast.Daily.Max.Max(), forecast.Current.Temperature, null);
-        UVIndex = new(0, 10, forecast.Hourly.UVIndex[currentHour], WeatherIcon.Clear.Value);
-        Pressure = new(960, 1050, forecast.Current.Pressure, WeatherIcon.Pressure.Value);
-        SunsetSunrise = GetSunsetSunrise(forecast);
-        HourlyForecast = Enumerable
-            .Range(currentHour, 24)
-            .Select(hour => GetHourlyForecast(forecast, hour % 24));
-        DailyForecast = Enumerable
-            .Range(0, forecast.Daily.Min.Count)
-            .Select(day => GetDailyForecast(forecast, day));
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (result.Forecast is not { } forecast)
+                {
+                    HasErrorBanner = true;
+                    isRateLimited = result.IsRateLimited;
+                    if (result.IsRateLimited)
+                    {
+                        StartRateLimitCooldown();
+                    }
+                    else
+                    {
+                        UpdateStatusText();
+                    }
+
+                    if (!lastSuccessAt.HasValue)
+                    {
+                        CurrentCondition = result.IsRateLimited ? "Rate limited" : "Offline";
+                    }
+
+                    return;
+                }
+
+                HasErrorBanner = false;
+                isRateLimited = false;
+                lastSuccessAt = DateTime.Now;
+                LastUpdatedText = $"Updated {lastSuccessAt.Value:HH:mm}";
+                UpdateStatusText();
+
+                var currentHour = DateTime.Now.Hour;
+
+                CurrentTemperature = $"{forecast.Current.Temperature:0}°";
+                CurrentIcon = forecast.Hourly.IsDay[currentHour] > 0 ? WeatherIconProvider.GetIcon(forecast.Current.WeatherCode) : WeatherIcon.Night.Value;
+                CurrentCondition = GetCondition(forecast.Current.WeatherCode);
+                CurrentMinMax = $"{forecast.Daily.Max[0]:0}°  {forecast.Daily.Min[0]:0}°";
+                CurrentMin = $"{forecast.Daily.Min[0]:0}";
+                CurrentMax = $"{forecast.Daily.Max[0]:0}";
+                TemperatureMetric = new(forecast.Daily.Min.Min(), forecast.Daily.Max.Max(), forecast.Current.Temperature, null);
+                UVIndex = new(0, 10, forecast.Hourly.UVIndex[currentHour], WeatherIcon.Clear.Value);
+                Pressure = new(960, 1050, forecast.Current.Pressure, WeatherIcon.Pressure.Value);
+                SunsetSunrise = GetSunsetSunrise(forecast);
+                HourlyForecast = Enumerable
+                    .Range(currentHour, 24)
+                    .Select(hour => GetHourlyForecast(forecast, hour % 24));
+                DailyForecast = Enumerable
+                    .Range(0, forecast.Daily.Min.Count)
+                    .Select(day => GetDailyForecast(forecast, day));
+            });
+        }
+        finally
+        {
+            isFetching = false;
+            Dispatcher.UIThread.Post(() => this.RaisePropertyChanged(nameof(CanRetry)));
+        }
+    }
+
+    private void StartRateLimitCooldown()
+    {
+        cooldownSecondsRemaining = 30;
+        cooldownTimer.Stop();
+        cooldownTimer.Start();
+        this.RaisePropertyChanged(nameof(CanRetry));
+        this.RaisePropertyChanged(nameof(RetryButtonText));
+        UpdateStatusText();
+    }
+
+    private void UpdateStatusText()
+    {
+        if (!HasErrorBanner)
+        {
+            StatusBadgeText = string.Empty;
+            StatusTooltip = lastSuccessAt.HasValue ? $"{CityName} • Last updated {lastSuccessAt.Value:HH:mm}" : CityName;
+            return;
+        }
+
+        if (isRateLimited && cooldownSecondsRemaining > 0)
+        {
+            StatusBadgeText = lastSuccessAt.HasValue
+                ? $"Last updated {lastSuccessAt.Value:HH:mm} (Cached)"
+                : $"Rate limited ({cooldownSecondsRemaining}s)";
+            StatusTooltip = $"{StatusBadgeText} • Retry available in {cooldownSecondsRemaining}s";
+        }
+        else if (lastSuccessAt.HasValue)
+        {
+            StatusBadgeText = $"Last updated {lastSuccessAt.Value:HH:mm} (Cached)";
+            StatusTooltip = $"Offline — showing cached weather from {lastSuccessAt.Value:HH:mm}";
+        }
+        else
+        {
+            StatusBadgeText = isRateLimited ? "Rate limited — try again" : "Offline — unavailable";
+            StatusTooltip = StatusBadgeText;
+        }
     }
 
     private SunriseSunsetViewModel GetSunsetSunrise(ForecastResponse forecast)
@@ -182,8 +297,43 @@ public class ForecastViewModel : ReactiveObject, IDisposable
         private set => this.RaiseAndSetIfChanged(ref sunsetSunrise, value);
     }
 
+    private bool isRateLimited;
+
+    private bool hasErrorBanner;
+    public bool HasErrorBanner
+    {
+        get => hasErrorBanner;
+        private set => this.RaiseAndSetIfChanged(ref hasErrorBanner, value);
+    }
+
+    private string statusBadgeText = string.Empty;
+    public string StatusBadgeText
+    {
+        get => statusBadgeText;
+        private set => this.RaiseAndSetIfChanged(ref statusBadgeText, value);
+    }
+
+    private string statusTooltip = string.Empty;
+    public string StatusTooltip
+    {
+        get => statusTooltip;
+        private set => this.RaiseAndSetIfChanged(ref statusTooltip, value);
+    }
+
+    private string lastUpdatedText = string.Empty;
+    public string LastUpdatedText
+    {
+        get => lastUpdatedText;
+        private set => this.RaiseAndSetIfChanged(ref lastUpdatedText, value);
+    }
+
+    public bool CanRetry => cooldownSecondsRemaining <= 0 && !isFetching;
+    public string RetryButtonText => cooldownSecondsRemaining > 0 ? $"Retry ({cooldownSecondsRemaining}s)" : "Retry";
+
     public void Dispose()
     {
+        cooldownTimer.Stop();
+        cooldownTimer.Tick -= OnCooldownTick;
         TimerService.Timer1Hour.Unsubscribe(UpdateForecast);
         GC.SuppressFinalize(this);
     }

@@ -15,6 +15,33 @@
         </Styles>
     </UserControl.Styles>
     <StackPanel Orientation="Vertical" Spacing="3">
+        <!-- Live Widget Preview Card -->
+        <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0 0 0 8" Text="Live Widget Preview" />
+        <Border CornerRadius="8" Padding="18" Margin="0 0 0 14"
+                Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                BorderBrush="{DynamicResource ToolTipBorderBrush}" BorderThickness="1">
+            <Border HorizontalAlignment="Center" Width="280" Padding="18"
+                    CornerRadius="{Binding PreviewCornerRadius}"
+                    Background="{Binding PreviewBackground}"
+                    BorderBrush="#60808080"
+                    BorderThickness="{Binding PreviewBorderThickness}">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                    <TextBlock Grid.Row="0" Grid.Column="0" FontSize="22" FontWeight="Bold"
+                               FontFamily="{Binding PreviewFontFamily}"
+                               Foreground="{Binding PreviewAccentBrush}"
+                               Text="10:42 AM" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" FontSize="13"
+                               FontFamily="{Binding PreviewFontFamily}"
+                               Foreground="{Binding PreviewForeground}"
+                               Opacity="0.8" Text="72°F" />
+                    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" FontSize="12" Margin="0,4,0,0"
+                               FontFamily="{Binding PreviewFontFamily}"
+                               Foreground="{Binding PreviewForeground}"
+                               Opacity="0.75" Text="Tuesday • Partly Cloudy • Cupertino" />
+                </Grid>
+            </Border>
+        </Border>
+
         <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0 0 0 10" 
                    Text="{x:Static locales:Locale.Settings_Appearance_ApplyTheme}"/>
         <ItemsControl ItemsSource="{Binding Themes}">
@@ -29,12 +56,13 @@
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
         </ItemsControl>
+
         <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0 20 0 10" 
                    Text="{x:Static locales:Locale.Settings_Appearance_Colors}"/>
         <controls:Setting Icon="{DynamicResource Brush}" 
             Title="{x:Static locales:Locale.Settings_Appearance_DarkMode_Title}" 
             Subtitle="{x:Static locales:Locale.Settings_Appearance_DarkMode_Subtitle}">
-            <ComboBox ItemsSource="{Binding DarkModes}" MinWidth="130" 
+            <ComboBox ItemsSource="{Binding DarkModes}" MinWidth="140" 
                       SelectedItem="{Binding DarkMode}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate DataType="viewModels:DarkModeViewModel">
@@ -46,7 +74,12 @@
         <controls:Setting Icon="{DynamicResource Transparency}" 
             Title="{x:Static locales:Locale.Settings_Appearance_OpacityLevel_Title}" 
             Subtitle="{x:Static locales:Locale.Settings_Appearance_OpacityLevel_Subtitle}">
-            <NumericUpDown MinWidth="130" Minimum="0" Maximum="1" Increment="0.05" Value="{Binding OpacityLevel}" />
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <Slider Width="160" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True"
+                        Value="{Binding OpacityPercent}" />
+                <TextBlock Width="42" VerticalAlignment="Center" TextAlignment="Right" FontWeight="SemiBold"
+                           Text="{Binding OpacityPercentLabel}" />
+            </StackPanel>
         </controls:Setting>
         <controls:Setting Icon="{DynamicResource Color}" 
                           Title="{x:Static locales:Locale.Settings_Appearance_AccentColor_Title}">
@@ -57,7 +90,7 @@
                              IsAlphaVisible="False" IsColorComponentsVisible="False" 
                              IsColorModelVisible="False" IsColorSpectrumSliderVisible="False" IsAccentColorsVisible="False"
                              IsColorPreviewVisible="False" IsComponentSliderVisible="False" IsHexInputVisible="False" />
-                <ComboBox ItemsSource="{Binding AccentComboboxItems}" MinWidth="130" 
+                <ComboBox ItemsSource="{Binding AccentComboboxItems}" MinWidth="140" 
                           SelectedItem="{Binding AccentMode}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate DataType="viewModels:AccentColorViewModel">
@@ -72,44 +105,13 @@
                           Subtitle="{x:Static locales:Locale.Settings_Appearance_Monochrome_Subtitle}">
             <ToggleSwitch IsChecked="{Binding Monochrome}" />
         </controls:Setting>
-        <controls:Setting Icon="{DynamicResource LiquidGlass}" 
-                          Title="{x:Static locales:Locale.Settings_Appearance_LiquidGlass_Title}" 
-                          Subtitle="{x:Static locales:Locale.Settings_Appearance_LiquidGlass_Subtitle}">
-            <ToggleSwitch IsChecked="{Binding LiquidGlass}" />
-        </controls:Setting>
-        <StackPanel Orientation="Vertical" Spacing="3" IsVisible="{Binding LiquidGlass}">
-            <controls:Setting Icon="{DynamicResource LiquidGlass}"
-                              Title="Refraction Thickness (RefThickness)"
-                              Subtitle="Width of the curved meniscus glass bevel in pixels (MyDockFinder default: 50)">
-                <NumericUpDown MinWidth="130" Minimum="8" Maximum="120" Increment="2" FormatString="0.#" Value="{Binding RefThickness}" />
-            </controls:Setting>
-            <controls:Setting Icon="{DynamicResource LiquidGlass}"
-                              Title="Refraction Index (RefFactor)"
-                              Subtitle="Snell's law index of refraction for meniscus ray bending (MyDockFinder default: 1.50)">
-                <NumericUpDown MinWidth="130" Minimum="1.05" Maximum="2.60" Increment="0.05" FormatString="0.00" Value="{Binding RefFactor}" />
-            </controls:Setting>
-            <controls:Setting Icon="{DynamicResource LiquidGlass}"
-                              Title="Chromatic Dispersion (RefDispersion)"
-                              Subtitle="7-tap spectral R/G/B separation along the glass rim (MyDockFinder default: 160)">
-                <NumericUpDown MinWidth="130" Minimum="0" Maximum="400" Increment="10" FormatString="0" Value="{Binding RefDispersion}" />
-            </controls:Setting>
-            <controls:Setting Icon="{DynamicResource WidgetRadius}"
-                              Title="Corner Shape Radius (ShapeRadius)"
-                              Subtitle="Corner radius ratio relative to widget corner radius (MyDockFinder default: 0.85)">
-                <NumericUpDown MinWidth="130" Minimum="0.10" Maximum="1.00" Increment="0.05" FormatString="0.00" Value="{Binding ShapeRadius}" />
-            </controls:Setting>
-            <controls:Setting Icon="{DynamicResource WidgetRadius}"
-                              Title="Corner Roundness (ShapeRoundness)"
-                              Subtitle="Superellipse squircle exponent n (2.0 = circle, MyDockFinder default: 4.0)">
-                <NumericUpDown MinWidth="130" Minimum="2.0" Maximum="8.0" Increment="0.2" FormatString="0.0#" Value="{Binding ShapeRoundness}" />
-            </controls:Setting>
-        </StackPanel>
+
         <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0 20 0 10"
                    Text="{x:Static locales:Locale.Settings_Advanced_Appearance}"/>
         <controls:Setting Icon="{DynamicResource Font}" 
                           Title="{x:Static locales:Locale.Settings_Advanced_FontFamily_Title}" 
                           Subtitle="{x:Static locales:Locale.Settings_Advanced_FontFamily_Subtitle}">
-            <ComboBox ItemsSource="{Binding Fonts}" MinWidth="130" 
+            <ComboBox ItemsSource="{Binding Fonts}" MinWidth="140" 
                       SelectedItem="{Binding Font}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
@@ -119,6 +121,18 @@
             </ComboBox>
         </controls:Setting>
         <controls:Setting Icon="{DynamicResource WidgetRadius}" 
+                          Title="{x:Static locales:Locale.Settings_Advanced_WidgetRadius_Title}"
+                          Subtitle="{x:Static locales:Locale.Settings_Advanced_WidgetRadius_Subtitle}"
+                          IsEnabled="{Binding !UseNativeFrame}">
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <Slider Width="160" Minimum="0" Maximum="48" TickFrequency="2" IsSnapToTickEnabled="True"
+                        Value="{Binding CornerRadius}" />
+                <TextBlock Width="42" VerticalAlignment="Center" TextAlignment="Right" FontWeight="SemiBold"
+                           Text="{Binding CornerRadius, StringFormat={}{0}px}" />
+            </StackPanel>
+        </controls:Setting>
+        <controls:Setting Icon="{DynamicResource WidgetRadius}"
+                          RestartRequired="True"
                           Title="{x:Static locales:Locale.Settings_Advanced_UseNativeFrame_Title}" 
                           Subtitle="{x:Static locales:Locale.Settings_Advanced_UseNativeFrame_Subtitle}">
             <ToggleSwitch IsChecked="{Binding UseNativeFrame}" />

@@ -1,0 +1,58 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls"
+             xmlns:locales="clr-namespace:uWidgets.Locales"
+             xmlns:viewModels="clr-namespace:uWidgets.ViewModels"
+             x:Class="uWidgets.Views.Pages.DesktopGrid"
+             x:DataType="viewModels:AdvancedViewModel">
+    <StackPanel Orientation="Vertical" Spacing="3">
+        <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0 0 0 10"
+                   Text="Grid Alignment &amp; Snapping"/>
+        <controls:Setting Icon="{DynamicResource SnapPosition}" 
+                          Title="{x:Static locales:Locale.Settings_Advanced_SnapPosition_Title}" 
+                          Subtitle="{x:Static locales:Locale.Settings_Advanced_SnapPosition_Subtitle}">
+            <ToggleSwitch IsChecked="{Binding SnapPosition}" />
+        </controls:Setting>
+        <controls:Setting Icon="{DynamicResource SnapSize}" 
+                          Title="{x:Static locales:Locale.Settings_Advanced_SnapSize_Title}" 
+                          Subtitle="{x:Static locales:Locale.Settings_Advanced_SnapSize_Subtitle}">
+            <ToggleSwitch IsChecked="{Binding SnapSize}" />
+        </controls:Setting>
+
+        <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0 20 0 10"
+                   Text="Desktop Protection"/>
+        <controls:Setting Icon="{DynamicResource Lock}"
+                          Title="Master Desktop Lock"
+                          Subtitle="Simultaneously lock both widget positions and sizes to prevent accidental changes">
+            <ToggleSwitch IsChecked="{Binding MasterLock}" />
+        </controls:Setting>
+        <controls:Setting Icon="{DynamicResource Lock}" 
+                          Title="{x:Static locales:Locale.Settings_Advanced_LockPosition_Title}" 
+                          Subtitle="Disables dragging widgets across the desktop while still allowing resizing">
+            <ToggleSwitch IsChecked="{Binding LockPosition}" />
+        </controls:Setting>
+        <controls:Setting Icon="{DynamicResource Lock}" 
+                          Title="{x:Static locales:Locale.Settings_Advanced_LockSize_Title}" 
+                          Subtitle="Hides bottom-right resize handles while still allowing dragging">
+            <ToggleSwitch IsChecked="{Binding LockSize}" />
+        </controls:Setting>
+
+        <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0 20 0 10" 
+                   Text="{x:Static locales:Locale.Settings_Advanced_Dimensions}"/>
+        <controls:Setting Icon="{DynamicResource WidgetSize}" 
+            Title="{x:Static locales:Locale.Settings_Advanced_WidgetSize_Title}"
+            Subtitle="{x:Static locales:Locale.Settings_Advanced_WidgetSize_Subtitle}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button Content="Compact (48)" Click="PresetCompact_OnClick" />
+                <Button Content="Default (72)" Click="PresetDefault_OnClick" />
+                <Button Content="Large (96)" Click="PresetLarge_OnClick" />
+                <NumericUpDown MinWidth="110" Minimum="36" Maximum="144" Value="{Binding Size, StringFormat=F0}" />
+            </StackPanel>
+        </controls:Setting>
+        <controls:Setting Icon="{DynamicResource WidgetMargin}" 
+            Title="{x:Static locales:Locale.Settings_Advanced_WidgetMargin_Title}"
+            Subtitle="{x:Static locales:Locale.Settings_Advanced_WidgetMargin_Subtitle}">
+            <NumericUpDown MinWidth="130" Minimum="0" Maximum="32" Value="{Binding Margin, StringFormat=F0}" />
+        </controls:Setting>
+    </StackPanel>
+</UserControl>

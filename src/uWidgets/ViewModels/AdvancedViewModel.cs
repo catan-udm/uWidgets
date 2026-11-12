@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using ReactiveUI;
 using uWidgets.Core.Interfaces;
 
@@ -13,8 +12,8 @@ public class AdvancedViewModel(IAppSettingsProvider appSettingsProvider) : React
         {
             var settings = appSettingsProvider.Get();
             var dimensions = settings.Dimensions with { Size = value };
-            var newSettings = settings with { Dimensions = dimensions };
-            appSettingsProvider.Save(newSettings);
+            appSettingsProvider.Save(settings with { Dimensions = dimensions });
+            this.RaisePropertyChanged(nameof(Size));
         }
     }
     
@@ -25,8 +24,8 @@ public class AdvancedViewModel(IAppSettingsProvider appSettingsProvider) : React
         {
             var settings = appSettingsProvider.Get();
             var dimensions = settings.Dimensions with { Margin = value };
-            var newSettings = settings with { Dimensions = dimensions };
-            appSettingsProvider.Save(newSettings);
+            appSettingsProvider.Save(settings with { Dimensions = dimensions });
+            this.RaisePropertyChanged(nameof(Margin));
         }
     }
     
@@ -37,8 +36,8 @@ public class AdvancedViewModel(IAppSettingsProvider appSettingsProvider) : React
         {
             var settings = appSettingsProvider.Get();
             var dimensions = settings.Dimensions with { Radius = value };
-            var newSettings = settings with { Dimensions = dimensions };
-            appSettingsProvider.Save(newSettings);
+            appSettingsProvider.Save(settings with { Dimensions = dimensions });
+            this.RaisePropertyChanged(nameof(Radius));
         }
     }
 
@@ -51,8 +50,7 @@ public class AdvancedViewModel(IAppSettingsProvider appSettingsProvider) : React
         {
             var settings = appSettingsProvider.Get();
             var newLayout = settings.Layout with { SnapPosition = value };
-            var newSettings = settings with { Layout = newLayout };
-            appSettingsProvider.Save(newSettings);
+            appSettingsProvider.Save(settings with { Layout = newLayout });
         }
     }
     
@@ -63,8 +61,7 @@ public class AdvancedViewModel(IAppSettingsProvider appSettingsProvider) : React
         {
             var settings = appSettingsProvider.Get();
             var newLayout = settings.Layout with { SnapSize = value };
-            var newSettings = settings with { Layout = newLayout };
-            appSettingsProvider.Save(newSettings);
+            appSettingsProvider.Save(settings with { Layout = newLayout });
         }
     }
     
@@ -75,8 +72,9 @@ public class AdvancedViewModel(IAppSettingsProvider appSettingsProvider) : React
         {
             var settings = appSettingsProvider.Get();
             var newLayout = settings.Layout with { LockPosition = value };
-            var newSettings = settings with { Layout = newLayout };
-            appSettingsProvider.Save(newSettings);
+            appSettingsProvider.Save(settings with { Layout = newLayout });
+            this.RaisePropertyChanged(nameof(LockPosition));
+            this.RaisePropertyChanged(nameof(MasterLock));
         }
     }
     
@@ -87,8 +85,23 @@ public class AdvancedViewModel(IAppSettingsProvider appSettingsProvider) : React
         {
             var settings = appSettingsProvider.Get();
             var newLayout = settings.Layout with { LockSize = value };
-            var newSettings = settings with { Layout = newLayout };
-            appSettingsProvider.Save(newSettings);
+            appSettingsProvider.Save(settings with { Layout = newLayout });
+            this.RaisePropertyChanged(nameof(LockSize));
+            this.RaisePropertyChanged(nameof(MasterLock));
+        }
+    }
+
+    public bool MasterLock
+    {
+        get => LockPosition && LockSize;
+        set
+        {
+            var settings = appSettingsProvider.Get();
+            var newLayout = settings.Layout with { LockPosition = value, LockSize = value };
+            appSettingsProvider.Save(settings with { Layout = newLayout });
+            this.RaisePropertyChanged(nameof(LockPosition));
+            this.RaisePropertyChanged(nameof(LockSize));
+            this.RaisePropertyChanged(nameof(MasterLock));
         }
     }
 }

@@ -243,7 +243,7 @@ public sealed class LiquidGlassSurface : Control
                 System.Diagnostics.Debug.WriteLine($"[LiquidGlassSurface] Render error: {ex}");
                 try
                 {
-                    var fileName = System.IO.Path.Combine(uWidgets.Core.Const.CurrentFolder, "crash_log.txt");
+                    var fileName = System.IO.Path.Combine(uWidgets.Core.Const.LogsFolder, "crash_log.txt");
                     System.IO.File.AppendAllText(fileName, $"[{DateTime.UtcNow:O}] LiquidGlassSurface Render error: {ex.Message}{Environment.NewLine}{ex.StackTrace}{Environment.NewLine}");
                 }
                 catch

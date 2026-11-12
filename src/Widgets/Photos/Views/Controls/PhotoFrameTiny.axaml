@@ -10,7 +10,9 @@
                    Stretch="{Binding ImageStretch}"
                    IsVisible="{Binding HasImage}" />
 
-            <Viewbox IsVisible="{Binding ShowPlaceholder}" Stretch="Uniform" MaxWidth="42" MaxHeight="42" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8">
+            <Viewbox IsVisible="{Binding ShowPlaceholder}"
+                     ToolTip.Tip="{Binding PlaceholderDescription}"
+                     Stretch="Uniform" MaxWidth="42" MaxHeight="42" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8">
                 <Canvas Width="64" Height="64">
                     <Ellipse Canvas.Left="40" Canvas.Top="12" Width="12" Height="12"
                              Fill="{DynamicResource SystemControlForegroundAccentBrush}" Opacity="0.85" />

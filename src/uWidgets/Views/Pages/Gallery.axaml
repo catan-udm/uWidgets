@@ -19,7 +19,17 @@
             <Setter Property="Margin" Value="12" />
         </Style>
     </UserControl.Styles>
-    <StackPanel>
+    <StackPanel Spacing="12">
+        <Border Name="ToastBanner"
+                IsVisible="False"
+                CornerRadius="6"
+                Padding="14,10"
+                Margin="10,0,10,4"
+                Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundAccentBrush}"
+                BorderThickness="1.5">
+            <TextBlock Name="ToastMessage" FontWeight="SemiBold" TextWrapping="Wrap" />
+        </Border>
         <ItemsControl ItemsSource="{Binding Widgets}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="viewModels:WidgetPreviewViewModel">

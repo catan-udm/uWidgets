@@ -12,6 +12,7 @@
                                       VerticalContentAlignment="Center"
                                       Background="{DynamicResource SystemControlHighlightListAccentLowBrush}"
                                       Text="{Binding Title}"
+                                      Watermark="Title..."
                                       LostFocus="UpdateTitle"
                                       FontSize="15"
                                       FontWeight="SemiBold" />
@@ -25,6 +26,7 @@
         <controls:ClickThroughTextBox Grid.Row="2"
                                       MinHeight="0"
                                       Text="{Binding Content}"
+                                      Watermark="Take a note (double-click to type)..."
                                       LostFocus="UpdateContent"
                                       AcceptsReturn="True"
                                       TextWrapping="Wrap" />

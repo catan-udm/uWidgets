@@ -8,6 +8,13 @@
                    FontSize="16" FontWeight="Bold" 
                    TextTrimming="CharacterEllipsis"
                    Text="{Binding CityName}" />
+        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right"
+                    Margin="0,0,28,0" IsVisible="{Binding HasErrorBanner}">
+            <TextBlock Text="{Binding StatusBadgeText}" FontSize="10" Opacity="0.7" VerticalAlignment="Center" />
+            <Button Content="{Binding RetryButtonText}"
+                    Command="{Binding RetryCommand}" IsEnabled="{Binding CanRetry}"
+                    FontSize="10" Padding="6,2" CornerRadius="4" />
+        </StackPanel>
         <TextBlock Grid.Row="1" Grid.Column="0" Grid.RowSpan="2" 
                    FontSize="44" LetterSpacing="-2" LineHeight="50" Margin="-2,0,0,0"
                    Text="{Binding CurrentTemperature}" />

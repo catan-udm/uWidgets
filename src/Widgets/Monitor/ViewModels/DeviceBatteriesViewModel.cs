@@ -68,6 +68,7 @@ public class DeviceBatteryItemViewModel : ReactiveObject
     }
 
     public double StrokeDashOffset => 27.6 * (1.0 - Math.Clamp(BatteryLevel, 0.0, 1.0));
+    public string TooltipText => $"{Name} — {BatteryPercent}%{(IsCharging ? " (Charging)" : "")}";
 
     private static readonly IBrush NormalLight = new SolidColorBrush(Color.Parse("#047857"));
     private static readonly IBrush NormalDark = new SolidColorBrush(Color.Parse("#34D399"));
@@ -86,6 +87,7 @@ public class DeviceBatteryItemViewModel : ReactiveObject
         Icon = info.Icon;
         FormattedLevel = info.FormattedLevel;
         this.RaisePropertyChanged(nameof(StrokeDashOffset));
+        this.RaisePropertyChanged(nameof(TooltipText));
 
         var isDark = Application.Current?.ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
 

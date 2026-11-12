@@ -64,5 +64,37 @@
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>
+
+    <TrayIcon.Icons>
+        <TrayIcons>
+            <TrayIcon Icon="avares://uWidgets/Assets/icon.ico"
+                      ToolTipText="uWidgets Desktop Widgets"
+                      Clicked="Tray_OnClicked">
+                <TrayIcon.Menu>
+                    <NativeMenu>
+                        <NativeMenuItem Header="Open Settings... (Ctrl+Shift+U)" Click="Tray_OpenSettings" />
+                        <NativeMenuItem Header="Add Widget">
+                            <NativeMenu>
+                                <NativeMenuItem Header="Analog Clock" Click="Tray_AddClock" />
+                                <NativeMenuItem Header="Weather Forecast" Click="Tray_AddWeather" />
+                                <NativeMenuItem Header="Quick Note" Click="Tray_AddNotes" />
+                                <NativeMenuItem Header="System Monitor" Click="Tray_AddMonitor" />
+                                <NativeMenuItem Header="Media Player" Click="Tray_AddMedia" />
+                                <NativeMenuItemSeparator />
+                                <NativeMenuItem Header="Browse All Widgets..." Click="Tray_BrowseWidgets" />
+                            </NativeMenu>
+                        </NativeMenuItem>
+                        <NativeMenuItemSeparator />
+                        <NativeMenuItem Header="Show / Hide All Widgets (Win+Shift+W)" Click="Tray_ToggleWidgets" />
+                        <NativeMenuItem Header="Lock / Unlock Widget Positions (Win+Alt+L)" Click="Tray_ToggleLock" />
+                        <NativeMenuItemSeparator />
+                        <NativeMenuItem Header="Help &amp; Shortcuts" Click="Tray_OpenHelp" />
+                        <NativeMenuItem Header="Restart uWidgets" Click="Tray_Restart" />
+                        <NativeMenuItem Header="Exit uWidgets" Click="Tray_Exit" />
+                    </NativeMenu>
+                </TrayIcon.Menu>
+            </TrayIcon>
+        </TrayIcons>
+    </TrayIcon.Icons>
     
 </Application>

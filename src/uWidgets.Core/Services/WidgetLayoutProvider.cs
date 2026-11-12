@@ -4,7 +4,7 @@ using uWidgets.Core.Models;
 namespace uWidgets.Core.Services;
 
 /// <inheritdoc />
-public class WidgetLayoutProvider(ILayoutProvider layoutProvider, WidgetLayout widgetLayout) : IWidgetLayoutProvider
+public class WidgetLayoutProvider(ILayoutProvider layoutProvider, WidgetLayout? widgetLayout) : IWidgetLayoutProvider
 {
     /// <inheritdoc />
     public event DataChangedEvent<WidgetLayout>? DataChanging;
@@ -13,57 +13,64 @@ public class WidgetLayoutProvider(ILayoutProvider layoutProvider, WidgetLayout w
     public event DataChangedEvent<WidgetLayout>? DataChanged;
 
     /// <inheritdoc />
-    public WidgetLayout Get() => widgetLayout;
+    public WidgetLayout Get() => widgetLayout!;
 
     /// <inheritdoc />
     public void Save(WidgetLayout data)
     {
-        DataChanging?.Invoke(this, widgetLayout, data);
+        if (widgetLayout == null) return;
+
+        var targetId = data.Id != Guid.Empty
+            ? data.Id
+            : (widgetLayout.Id != Guid.Empty ? widgetLayout.Id : Guid.NewGuid());
+        var sanitizedData = data with { Id = targetId };
+
+        DataChanging?.Invoke(this, widgetLayout, sanitizedData);
         var layout = layoutProvider.Get();
-        var index = layout.FindIndex(item => 
-            item.Type == widgetLayout.Type && 
-            item.SubType == widgetLayout.SubType && 
-            item.X == widgetLayout.X && 
-            item.Y == widgetLayout.Y);
-
-        if (index == -1)
-        {
-            index = layout.FindIndex(item => item.Type == widgetLayout.Type && item.SubType == widgetLayout.SubType);
-        }
-
-        if (index == -1)
-        {
-            index = layout.IndexOf(widgetLayout);
-        }
+        var index = FindIndex(layout, widgetLayout);
 
         if (index == -1) return;
-        
-        layout[index] = data;
+
+        layout[index] = sanitizedData;
         layoutProvider.Save(layout);
         var oldData = widgetLayout;
-        widgetLayout = data;
-        DataChanged?.Invoke(this, oldData, data);
+        widgetLayout = sanitizedData;
+        DataChanged?.Invoke(this, oldData, sanitizedData);
     }
 
     /// <inheritdoc />
     public void Remove()
     {
-        var layout = layoutProvider.Get();
-        var index = layout.FindIndex(item => 
-            item.Type == widgetLayout.Type && 
-            item.SubType == widgetLayout.SubType && 
-            item.X == widgetLayout.X && 
-            item.Y == widgetLayout.Y);
+        if (widgetLayout == null) return;
 
-        if (index == -1)
-        {
-            index = layout.IndexOf(widgetLayout);
-        }
+        var layout = layoutProvider.Get();
+        var index = FindIndex(layout, widgetLayout);
 
         if (index != -1)
         {
             layout.RemoveAt(index);
             layoutProvider.Save(layout);
         }
+    }
+
+    private static int FindIndex(List<WidgetLayout> layout, WidgetLayout target)
+    {
+        if (target.Id != Guid.Empty)
+        {
+            var byId = layout.FindIndex(item => item.Id == target.Id);
+            if (byId != -1) return byId;
+        }
+
+        var byCoords = layout.FindIndex(item =>
+            item.Type == target.Type &&
+            item.SubType == target.SubType &&
+            item.X == target.X &&
+            item.Y == target.Y);
+        if (byCoords != -1) return byCoords;
+
+        var byRef = layout.IndexOf(target);
+        if (byRef != -1) return byRef;
+
+        return layout.FindIndex(item => item.Type == target.Type && item.SubType == target.SubType);
     }
 }

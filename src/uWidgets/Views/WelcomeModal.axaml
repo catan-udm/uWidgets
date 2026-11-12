@@ -1,0 +1,187 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:uWidgets.Views"
+        x:Class="uWidgets.Views.WelcomeModal"
+        Width="720" Height="560"
+        MinWidth="640" MinHeight="500"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource SettingsBackground}"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="44"
+        Title="Welcome to uWidgets"
+        x:DataType="views:WelcomeModal">
+
+    <Window.Styles>
+        <Style Selector="Border.PackCard">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolTipBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+        <Style Selector="Border.PackCard.Selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundAccentBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+        <Style Selector="Border.TourCard">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolTipBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="28,44,28,24">
+        <!-- Header & Step Indicator -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,18">
+            <StackPanel Spacing="4">
+                <TextBlock FontSize="22" FontWeight="Bold" Text="{Binding StepTitle}" />
+                <TextBlock FontSize="13" Opacity="0.75" Text="{Binding StepSubtitle}" TextWrapping="Wrap" />
+            </StackPanel>
+            <Border Grid.Column="1" VerticalAlignment="Top" Padding="10,4" CornerRadius="12"
+                    Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                    BorderBrush="{DynamicResource ToolTipBorderBrush}" BorderThickness="1">
+                <TextBlock FontSize="12" FontWeight="SemiBold" Text="{Binding StepBadge}" />
+            </Border>
+        </Grid>
+
+        <!-- Step Content -->
+        <Panel Grid.Row="1">
+            <!-- Step 1: Welcome -->
+            <StackPanel IsVisible="{Binding IsStep1}" Spacing="14" VerticalAlignment="Center">
+                <Border Classes="TourCard" Padding="20">
+                    <StackPanel Spacing="10">
+                        <TextBlock FontSize="16" FontWeight="SemiBold" Text="Your desktop, organized with live widgets" />
+                        <TextBlock TextWrapping="Wrap" Opacity="0.85"
+                                   Text="uWidgets pins lightweight, customizable widgets directly onto your Windows desktop—clocks, calendars, notes, weather, system monitors, media controls, and developer tools." />
+                    </StackPanel>
+                </Border>
+                <Grid ColumnDefinitions="*,*,*">
+                    <Border Grid.Column="0" Classes="TourCard" Margin="0,0,8,0">
+                        <StackPanel Spacing="6">
+                            <TextBlock FontWeight="SemiBold" Text="Desktop Pinned" />
+                            <TextBlock FontSize="12" Opacity="0.75" TextWrapping="Wrap"
+                                       Text="Widgets stay neatly behind your apps on your wallpaper, or float above on demand." />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Classes="TourCard" Margin="4,0,4,0">
+                        <StackPanel Spacing="6">
+                            <TextBlock FontWeight="SemiBold" Text="Glass &amp; Native Themes" />
+                            <TextBlock FontSize="12" Opacity="0.75" TextWrapping="Wrap"
+                                       Text="Switch between translucent acrylic, Liquid Glass refraction, or clean native frames." />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" Classes="TourCard" Margin="8,0,0,0">
+                        <StackPanel Spacing="6">
+                            <TextBlock FontWeight="SemiBold" Text="Always Reachable" />
+                            <TextBlock FontSize="12" Opacity="0.75" TextWrapping="Wrap"
+                                       Text="Manage widgets anytime from the Windows System Tray icon or Ctrl+Shift+U." />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+
+            <!-- Step 2: Starter Packs -->
+            <Grid IsVisible="{Binding IsStep2}" RowDefinitions="*,*" ColumnDefinitions="*,*">
+                <Button Grid.Row="0" Grid.Column="0" Padding="0" Margin="0,0,6,6" Background="Transparent" BorderThickness="0"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                        Click="SelectEssentialPack">
+                    <Border Classes="PackCard" Classes.Selected="{Binding IsEssentialSelected}">
+                        <StackPanel Spacing="6">
+                            <TextBlock FontSize="15" FontWeight="SemiBold" Text="Essential Pack (Recommended)" />
+                            <TextBlock FontSize="12" Opacity="0.75" TextWrapping="Wrap"
+                                       Text="Analog Clock, Month Calendar, Weather Forecast, and a Quick Note." />
+                        </StackPanel>
+                    </Border>
+                </Button>
+                <Button Grid.Row="0" Grid.Column="1" Padding="0" Margin="6,0,0,6" Background="Transparent" BorderThickness="0"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                        Click="SelectDeveloperPack">
+                    <Border Classes="PackCard" Classes.Selected="{Binding IsDeveloperSelected}">
+                        <StackPanel Spacing="6">
+                            <TextBlock FontSize="15" FontWeight="SemiBold" Text="Developer Pack" />
+                            <TextBlock FontSize="12" Opacity="0.75" TextWrapping="Wrap"
+                                       Text="Digital Clock, Git Working Tree, Docker Engine, and System Monitor." />
+                        </StackPanel>
+                    </Border>
+                </Button>
+                <Button Grid.Row="1" Grid.Column="0" Padding="0" Margin="0,6,6,0" Background="Transparent" BorderThickness="0"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                        Click="SelectMinimalistPack">
+                    <Border Classes="PackCard" Classes.Selected="{Binding IsMinimalistSelected}">
+                        <StackPanel Spacing="6">
+                            <TextBlock FontSize="15" FontWeight="SemiBold" Text="Minimalist Focus Pack" />
+                            <TextBlock FontSize="12" Opacity="0.75" TextWrapping="Wrap"
+                                       Text="Now Playing Media, Pomodoro Timer, and a Reminders Checklist." />
+                        </StackPanel>
+                    </Border>
+                </Button>
+                <Button Grid.Row="1" Grid.Column="1" Padding="0" Margin="6,6,0,0" Background="Transparent" BorderThickness="0"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                        Click="SelectCleanSlate">
+                    <Border Classes="PackCard" Classes.Selected="{Binding IsCleanSlateSelected}">
+                        <StackPanel Spacing="6">
+                            <TextBlock FontSize="15" FontWeight="SemiBold" Text="Clean Slate" />
+                            <TextBlock FontSize="12" Opacity="0.75" TextWrapping="Wrap"
+                                       Text="Start with an empty desktop and open the Widget Manager to hand-pick widgets." />
+                        </StackPanel>
+                    </Border>
+                </Button>
+            </Grid>
+
+            <!-- Step 3: 30-Second Interactive Gesture Tour -->
+            <ScrollViewer IsVisible="{Binding IsStep3}">
+                <StackPanel Spacing="8">
+                    <Border Classes="TourCard">
+                        <StackPanel Spacing="2">
+                            <TextBlock FontWeight="SemiBold" Text="1. Move &amp; Snap" />
+                            <TextBlock FontSize="12" Opacity="0.78" TextWrapping="Wrap"
+                                       Text="Left-click and drag anywhere on a widget to move it. Release to snap cleanly onto your desktop grid." />
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="TourCard">
+                        <StackPanel Spacing="2">
+                            <TextBlock FontWeight="SemiBold" Text="2. Resize or Pick Presets" />
+                            <TextBlock FontSize="12" Opacity="0.78" TextWrapping="Wrap"
+                                       Text="Drag the bottom-right corner handle, or right-click a widget to pick Small, Medium, Large, or Extra Large." />
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="TourCard">
+                        <StackPanel Spacing="2">
+                            <TextBlock FontWeight="SemiBold" Text="3. Configure Any Widget" />
+                            <TextBlock FontSize="12" Opacity="0.78" TextWrapping="Wrap"
+                                       Text="Right-click a widget and choose Edit to set cities, stocks, timezones, Git repositories, or timers." />
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="TourCard">
+                        <StackPanel Spacing="2">
+                            <TextBlock FontWeight="SemiBold" Text="4. Double-Click to Type" />
+                            <TextBlock FontSize="12" Opacity="0.78" TextWrapping="Wrap"
+                                       Text="Single-click drags a Note or Reminder; double-click its text field when you want to type." />
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="TourCard">
+                        <StackPanel Spacing="2">
+                            <TextBlock FontWeight="SemiBold" Text="5. System Tray &amp; Global Hotkeys" />
+                            <TextBlock FontSize="12" Opacity="0.78" TextWrapping="Wrap"
+                                       Text="Click the uWidgets icon in the Windows System Tray or press Ctrl+Shift+U for Settings, Win+Shift+W to hide/show all widgets, and Win+Alt+L to lock positions." />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Panel>
+
+        <!-- Footer Controls -->
+        <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,20,0,0">
+            <Button Grid.Column="0" Content="Skip Tour" Click="Skip_OnClick" />
+            <Button Grid.Column="2" Content="Back" IsVisible="{Binding CanGoBack}" Click="Back_OnClick" Margin="0,0,10,0" />
+            <Button Grid.Column="3" Classes="accent" Content="{Binding NextButtonText}" Click="Next_OnClick" />
+        </Grid>
+    </Grid>
+</Window>

@@ -11,8 +11,8 @@
                    Stretch="{Binding ImageStretch}"
                    IsVisible="{Binding HasImage}" />
 
-            <Grid IsVisible="{Binding ShowPlaceholder}" RowDefinitions="*,Auto" Margin="12">
-                <Viewbox Grid.Row="0" Stretch="Uniform" MaxWidth="72" MaxHeight="72" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid IsVisible="{Binding ShowPlaceholder}" RowDefinitions="*,Auto,Auto" Margin="12">
+                <Viewbox Grid.Row="0" Stretch="Uniform" MaxWidth="64" MaxHeight="64" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Canvas Width="64" Height="64">
                         <Ellipse Canvas.Left="40" Canvas.Top="12" Width="12" Height="12"
                                  Fill="{DynamicResource SystemControlForegroundAccentBrush}" Opacity="0.85" />
@@ -23,12 +23,23 @@
                     </Canvas>
                 </Viewbox>
                 <TextBlock Grid.Row="1"
-                           Text="{x:Static locales:Locale.Photos_Frame_Title}"
+                           Text="{Binding PlaceholderTitle}"
                            FontSize="12"
                            FontWeight="SemiBold"
-                           Opacity="0.7"
+                           Opacity="0.85"
                            HorizontalAlignment="Center"
+                           TextAlignment="Center"
                            Margin="0,4,0,0" />
+                <TextBlock Grid.Row="2"
+                           Text="{Binding PlaceholderDescription}"
+                           FontSize="10"
+                           Opacity="0.65"
+                           TextWrapping="Wrap"
+                           TextTrimming="CharacterEllipsis"
+                           MaxLines="2"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"
+                           Margin="0,2,0,0" />
             </Grid>
 
             <Grid VerticalAlignment="Bottom" ColumnDefinitions="*,Auto" Margin="8">

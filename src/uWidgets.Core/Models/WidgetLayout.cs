@@ -1,20 +1,70 @@
 ﻿using System;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace uWidgets.Core.Models;
 
 /// <summary>
 /// Layout of a single widget, stored in <c>layout.json</c>.
 /// </summary>
-/// <param name="Type">Assembly name of the widget.</param>
-/// <param name="SubType">UserControl name of the widget.</param>
-/// <param name="X">X coordinate of the widget's top-left corner.</param>
-/// <param name="Y">Y coordinate of the widget's top-left corner.</param>
-/// <param name="Width">Width of the widget.</param>
-/// <param name="Height">Height of the widget.</param>
-/// <param name="Settings">Widget's model as <see cref="JsonElement"/></param>
-public record WidgetLayout(string Type, string SubType, int X, int Y, int Width, int Height, JsonElement? Settings)
+public record WidgetLayout
 {
+    /// <summary>
+    /// Initializes a widget layout record with an explicit instance identifier.
+    /// </summary>
+    [JsonConstructor]
+    public WidgetLayout(
+        Guid Id,
+        string Type,
+        string SubType,
+        int X,
+        int Y,
+        int Width,
+        int Height,
+        JsonElement? Settings)
+    {
+        this.Id = Id;
+        this.Type = Type;
+        this.SubType = SubType;
+        this.X = X;
+        this.Y = Y;
+        this.Width = Width;
+        this.Height = Height;
+        this.Settings = Settings;
+    }
+
+    /// <summary>
+    /// Initializes a new widget layout record with a freshly generated <see cref="Guid"/>.
+    /// </summary>
+    public WidgetLayout(
+        string Type,
+        string SubType,
+        int X,
+        int Y,
+        int Width,
+        int Height,
+        JsonElement? Settings)
+        : this(Guid.NewGuid(), Type, SubType, X, Y, Width, Height, Settings)
+    {
+    }
+
+    /// <summary>Unique widget instance identifier.</summary>
+    public Guid Id { get; init; }
+    /// <summary>Assembly name of the widget.</summary>
+    public string Type { get; init; }
+    /// <summary>UserControl name of the widget.</summary>
+    public string SubType { get; init; }
+    /// <summary>X coordinate of the widget's top-left corner.</summary>
+    public int X { get; init; }
+    /// <summary>Y coordinate of the widget's top-left corner.</summary>
+    public int Y { get; init; }
+    /// <summary>Width of the widget.</summary>
+    public int Width { get; init; }
+    /// <summary>Height of the widget.</summary>
+    public int Height { get; init; }
+    /// <summary>Widget's model as <see cref="JsonElement"/>.</summary>
+    public JsonElement? Settings { get; init; }
+
     /// <summary>
     /// Get the widget's model.
     /// </summary>
@@ -46,7 +96,8 @@ public record WidgetLayout(string Type, string SubType, int X, int Y, int Width,
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
-        return Type == other.Type
+        return Id == other.Id
+            && Type == other.Type
             && SubType == other.SubType
             && X == other.X
             && Y == other.Y
@@ -57,7 +108,7 @@ public record WidgetLayout(string Type, string SubType, int X, int Y, int Width,
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Type, SubType, X, Y, Width, Height);
+        return HashCode.Combine(Id, Type, SubType, X, Y, Width, Height);
     }
 
     private static bool JsonElementsEqual(JsonElement? a, JsonElement? b)

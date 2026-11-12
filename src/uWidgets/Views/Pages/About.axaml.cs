@@ -1,9 +1,12 @@
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using uWidgets.Core;
 using uWidgets.Core.Interfaces;
+using uWidgets.Core.Models.Settings;
 using uWidgets.Locales;
 using uWidgets.Services;
 
@@ -13,6 +16,7 @@ public partial class About : UserControl
 {
     private readonly IAppSettingsProvider appSettingsProvider;
     public string? Version => Assembly.GetExecutingAssembly().GetName().Version?.ToString();
+    public string DataFolderPath => Const.CurrentFolder;
     
     public About(IAppSettingsProvider appSettingsProvider)
     {
@@ -47,5 +51,24 @@ public partial class About : UserControl
     {
         Process.Start(
             new ProcessStartInfo("https://github.com/creewick/uWidgets/issues") { UseShellExecute = true });
+    }
+
+    private void OpenDataFolder(object? sender, RoutedEventArgs e)
+    {
+        Directory.CreateDirectory(Const.CurrentFolder);
+        Process.Start(new ProcessStartInfo(Const.CurrentFolder) { UseShellExecute = true });
+    }
+
+    private void OpenLogsFolder(object? sender, RoutedEventArgs e)
+    {
+        Directory.CreateDirectory(Const.LogsFolder);
+        Process.Start(new ProcessStartInfo(Const.LogsFolder) { UseShellExecute = true });
+    }
+
+    private void ResetDefaults(object? sender, RoutedEventArgs e)
+    {
+        var current = appSettingsProvider.Get();
+        var defaults = AppSettings.CreateDefault() with { Onboarding = current.EffectiveOnboarding };
+        appSettingsProvider.Save(defaults);
     }
 }

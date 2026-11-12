@@ -1,15 +1,47 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Avalonia;
 using Avalonia.Media;
 using ReactiveUI;
 using uWidgets.Core.Interfaces;
+using uWidgets.Core.Models.Settings;
 using uWidgets.Locales;
 using uWidgets.Views.Controls;
 
 namespace uWidgets.ViewModels;
 
-public class AppearanceViewModel(IAppSettingsProvider appSettingsProvider) : ReactiveObject
+public class AppearanceViewModel : ReactiveObject
 {
+    private readonly IAppSettingsProvider appSettingsProvider;
+    private bool nativeFrameChangedPendingRestart;
+
+    public AppearanceViewModel(IAppSettingsProvider appSettingsProvider)
+    {
+        this.appSettingsProvider = appSettingsProvider;
+        appSettingsProvider.DataChanged += OnSettingsChanged;
+    }
+
+    private void OnSettingsChanged(object sender, AppSettings? oldData, AppSettings newData)
+    {
+        this.RaisePropertyChanged(nameof(DarkMode));
+        this.RaisePropertyChanged(nameof(OpacityPercent));
+        this.RaisePropertyChanged(nameof(OpacityPercentLabel));
+        this.RaisePropertyChanged(nameof(AccentMode));
+        this.RaisePropertyChanged(nameof(AccentColor));
+        this.RaisePropertyChanged(nameof(ShowColorPalette));
+        this.RaisePropertyChanged(nameof(Monochrome));
+        this.RaisePropertyChanged(nameof(Font));
+        this.RaisePropertyChanged(nameof(UseNativeFrame));
+        this.RaisePropertyChanged(nameof(CornerRadius));
+        this.RaisePropertyChanged(nameof(PreviewCornerRadius));
+        this.RaisePropertyChanged(nameof(PreviewBackground));
+        this.RaisePropertyChanged(nameof(PreviewForeground));
+        this.RaisePropertyChanged(nameof(PreviewAccentBrush));
+        this.RaisePropertyChanged(nameof(PreviewFontFamily));
+        this.RaisePropertyChanged(nameof(PreviewBorderThickness));
+    }
+
     public ThemeButton[] Themes => appSettingsProvider.Get().Templates.Select(theme => new ThemeButton(appSettingsProvider, theme)).ToArray();
     
     public DarkModeViewModel[] DarkModes =>
@@ -34,8 +66,7 @@ public class AppearanceViewModel(IAppSettingsProvider appSettingsProvider) : Rea
         {
             var settings = appSettingsProvider.Get();
             var newTheme = settings.Theme with { AccentColor = value.Value };
-            var newSettings = settings with { Theme = newTheme };
-            appSettingsProvider.Save(newSettings);
+            appSettingsProvider.Save(settings with { Theme = newTheme });
             this.RaisePropertyChanged(nameof(ShowColorPalette));
         }
     }
@@ -47,8 +78,7 @@ public class AppearanceViewModel(IAppSettingsProvider appSettingsProvider) : Rea
         {
             var settings = appSettingsProvider.Get();
             var newTheme = settings.Theme with { AccentColor = value.ToString() };
-            var newSettings = settings with { Theme = newTheme };
-            appSettingsProvider.Save(newSettings);
+            appSettingsProvider.Save(settings with { Theme = newTheme });
         }
     }
 
@@ -59,23 +89,39 @@ public class AppearanceViewModel(IAppSettingsProvider appSettingsProvider) : Rea
         {
             var settings = appSettingsProvider.Get();
             var newTheme = settings.Theme with { DarkMode = value?.Value };
-            var newSettings = settings with { Theme = newTheme };
-            appSettingsProvider.Save(newSettings);
+            appSettingsProvider.Save(settings with { Theme = newTheme });
         }
     }
-    
-    public double OpacityLevel
+
+    public int OpacityPercent
     {
-        get => appSettingsProvider.Get().Theme.OpacityLevel;
+        get => (int)Math.Round(appSettingsProvider.Get().Theme.OpacityLevel * 100);
+        set
+        {
+            var clamped = Math.Clamp(value, 0, 100);
+            var settings = appSettingsProvider.Get();
+            var newTheme = settings.Theme with { OpacityLevel = Math.Round(clamped / 100.0, 2) };
+            appSettingsProvider.Save(settings with { Theme = newTheme });
+            this.RaisePropertyChanged(nameof(OpacityPercent));
+            this.RaisePropertyChanged(nameof(OpacityPercentLabel));
+        }
+    }
+
+    public string OpacityPercentLabel => $"{OpacityPercent}%";
+
+    public int CornerRadius
+    {
+        get => appSettingsProvider.Get().Dimensions.Radius;
         set
         {
             var settings = appSettingsProvider.Get();
-            var newTheme = settings.Theme with { OpacityLevel = value };
-            var newSettings = settings with { Theme = newTheme };
-            appSettingsProvider.Save(newSettings);
+            var dimensions = settings.Dimensions with { Radius = value };
+            appSettingsProvider.Save(settings with { Dimensions = dimensions });
+            this.RaisePropertyChanged(nameof(CornerRadius));
+            this.RaisePropertyChanged(nameof(PreviewCornerRadius));
         }
     }
-    
+
     public bool Monochrome
     {
         get => appSettingsProvider.Get().Theme.Monochrome;
@@ -83,85 +129,10 @@ public class AppearanceViewModel(IAppSettingsProvider appSettingsProvider) : Rea
         {
             var settings = appSettingsProvider.Get();
             var newTheme = settings.Theme with { Monochrome = value };
-            var newSettings = settings with { Theme = newTheme };
-            appSettingsProvider.Save(newSettings);
-        }
-    }
-
-    public bool LiquidGlass
-    {
-        get => appSettingsProvider.Get().Theme.LiquidGlass;
-        set
-        {
-            var settings = appSettingsProvider.Get();
-            var newTheme = settings.Theme with
-            {
-                LiquidGlass = value,
-                UseNativeFrame = value ? false : settings.Theme.UseNativeFrame
-            };
-            var newSettings = settings with { Theme = newTheme };
-            appSettingsProvider.Save(newSettings);
-            this.RaisePropertyChanged(nameof(LiquidGlass));
-            if (value)
-                this.RaisePropertyChanged(nameof(UseNativeFrame));
-        }
-    }
-
-    public double RefThickness
-    {
-        get => appSettingsProvider.Get().Theme.RefThickness;
-        set
-        {
-            var settings = appSettingsProvider.Get();
-            var newTheme = settings.Theme with { RefThickness = value };
             appSettingsProvider.Save(settings with { Theme = newTheme });
         }
     }
 
-    public double RefFactor
-    {
-        get => appSettingsProvider.Get().Theme.RefFactor;
-        set
-        {
-            var settings = appSettingsProvider.Get();
-            var newTheme = settings.Theme with { RefFactor = value };
-            appSettingsProvider.Save(settings with { Theme = newTheme });
-        }
-    }
-
-    public double RefDispersion
-    {
-        get => appSettingsProvider.Get().Theme.RefDispersion;
-        set
-        {
-            var settings = appSettingsProvider.Get();
-            var newTheme = settings.Theme with { RefDispersion = value };
-            appSettingsProvider.Save(settings with { Theme = newTheme });
-        }
-    }
-
-    public double ShapeRadius
-    {
-        get => appSettingsProvider.Get().Theme.ShapeRadius;
-        set
-        {
-            var settings = appSettingsProvider.Get();
-            var newTheme = settings.Theme with { ShapeRadius = value };
-            appSettingsProvider.Save(settings with { Theme = newTheme });
-        }
-    }
-
-    public double ShapeRoundness
-    {
-        get => appSettingsProvider.Get().Theme.ShapeRoundness;
-        set
-        {
-            var settings = appSettingsProvider.Get();
-            var newTheme = settings.Theme with { ShapeRoundness = value };
-            appSettingsProvider.Save(settings with { Theme = newTheme });
-        }
-    }
-    
     public List<string> Fonts => ["Inter", "Segoe UI", "Microsoft YaHei"];
 
     public string Font
@@ -171,9 +142,14 @@ public class AppearanceViewModel(IAppSettingsProvider appSettingsProvider) : Rea
         {
             var settings = appSettingsProvider.Get();
             var theme = settings.Theme with { FontFamily = value };
-            var newSettings = settings with { Theme = theme };
-            appSettingsProvider.Save(newSettings);
+            appSettingsProvider.Save(settings with { Theme = theme });
         }
+    }
+
+    public bool NativeFrameChangedPendingRestart
+    {
+        get => nativeFrameChangedPendingRestart;
+        private set => this.RaiseAndSetIfChanged(ref nativeFrameChangedPendingRestart, value);
     }
 
     public bool UseNativeFrame
@@ -182,16 +158,54 @@ public class AppearanceViewModel(IAppSettingsProvider appSettingsProvider) : Rea
         set
         {
             var settings = appSettingsProvider.Get();
+            if (settings.Theme.UseNativeFrame == value) return;
             var theme = settings.Theme with
             {
                 UseNativeFrame = value,
                 LiquidGlass = value ? false : settings.Theme.LiquidGlass
             };
-            var newSettings = settings with { Theme = theme };
-            appSettingsProvider.Save(newSettings);
-            if (value)
-                this.RaisePropertyChanged(nameof(LiquidGlass));
-        }        
+            appSettingsProvider.Save(settings with { Theme = theme });
+            NativeFrameChangedPendingRestart = true;
+        }
     }
 
+    // Live Preview Properties
+    public CornerRadius PreviewCornerRadius => UseNativeFrame ? new CornerRadius(2) : new CornerRadius(CornerRadius);
+    public Thickness PreviewBorderThickness => new(UseNativeFrame ? 1.5 : 1);
+
+    public IBrush PreviewBackground
+    {
+        get
+        {
+            var theme = appSettingsProvider.Get().Theme;
+            var isDark = theme.DarkMode ?? (Application.Current?.ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark);
+            var baseColor = isDark ? Color.Parse("#2E2E2E") : Color.Parse("#FFFFFF");
+            return new SolidColorBrush(baseColor, theme.LiquidGlass ? Math.Max(0.25, theme.OpacityLevel) : theme.OpacityLevel);
+        }
+    }
+
+    public IBrush PreviewForeground
+    {
+        get
+        {
+            var isDark = appSettingsProvider.Get().Theme.DarkMode ?? (Application.Current?.ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark);
+            return new SolidColorBrush(isDark ? Colors.White : Color.Parse("#1F1F1F"));
+        }
+    }
+
+    public IBrush PreviewAccentBrush
+    {
+        get
+        {
+            var theme = appSettingsProvider.Get().Theme;
+            if (theme.Monochrome) return PreviewForeground;
+            if (theme.AccentColor != null && Color.TryParse(theme.AccentColor, out var custom))
+                return new SolidColorBrush(custom);
+            return new SolidColorBrush(Color.Parse("#3376CD"));
+        }
+    }
+
+    public FontFamily PreviewFontFamily => Font == "Inter"
+        ? new FontFamily("avares://Avalonia.Fonts.Inter#Inter")
+        : new FontFamily(Font);
 }
