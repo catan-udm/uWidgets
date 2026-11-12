@@ -14,7 +14,7 @@
             <Setter Property="Opacity" Value="0.5" />
         </Style>
         <Style Selector="TextBlock.today">
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundAltHighBrush}" />
         </Style>
     </UserControl.Styles>
     
@@ -30,7 +30,7 @@
                             <Canvas Width="100" Height="100">
                                 <Ellipse Canvas.Left="0" Canvas.Top="0" Width="100" Height="100"
                                          IsVisible="{Binding IsToday}"
-                                         Fill="{DynamicResource SystemAccentColor}" />
+                                         Fill="{DynamicResource SystemControlHighlightAccentBrush}" />
                                 <TextBlock Width="100" Height="100"
                                            TextAlignment="Center"
                                            Margin="0,14,0,0"

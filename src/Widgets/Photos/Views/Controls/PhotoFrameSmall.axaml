@@ -31,35 +31,35 @@
                            Margin="0,4,0,0" />
             </Grid>
 
-            <Border VerticalAlignment="Bottom"
-                    HorizontalAlignment="Left"
-                    Margin="10"
-                    Padding="8,4"
-                    CornerRadius="8"
-                    Background="#77000000"
-                    IsVisible="{Binding HasCaption}">
-                <TextBlock Text="{Binding Caption}"
-                           Foreground="White"
-                           FontSize="11"
-                           FontWeight="SemiBold"
-                           TextTrimming="CharacterEllipsis" />
-            </Border>
+            <Grid VerticalAlignment="Bottom" ColumnDefinitions="*,Auto" Margin="8">
+                <Border Grid.Column="0"
+                        Margin="0,0,6,0"
+                        Padding="8,4"
+                        CornerRadius="8"
+                        Background="#77000000"
+                        HorizontalAlignment="Left"
+                        IsVisible="{Binding HasCaption}">
+                    <TextBlock Text="{Binding Caption}"
+                               Foreground="White"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis" />
+                </Border>
 
-            <Button VerticalAlignment="Bottom"
-                    HorizontalAlignment="Right"
-                    Margin="8"
-                    Width="26"
-                    Height="26"
-                    Padding="0"
-                    CornerRadius="13"
-                    Background="#66000000"
-                    HorizontalContentAlignment="Center"
-                    VerticalContentAlignment="Center"
-                    IsVisible="{Binding HasMultipleImages}"
-                    Click="Next_OnClick">
-                <PathIcon Width="10" Height="10" Foreground="White"
-                          Data="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z" />
-            </Button>
+                <Button Grid.Column="1"
+                        Width="26"
+                        Height="26"
+                        Padding="0"
+                        CornerRadius="13"
+                        Background="#66000000"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        IsVisible="{Binding HasMultipleImages}"
+                        Click="Next_OnClick">
+                    <PathIcon Width="10" Height="10" Foreground="White"
+                              Data="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z" />
+                </Button>
+            </Grid>
         </Panel>
     </Border>
 </UserControl>

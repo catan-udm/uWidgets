@@ -8,7 +8,7 @@
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="6,4,6,6">
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                 <PathIcon Data="{x:Static viewModels:DevelopmentIcon.NodeGeometry}" Width="16" Height="16"
-                          Foreground="#22C55E" />
+                          Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
                 <TextBlock Text="Dev Apps" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Grid.Column="2" Text="{Binding HeaderSummary}" FontSize="11" Opacity="0.7"
@@ -29,14 +29,14 @@
 
                                 <!-- App details -->
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1" Margin="0,0,6,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <TextBlock Text="{Binding AppName}" FontSize="11" FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis" />
-                                        <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
-                                                CornerRadius="3" Padding="4,1">
+                                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,4,0">
+                                        <TextBlock Grid.Column="0" Text="{Binding AppName}" FontSize="11" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                        <Border Grid.Column="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                                CornerRadius="3" Padding="4,1" Margin="6,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding PortDisplay}" FontSize="9" FontWeight="Medium" />
                                         </Border>
-                                    </StackPanel>
+                                    </Grid>
                                     <TextBlock Text="{Binding MemoryDisplay}" FontSize="9" Opacity="0.6" />
                                 </StackPanel>
 
@@ -49,7 +49,7 @@
                                     </Button>
                                     <Button Classes="small" Command="{Binding StopCommand}"
                                             Padding="4" Background="Transparent" ToolTip.Tip="Stop Process">
-                                        <PathIcon Data="{x:Static viewModels:DevelopmentIcon.StopGeometry}" Width="10" Height="10" Foreground="#EF4444" />
+                                        <PathIcon Data="{x:Static viewModels:DevelopmentIcon.StopGeometry}" Width="10" Height="10" Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" />
                                     </Button>
                                 </StackPanel>
                             </Grid>

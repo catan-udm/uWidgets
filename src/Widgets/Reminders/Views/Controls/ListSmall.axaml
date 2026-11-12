@@ -31,7 +31,7 @@
                                     </Canvas>
                                 </Button>
                                 <controls:ClickThroughTextBox Grid.Row="0" Grid.Column="1" Padding="8,6,0,6" 
-                                                              Text="{Binding Title}" 
+                                                              Text="{Binding Title}" TextWrapping="Wrap"
                                                               x:DataType="models:ReminderModel" DataContext="{Binding}" 
                                                               LostFocus="EditReminder" />
                                 <Path Grid.Row="1" Grid.Column="1" Height="1" Stretch="Fill" Opacity="0.2" Margin="8,0"

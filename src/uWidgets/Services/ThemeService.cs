@@ -50,11 +50,30 @@ public class ThemeService : IThemeService
             ? new FontFamily("avares://Avalonia.Fonts.Inter#Inter")
             : new FontFamily(theme.FontFamily);
 
+        string[] accentKeys =
+        [
+            "SystemAccentColor",
+            "SystemAccentColorDark1",
+            "SystemAccentColorDark2",
+            "SystemAccentColorDark3",
+            "SystemAccentColorLight1",
+            "SystemAccentColorLight2",
+            "SystemAccentColorLight3"
+        ];
+
         if (theme.AccentColor != null && Color.TryParse(theme.AccentColor, out var color))
         {
-            Application.Current.Resources["SystemAccentColor"] = color;
-            Application.Current.Resources["SystemAccentColorDark1"] = color;
-            Application.Current.Resources["SystemAccentColorLight1"] = color;
+            foreach (var key in accentKeys)
+            {
+                Application.Current.Resources[key] = color;
+            }
+        }
+        else
+        {
+            foreach (var key in accentKeys)
+            {
+                Application.Current.Resources.Remove(key);
+            }
         }
         
         SwitchStyle(transparentStyle, theme.OpacityLevel < 1 || theme.LiquidGlass);

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using Avalonia;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Development.Models;
@@ -30,9 +31,21 @@ public class DockerContainerItemViewModel : ReactiveObject
     public string PortSummary => info.PortSummary;
     public bool IsRunning => info.IsRunning;
 
-    public IBrush StatusBrush => IsRunning
-        ? new SolidColorBrush(Color.Parse("#10B981"))
-        : new SolidColorBrush(Color.Parse("#9CA3AF"));
+    private static readonly IBrush RunningLightBrush = new SolidColorBrush(Color.Parse("#047857"));
+    private static readonly IBrush RunningDarkBrush = new SolidColorBrush(Color.Parse("#34D399"));
+    private static readonly IBrush StoppedLightBrush = new SolidColorBrush(Color.Parse("#6B7280"));
+    private static readonly IBrush StoppedDarkBrush = new SolidColorBrush(Color.Parse("#9CA3AF"));
+
+    public IBrush StatusBrush
+    {
+        get
+        {
+            var isDark = Application.Current?.ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
+            if (IsRunning)
+                return isDark ? RunningDarkBrush : RunningLightBrush;
+            return isDark ? StoppedDarkBrush : StoppedLightBrush;
+        }
+    }
 
     public ICommand StartCommand { get; }
     public ICommand StopCommand { get; }

@@ -8,7 +8,7 @@
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="6,4,6,6">
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                 <PathIcon Data="{x:Static viewModels:FinanceIcon.CryptoGeometry}" Width="16" Height="16"
-                          Foreground="#F59E0B" />
+                          Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
                 <TextBlock Text="Crypto" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
             </StackPanel>
         </Grid>

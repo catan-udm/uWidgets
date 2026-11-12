@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Avalonia;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Finance.Models;
@@ -24,9 +25,19 @@ public class StockItemViewModel : ReactiveObject
     public string FormattedDelta => info.FormattedDelta;
     public bool IsPositive => info.IsPositive;
 
-    public IBrush DeltaBrush => IsPositive
-        ? new SolidColorBrush(Color.Parse("#10B981"))
-        : new SolidColorBrush(Color.Parse("#EF4444"));
+    private static readonly IBrush PosLight = new SolidColorBrush(Color.Parse("#047857"));
+    private static readonly IBrush PosDark = new SolidColorBrush(Color.Parse("#34D399"));
+    private static readonly IBrush NegLight = new SolidColorBrush(Color.Parse("#B91C1C"));
+    private static readonly IBrush NegDark = new SolidColorBrush(Color.Parse("#F87171"));
+
+    public IBrush DeltaBrush
+    {
+        get
+        {
+            var isDark = Application.Current?.ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
+            return IsPositive ? (isDark ? PosDark : PosLight) : (isDark ? NegDark : NegLight);
+        }
+    }
 
     public void Update(StockQuoteInfo newInfo)
     {

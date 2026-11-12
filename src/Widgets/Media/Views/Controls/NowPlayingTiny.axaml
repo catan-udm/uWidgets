@@ -16,8 +16,8 @@
 
     <UserControl.Styles>
         <Style Selector="Button.playBtn">
-            <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundAltHighBrush}" />
             <Setter Property="CornerRadius" Value="22" />
             <Setter Property="Width" Value="44" />
             <Setter Property="Height" Value="44" />
@@ -33,7 +33,7 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundAccentBrush}" />
         </Style>
         <Style Selector="Slider.timelineSlider /template/ Thumb">
             <Setter Property="Width" Value="10" />
@@ -58,7 +58,7 @@
                         Width="44" Height="44"
                         IsVisible="{Binding HasAlbumArt}" />
                 <PathIcon Width="16" Height="16"
-                          Foreground="White"
+                          Foreground="{DynamicResource SystemControlForegroundAltHighBrush}"
                           Data="{Binding PlayPauseIcon}" />
             </Panel>
         </Button>

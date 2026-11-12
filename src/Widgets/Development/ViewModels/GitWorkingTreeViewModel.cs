@@ -1,6 +1,7 @@
 using System.IO;
 using System.Threading;
 using System.Windows.Input;
+using Avalonia;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Development.Models;
@@ -94,9 +95,21 @@ public class GitWorkingTreeViewModel : ReactiveObject, IDisposable
         private set => this.RaiseAndSetIfChanged(ref isClean, value);
     }
 
-    public IBrush StatusBrush => IsClean
-        ? new SolidColorBrush(Color.Parse("#10B981"))
-        : new SolidColorBrush(Color.Parse("#F59E0B"));
+    private static readonly IBrush CleanLightBrush = new SolidColorBrush(Color.Parse("#047857"));
+    private static readonly IBrush CleanDarkBrush = new SolidColorBrush(Color.Parse("#34D399"));
+    private static readonly IBrush DirtyLightBrush = new SolidColorBrush(Color.Parse("#B45309"));
+    private static readonly IBrush DirtyDarkBrush = new SolidColorBrush(Color.Parse("#FBBF24"));
+
+    public IBrush StatusBrush
+    {
+        get
+        {
+            var isDark = Application.Current?.ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
+            if (IsClean)
+                return isDark ? CleanDarkBrush : CleanLightBrush;
+            return isDark ? DirtyDarkBrush : DirtyLightBrush;
+        }
+    }
 
     public ICommand OpenEditorCommand { get; }
     public ICommand OpenVSCodeCommand { get; }

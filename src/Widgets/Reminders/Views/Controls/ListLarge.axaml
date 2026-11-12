@@ -20,7 +20,7 @@
                 <LineGeometry StartPoint="0,0" EndPoint="1,0"/>
             </Path.Data>
         </Path>
-        <ScrollViewer Grid.Row="3" Grid.Column="0" Grid.RowSpan="2">
+        <ScrollViewer Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
             <StackPanel>
                 <ItemsControl ItemsSource="{Binding Reminders}">
                     <ItemsControl.ItemTemplate>

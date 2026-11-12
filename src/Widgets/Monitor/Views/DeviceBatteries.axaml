@@ -14,7 +14,7 @@
                           Margin="8,6">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="viewModels:DeviceBatteryItemViewModel">
-                        <Grid ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center" Margin="0,5">
+                        <Grid ColumnDefinitions="Auto,2*,1*" VerticalAlignment="Center" Margin="0,5">
                             <!-- 1. Device Icon -->
                             <PathIcon Grid.Column="0" Data="{Binding Icon}"
                                       Width="16" Height="16" Margin="0,0,8,0"
@@ -24,7 +24,7 @@
                             <!-- 2. Actual Reported Device Name -->
                             <TextBlock Grid.Column="1" Text="{Binding Name}"
                                        FontSize="12" FontWeight="SemiBold"
-                                       TextTrimming="CharacterEllipsis" MaxWidth="190"
+                                       TextTrimming="CharacterEllipsis"
                                        Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                                        VerticalAlignment="Center" Margin="0,0,12,0" />
 

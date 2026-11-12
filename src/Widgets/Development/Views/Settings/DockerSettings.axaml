@@ -9,6 +9,9 @@
             <controls:Setting Title="Show all containers">
                 <ToggleSwitch IsChecked="{Binding ShowAllContainers}" OnContent="" OffContent="" />
             </controls:Setting>
+            <controls:Setting Title="Refresh Interval (Seconds)">
+                <NumericUpDown Minimum="2" Maximum="120" Value="{Binding RefreshIntervalSeconds}" Width="120" />
+            </controls:Setting>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

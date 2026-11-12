@@ -8,7 +8,7 @@
         ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="60"
         WindowStartupLocation="CenterOwner"
-        Width="340" Height="340" CanResize="False"
+        Width="440" Height="520" MinWidth="360" MinHeight="360" CanResize="True"
         x:DataType="views:EditWidget">
     <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto, Auto,*"
           Margin="16">
@@ -16,6 +16,8 @@
         <TextBlock Grid.Row="0" Grid.Column="1" IsHitTestVisible="False" Text="{Binding WidgetType}" FontSize="14" FontWeight="Bold" />
         <TextBlock Grid.Row="1" Grid.Column="1" IsHitTestVisible="False" Text="{Binding WidgetSubType}" FontSize="12" FontWeight="SemiBold" Opacity="0.5" />
         <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="{x:Static locales:Locale.Widget_Save}" Click="Close" />
-        <ContentPresenter Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" IsHitTestVisible="True" Margin="0,12,0,0" Content="{Binding Control}" />
+        <ScrollViewer Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,12,0,0">
+            <ContentPresenter IsHitTestVisible="True" Content="{Binding Control}" />
+        </ScrollViewer>
     </Grid>
 </Window>

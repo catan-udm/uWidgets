@@ -5,7 +5,7 @@
              x:Class="Notes.Views.Controls.NoteWide"
              x:DataType="viewModels:NoteViewModel"
              Margin="0">
-    <Grid ColumnDefinitions="118,Auto,*" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+    <Grid ColumnDefinitions="1*,Auto,2*" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
         <Border Grid.Column="0"
                 Background="{DynamicResource SystemControlHighlightListAccentLowBrush}"
                 Padding="4,8">

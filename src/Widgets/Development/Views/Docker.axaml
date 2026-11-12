@@ -8,7 +8,7 @@
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="6,4,6,6">
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                 <PathIcon Data="{x:Static viewModels:DevelopmentIcon.DockerGeometry}" Width="16" Height="16"
-                          Foreground="#0DB7ED" />
+                          Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
                 <TextBlock Text="Docker" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Grid.Column="2" Text="{Binding HeaderSummary}" FontSize="11" Opacity="0.7"
@@ -42,11 +42,11 @@
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                                     <Button Classes="small" Command="{Binding StartCommand}" IsVisible="{Binding !IsRunning}"
                                             Padding="4" Background="Transparent" ToolTip.Tip="Start">
-                                        <PathIcon Data="{x:Static viewModels:DevelopmentIcon.PlayGeometry}" Width="10" Height="10" Foreground="#10B981" />
+                                        <PathIcon Data="{x:Static viewModels:DevelopmentIcon.PlayGeometry}" Width="10" Height="10" Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
                                     </Button>
                                     <Button Classes="small" Command="{Binding StopCommand}" IsVisible="{Binding IsRunning}"
                                             Padding="4" Background="Transparent" ToolTip.Tip="Stop">
-                                        <PathIcon Data="{x:Static viewModels:DevelopmentIcon.StopGeometry}" Width="10" Height="10" Foreground="#EF4444" />
+                                        <PathIcon Data="{x:Static viewModels:DevelopmentIcon.StopGeometry}" Width="10" Height="10" Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" />
                                     </Button>
                                     <Button Classes="small" Command="{Binding RestartCommand}"
                                             Padding="4" Background="Transparent" ToolTip.Tip="Restart">

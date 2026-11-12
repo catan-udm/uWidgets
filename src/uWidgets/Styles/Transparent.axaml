@@ -10,7 +10,4 @@
     <Style Selector="Window">
         <Setter Property="TransparencyLevelHint" Value="AcrylicBlur" />
     </Style>
-    <Style Selector="TextBlock">
-        <Setter Property="Opacity" Value="0.8" />
-    </Style>
 </Styles>

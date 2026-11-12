@@ -27,6 +27,17 @@ public class DockerSettingsViewModel : ReactiveObject
         }
     }
 
+    public int RefreshIntervalSeconds
+    {
+        get => model.RefreshIntervalSeconds;
+        set
+        {
+            model = model with { RefreshIntervalSeconds = Math.Clamp(value, 2, 120) };
+            SaveModel();
+            this.RaisePropertyChanged(nameof(RefreshIntervalSeconds));
+        }
+    }
+
     private void SaveModel()
     {
         if (widgetLayoutProvider == null) return;

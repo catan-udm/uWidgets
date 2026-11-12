@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Avalonia;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Monitor.Models;
@@ -68,6 +69,13 @@ public class DeviceBatteryItemViewModel : ReactiveObject
 
     public double StrokeDashOffset => 27.6 * (1.0 - Math.Clamp(BatteryLevel, 0.0, 1.0));
 
+    private static readonly IBrush NormalLight = new SolidColorBrush(Color.Parse("#047857"));
+    private static readonly IBrush NormalDark = new SolidColorBrush(Color.Parse("#34D399"));
+    private static readonly IBrush LowLight = new SolidColorBrush(Color.Parse("#B45309"));
+    private static readonly IBrush LowDark = new SolidColorBrush(Color.Parse("#FBBF24"));
+    private static readonly IBrush CritLight = new SolidColorBrush(Color.Parse("#B91C1C"));
+    private static readonly IBrush CritDark = new SolidColorBrush(Color.Parse("#F87171"));
+
     public void Update(DeviceBatteryInfo info)
     {
         DeviceId = info.DeviceId;
@@ -79,21 +87,23 @@ public class DeviceBatteryItemViewModel : ReactiveObject
         FormattedLevel = info.FormattedLevel;
         this.RaisePropertyChanged(nameof(StrokeDashOffset));
 
+        var isDark = Application.Current?.ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
+
         if (info.IsCharging)
         {
-            StatusBrush = new SolidColorBrush(Color.Parse("#10B981")); // Emerald
+            StatusBrush = isDark ? NormalDark : NormalLight;
         }
         else if (info.BatteryPercent <= 15)
         {
-            StatusBrush = new SolidColorBrush(Color.Parse("#EF4444")); // Red
+            StatusBrush = isDark ? CritDark : CritLight;
         }
         else if (info.BatteryPercent <= 30)
         {
-            StatusBrush = new SolidColorBrush(Color.Parse("#F59E0B")); // Amber
+            StatusBrush = isDark ? LowDark : LowLight;
         }
         else
         {
-            StatusBrush = new SolidColorBrush(Color.Parse("#10B981")); // Green
+            StatusBrush = isDark ? NormalDark : NormalLight;
         }
     }
 }

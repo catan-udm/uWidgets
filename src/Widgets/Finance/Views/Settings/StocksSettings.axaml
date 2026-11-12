@@ -24,7 +24,7 @@
                                 <TextBlock Text="{Binding}" FontSize="11" VerticalAlignment="Center" />
                                 <Button Grid.Column="1" Command="{Binding $parent[UserControl].((viewModels:StocksSettingsViewModel)DataContext).RemoveTickerCommand}"
                                         CommandParameter="{Binding}" Content="✕" Padding="6,2"
-                                        Background="Transparent" Foreground="#EF4444" />
+                                        Background="Transparent" Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" />
                             </Grid>
                         </Border>
                     </DataTemplate>

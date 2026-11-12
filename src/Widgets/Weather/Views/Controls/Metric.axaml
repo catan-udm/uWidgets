@@ -19,7 +19,7 @@
             <Path StrokeThickness="10" StrokeLineCap="Round"
                   StrokeDashArray="21,21"
                   StrokeDashOffset="{Binding StrokeDashOffset}"
-                  Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                  Stroke="{DynamicResource SystemControlForegroundAccentBrush}"
                   RenderTransformOrigin="55,55">
                 <Path.RenderTransform>
                     <RotateTransform Angle="149" />

@@ -14,8 +14,8 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style Selector="Button.primaryBtn">
-            <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundAltHighBrush}" />
             <Setter Property="CornerRadius" Value="18" />
             <Setter Property="Width" Value="34" />
             <Setter Property="Height" Value="34" />
@@ -80,7 +80,7 @@
                           Data="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466" />
             </Button>
             <Button Classes="primaryBtn" Click="StartPause_OnClick">
-                <PathIcon Width="13" Height="13" Foreground="White" Data="{Binding PlayPauseIcon}" />
+                <PathIcon Width="13" Height="13" Foreground="{DynamicResource SystemControlForegroundAltHighBrush}" Data="{Binding PlayPauseIcon}" />
             </Button>
             <Button Classes="controlBtn" Click="Skip_OnClick">
                 <PathIcon Width="12" Height="12"

@@ -10,7 +10,7 @@
         <TextBlock Grid.Row="1" Grid.Column="0" Margin="0 -3 6 0" FontSize="32" FontWeight="Bold"
                    VerticalAlignment="Top" HorizontalAlignment="Left" Text="{Binding Count}" />
         <controls:ClickThroughTextBox Grid.Row="2" Grid.Column="0" Padding="0" Margin="0 0 8 0" 
-                                      MinHeight="16" MinWidth="90" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"
+                                      MinHeight="16" MinWidth="90" MaxWidth="110" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"
                                       Text="{Binding ListName}" LostFocus="ListNameChanged"
                                       Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
         <ScrollViewer Grid.Row="0" Grid.Column="1" Grid.RowSpan="2">
