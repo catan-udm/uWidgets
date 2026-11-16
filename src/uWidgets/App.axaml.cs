@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -54,7 +53,7 @@ public class App : Application
         themeService.Apply(appSettings.Theme);
 
         // Initialize global hotkeys early on the UI thread
-        var hotkeyService = _services.GetRequiredService<HotkeyService>();
+        _ = _services.GetRequiredService<HotkeyService>();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -62,7 +61,7 @@ public class App : Application
                 ? ShutdownMode.OnExplicitShutdown
                 : ShutdownMode.OnLastWindowClose;
 
-            desktop.Exit += (_, _) => hotkeyService.Dispose();
+            desktop.Exit += (_, _) => _services?.Dispose();
 
             UpdateTrayVisibility(appSettings.ShowTrayIcon);
             appSettingsProvider.DataChanged += (_, oldSettings, newSettings) =>
@@ -180,27 +179,9 @@ public class App : Application
         provider.Save(updated);
     }
 
-    private void Tray_Restart(object? sender, EventArgs e)
-    {
-        var executablePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
-        if (!string.IsNullOrEmpty(executablePath))
-        {
-            var process = Process.Start(executablePath, "--settings");
-            var tryCount = 0;
-            while (process != null && process.MainWindowHandle == IntPtr.Zero && !process.HasExited && tryCount++ < 10)
-            {
-                Thread.Sleep(100);
-                process.Refresh();
-            }
-        }
+    private void Tray_Restart(object? sender, EventArgs e) =>
+        AppRestartHelper.RestartApplication();
 
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            desktop.Shutdown();
-    }
-
-    private void Tray_Exit(object? sender, EventArgs e)
-    {
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            desktop.Shutdown();
-    }
+    private void Tray_Exit(object? sender, EventArgs e) =>
+        AppRestartHelper.ShutdownApplication();
 }

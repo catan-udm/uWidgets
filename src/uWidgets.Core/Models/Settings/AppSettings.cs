@@ -1,4 +1,6 @@
-﻿namespace uWidgets.Core.Models.Settings;
+﻿using System.Text.Json.Serialization;
+
+namespace uWidgets.Core.Models.Settings;
 
 /// <summary>
 /// Tracks first-run onboarding state and starter pack selection.
@@ -37,11 +39,13 @@ public record AppSettings(
     /// <summary>
     /// Returns guaranteed non-null onboarding settings.
     /// </summary>
+    [JsonIgnore]
     public OnboardingSettings EffectiveOnboarding => Onboarding ?? new OnboardingSettings();
 
     /// <summary>
     /// Returns guaranteed non-null hotkey settings.
     /// </summary>
+    [JsonIgnore]
     public HotkeySettings EffectiveHotkeys => Hotkeys ?? new HotkeySettings();
 
     /// <summary>

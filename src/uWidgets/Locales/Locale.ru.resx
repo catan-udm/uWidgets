@@ -200,9 +200,6 @@
     <data name="Settings_Advanced_Position" xml:space="preserve">
         <value>Положение</value>
     </data>
-    <data name="Settings_Advanced" xml:space="preserve">
-        <value>Расширенные</value>
-    </data>
     <data name="Settings_AdminRequired" xml:space="preserve">
         <value>Запустите приложение от имени Администратора для изменения этой настройки</value>
     </data>

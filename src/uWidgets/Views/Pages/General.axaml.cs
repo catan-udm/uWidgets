@@ -1,9 +1,4 @@
-using System;
-using System.Diagnostics;
-using System.Threading;
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using uWidgets.Core.Interfaces;
 using uWidgets.Services;
@@ -25,21 +20,6 @@ public partial class General : UserControl
     private void ResetHotkeys_OnClick(object? sender, RoutedEventArgs e) =>
         viewModel.ResetHotkeysToDefault();
 
-    private void RestartNow_OnClick(object? sender, RoutedEventArgs e)
-    {
-        var executablePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
-        if (!string.IsNullOrEmpty(executablePath))
-        {
-            var process = Process.Start(executablePath, "--settings");
-            var tryCount = 0;
-            while (process != null && process.MainWindowHandle == IntPtr.Zero && !process.HasExited && tryCount++ < 10)
-            {
-                Thread.Sleep(100);
-                process.Refresh();
-            }
-        }
-
-        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopApp)
-            desktopApp.Shutdown();
-    }
+    private void RestartNow_OnClick(object? sender, RoutedEventArgs e) =>
+        AppRestartHelper.RestartApplication();
 }

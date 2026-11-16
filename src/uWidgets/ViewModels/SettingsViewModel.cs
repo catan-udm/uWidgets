@@ -14,7 +14,7 @@ using uWidgets.Views.Pages;
 
 namespace uWidgets.ViewModels;
 
-public class SettingsViewModel : ReactiveObject
+public class SettingsViewModel : ReactiveObject, IDisposable
 {
     private readonly IAppSettingsProvider appSettingsProvider;
     private readonly IAssemblyProvider assemblyProvider;
@@ -126,16 +126,36 @@ public class SettingsViewModel : ReactiveObject
     {
         if (value?.Type == null) return;
 
+        var previousPage = currentPage;
+        UserControl nextPage;
         if (value.AssemblyInfo != null)
         {
             var placementService = serviceProvider.GetService<WidgetPlacementService>();
-            CurrentPage = new Gallery(appSettingsProvider, layoutProvider, assemblyProvider, value.AssemblyInfo, widgetFactory, placementService);
+            nextPage = new Gallery(appSettingsProvider, layoutProvider, assemblyProvider, value.AssemblyInfo, widgetFactory, placementService);
         }
         else
         {
-            CurrentPage = (UserControl)ActivatorUtilities.CreateInstance(serviceProvider, value.Type);
+            nextPage = (UserControl)ActivatorUtilities.CreateInstance(serviceProvider, value.Type);
         }
 
+        CurrentPage = nextPage;
         CurrentPageTitle = value.Text;
+        DisposePage(previousPage);
+    }
+
+    public void Dispose()
+    {
+        DisposePage(currentPage);
+        currentPage = null;
+        GC.SuppressFinalize(this);
+    }
+
+    private static void DisposePage(UserControl? page)
+    {
+        if (page == null) return;
+        if (page.DataContext is IDisposable vmDisposable && !ReferenceEquals(vmDisposable, page))
+            vmDisposable.Dispose();
+        if (page is IDisposable pageDisposable)
+            pageDisposable.Dispose();
     }
 }

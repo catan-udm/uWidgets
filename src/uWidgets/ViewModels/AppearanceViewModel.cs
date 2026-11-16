@@ -11,10 +11,11 @@ using uWidgets.Views.Controls;
 
 namespace uWidgets.ViewModels;
 
-public class AppearanceViewModel : ReactiveObject
+public class AppearanceViewModel : ReactiveObject, IDisposable
 {
     private readonly IAppSettingsProvider appSettingsProvider;
     private bool nativeFrameChangedPendingRestart;
+    private bool disposed;
 
     public AppearanceViewModel(IAppSettingsProvider appSettingsProvider)
     {
@@ -24,6 +25,9 @@ public class AppearanceViewModel : ReactiveObject
 
     private void OnSettingsChanged(object sender, AppSettings? oldData, AppSettings newData)
     {
+        if (oldData != null && oldData.Theme.UseNativeFrame != newData.Theme.UseNativeFrame)
+            NativeFrameChangedPendingRestart = true;
+
         this.RaisePropertyChanged(nameof(DarkMode));
         this.RaisePropertyChanged(nameof(OpacityPercent));
         this.RaisePropertyChanged(nameof(OpacityPercentLabel));
@@ -208,4 +212,12 @@ public class AppearanceViewModel : ReactiveObject
     public FontFamily PreviewFontFamily => Font == "Inter"
         ? new FontFamily("avares://Avalonia.Fonts.Inter#Inter")
         : new FontFamily(Font);
+
+    public void Dispose()
+    {
+        if (disposed) return;
+        disposed = true;
+        appSettingsProvider.DataChanged -= OnSettingsChanged;
+        GC.SuppressFinalize(this);
+    }
 }

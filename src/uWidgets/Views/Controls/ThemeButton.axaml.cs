@@ -1,10 +1,7 @@
 using System;
-using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -77,29 +74,16 @@ public partial class ThemeButton : UserControl
     private void Apply(object? sender, RoutedEventArgs e)
     {
         var settings = appSettingsProvider.Get();
-        var newSettings = settings with { Theme = AppTheme with { LiquidGlass = settings.Theme.LiquidGlass } };
-        
-        appSettingsProvider.Save(newSettings);
-        if (settings.Theme.UseNativeFrame != newSettings.Theme.UseNativeFrame)
-            Restart();
-    }
-    
-    private void Restart()
-    {
-        var executablePath = Process.GetCurrentProcess().MainModule?.FileName;
-        if (executablePath == null) return;
-        
-        var process = Process.Start(executablePath, "--settings");
-        var tryCount = 0;
-        var maxTryCount = 10;
-        
-        while (process.MainWindowHandle == IntPtr.Zero && !process.HasExited && tryCount++ < maxTryCount)
+        var preservedTheme = AppTheme with
         {
-            Thread.Sleep(100);
-            process.Refresh();
-        }
+            LiquidGlass = AppTheme.UseNativeFrame ? false : settings.Theme.LiquidGlass,
+            RefThickness = settings.Theme.RefThickness,
+            RefFactor = settings.Theme.RefFactor,
+            RefDispersion = settings.Theme.RefDispersion,
+            ShapeRadius = settings.Theme.ShapeRadius,
+            ShapeRoundness = settings.Theme.ShapeRoundness
+        };
 
-        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopApp) 
-            desktopApp.Shutdown();
+        appSettingsProvider.Save(settings with { Theme = preservedTheme });
     }
 }

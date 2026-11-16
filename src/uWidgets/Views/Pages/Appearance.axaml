@@ -15,6 +15,17 @@
         </Styles>
     </UserControl.Styles>
     <StackPanel Orientation="Vertical" Spacing="3">
+        <!-- Inline Restart Banner when Native Window Frame changes -->
+        <Border IsVisible="{Binding NativeFrameChangedPendingRestart}"
+                Margin="0,0,0,12" Padding="14,10" CornerRadius="6"
+                Background="#25FFA500" BorderBrush="#80FFA500" BorderThickness="1.5">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock VerticalAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,12,0"
+                           Text="Native window frame preference changed. Restart uWidgets to apply the new window frame to all widgets." />
+                <Button Grid.Column="1" Classes="accent" Content="Restart Now" Click="RestartNow_OnClick" />
+            </Grid>
+        </Border>
+
         <!-- Live Widget Preview Card -->
         <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0 0 0 8" Text="Live Widget Preview" />
         <Border CornerRadius="8" Padding="18" Margin="0 0 0 14"

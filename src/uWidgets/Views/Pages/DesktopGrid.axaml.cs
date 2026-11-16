@@ -7,11 +7,11 @@ namespace uWidgets.Views.Pages;
 
 public partial class DesktopGrid : UserControl
 {
-    private readonly AdvancedViewModel viewModel;
+    private readonly DesktopGridViewModel viewModel;
 
     public DesktopGrid(IAppSettingsProvider appSettingsProvider)
     {
-        viewModel = new AdvancedViewModel(appSettingsProvider);
+        viewModel = new DesktopGridViewModel(appSettingsProvider);
         DataContext = viewModel;
         InitializeComponent();
     }

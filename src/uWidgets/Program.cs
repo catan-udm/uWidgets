@@ -9,6 +9,9 @@ namespace uWidgets;
 
 class Program
 {
+    private const int MaxCrashLogBytes = 64 * 1024;
+    private static readonly object crashLogLock = new();
+
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
     // yet and stuff might break.
@@ -19,28 +22,14 @@ class Program
 
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
         {
-            try
-            {
-                var ex = e.ExceptionObject as Exception;
-                var fileName = Path.Combine(Const.LogsFolder, "crash_log.txt");
-                File.WriteAllText(fileName, $"[{DateTime.UtcNow:O}] UnhandledException: {ex?.Message}{Environment.NewLine}{ex?.StackTrace}");
-            }
-            catch
-            {
-            }
+            var ex = e.ExceptionObject as Exception;
+            AppendCrashLog($"[{DateTime.UtcNow:O}] UnhandledException: {ex?.Message}{Environment.NewLine}{ex?.StackTrace}");
         };
 
         System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (s, e) =>
         {
-            try
-            {
-                var fileName = Path.Combine(Const.LogsFolder, "crash_log.txt");
-                File.AppendAllText(fileName, $"[{DateTime.UtcNow:O}] UnobservedTaskException: {e.Exception.Message}{Environment.NewLine}{e.Exception.StackTrace}");
-                e.SetObserved();
-            }
-            catch
-            {
-            }
+            AppendCrashLog($"[{DateTime.UtcNow:O}] UnobservedTaskException: {e.Exception.Message}{Environment.NewLine}{e.Exception.StackTrace}");
+            e.SetObserved();
         };
 
         try
@@ -52,14 +41,7 @@ class Program
             catch (Exception ex)
             {
                 // Non-fatal if MyDockFinder is not installed or locked
-                try
-                {
-                    var fileName = Path.Combine(Const.LogsFolder, "crash_log.txt");
-                    File.AppendAllText(fileName, $"[{DateTime.UtcNow:O}] GlossyGlass StartEngine warning: {ex.Message}{Environment.NewLine}{ex.StackTrace}{Environment.NewLine}");
-                }
-                catch
-                {
-                }
+                AppendCrashLog($"[{DateTime.UtcNow:O}] GlossyGlass unavailable: {ex.Message}");
             }
 
             try
@@ -75,15 +57,35 @@ class Program
         }
         catch (Exception e)
         {
-            try
-            {
-                var fileName = Path.Combine(Const.LogsFolder, "crash_log.txt");
-                File.WriteAllText(fileName, $"[{DateTime.UtcNow:O}] Fatal: {e.Message}{Environment.NewLine}{e.StackTrace}");
-            }
-            catch
-            {
-            }
+            AppendCrashLog($"[{DateTime.UtcNow:O}] Fatal: {e.Message}{Environment.NewLine}{e.StackTrace}");
             throw;
+        }
+    }
+
+    private static void AppendCrashLog(string entry)
+    {
+        try
+        {
+            lock (crashLogLock)
+            {
+                Directory.CreateDirectory(Const.LogsFolder);
+                var fileName = Path.Combine(Const.LogsFolder, "crash_log.txt");
+                if (File.Exists(fileName) && new FileInfo(fileName).Length > MaxCrashLogBytes)
+                {
+                    var text = File.ReadAllText(fileName);
+                    var keepLength = Math.Min(text.Length, MaxCrashLogBytes / 2);
+                    var tail = text.Substring(text.Length - keepLength);
+                    var firstNewline = tail.IndexOf('\n');
+                    if (firstNewline >= 0 && firstNewline + 1 < tail.Length)
+                        tail = tail.Substring(firstNewline + 1);
+                    File.WriteAllText(fileName, tail);
+                }
+
+                File.AppendAllText(fileName, entry + Environment.NewLine);
+            }
+        }
+        catch
+        {
         }
     }
 

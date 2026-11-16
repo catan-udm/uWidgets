@@ -3,7 +3,7 @@ using uWidgets.Core.Interfaces;
 
 namespace uWidgets.ViewModels;
 
-public class AdvancedViewModel(IAppSettingsProvider appSettingsProvider) : ReactiveObject
+public class DesktopGridViewModel(IAppSettingsProvider appSettingsProvider) : ReactiveObject
 {
     public int Size
     {
@@ -16,7 +16,7 @@ public class AdvancedViewModel(IAppSettingsProvider appSettingsProvider) : React
             this.RaisePropertyChanged(nameof(Size));
         }
     }
-    
+
     public int Margin
     {
         get => appSettingsProvider.Get().Dimensions.Margin;
@@ -28,21 +28,7 @@ public class AdvancedViewModel(IAppSettingsProvider appSettingsProvider) : React
             this.RaisePropertyChanged(nameof(Margin));
         }
     }
-    
-    public int Radius
-    {
-        get => appSettingsProvider.Get().Dimensions.Radius;
-        set
-        {
-            var settings = appSettingsProvider.Get();
-            var dimensions = settings.Dimensions with { Radius = value };
-            appSettingsProvider.Save(settings with { Dimensions = dimensions });
-            this.RaisePropertyChanged(nameof(Radius));
-        }
-    }
 
-    public bool RadiusEnabled => !appSettingsProvider.Get().Theme.UseNativeFrame;
-    
     public bool SnapPosition
     {
         get => appSettingsProvider.Get().Layout.SnapPosition;
@@ -53,8 +39,8 @@ public class AdvancedViewModel(IAppSettingsProvider appSettingsProvider) : React
             appSettingsProvider.Save(settings with { Layout = newLayout });
         }
     }
-    
-    public bool SnapSize 
+
+    public bool SnapSize
     {
         get => appSettingsProvider.Get().Layout.SnapSize;
         set
@@ -64,7 +50,7 @@ public class AdvancedViewModel(IAppSettingsProvider appSettingsProvider) : React
             appSettingsProvider.Save(settings with { Layout = newLayout });
         }
     }
-    
+
     public bool LockPosition
     {
         get => appSettingsProvider.Get().Layout.LockPosition;
@@ -77,7 +63,7 @@ public class AdvancedViewModel(IAppSettingsProvider appSettingsProvider) : React
             this.RaisePropertyChanged(nameof(MasterLock));
         }
     }
-    
+
     public bool LockSize
     {
         get => appSettingsProvider.Get().Layout.LockSize;
