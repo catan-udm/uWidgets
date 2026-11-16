@@ -8,7 +8,7 @@ namespace Monitor.ViewModels;
 
 public class DashboardSettingsViewModel(IWidgetLayoutProvider widgetLayoutProvider) : ReactiveObject
 {
-    private DashboardModel model = widgetLayoutProvider.Get().GetModel<DashboardModel>() ?? new DashboardModel();
+    private DashboardModel model = widgetLayoutProvider?.Get()?.GetModel<DashboardModel>() ?? new DashboardModel();
 
     public MetricTypeViewModel[] FourthMetricTypes =>
     [
@@ -19,7 +19,11 @@ public class DashboardSettingsViewModel(IWidgetLayoutProvider widgetLayoutProvid
     public MetricTypeViewModel SelectedFourthMetric
     {
         get => FourthMetricTypes.FirstOrDefault(x => x.Type == model.FourthMetric) ?? FourthMetricTypes[0];
-        set => Save(model with { FourthMetric = value.Type });
+        set
+        {
+            if (value == null) return;
+            Save(model with { FourthMetric = value.Type });
+        }
     }
 
     public bool ShowLabels
@@ -31,7 +35,9 @@ public class DashboardSettingsViewModel(IWidgetLayoutProvider widgetLayoutProvid
     private void Save(DashboardModel updated)
     {
         model = updated;
+        if (widgetLayoutProvider == null) return;
         var widgetSettings = widgetLayoutProvider.Get();
+        if (widgetSettings == null) return;
         widgetLayoutProvider.Save(widgetSettings with { Settings = JsonSerializer.SerializeToElement(model) });
     }
 }

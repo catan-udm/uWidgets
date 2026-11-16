@@ -8,10 +8,13 @@
     <ScrollViewer>
         <StackPanel Orientation="Vertical" Spacing="5">
             <controls:Setting Title="{x:Static locales:Locale.Calendar_Countdown_Event}">
-                <TextBox Width="140" Text="{Binding Title, Mode=TwoWay}" />
+                <TextBox Width="160" Text="{Binding Title, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+            </controls:Setting>
+            <controls:Setting Title="Start date">
+                <CalendarDatePicker Width="160" SelectedDate="{Binding StartDate, Mode=TwoWay}" />
             </controls:Setting>
             <controls:Setting Title="{x:Static locales:Locale.Calendar_Countdown_TargetDate}">
-                <CalendarDatePicker Width="140" SelectedDate="{Binding TargetDate, Mode=TwoWay}" />
+                <CalendarDatePicker Width="160" SelectedDate="{Binding TargetDate, Mode=TwoWay}" />
             </controls:Setting>
             <controls:Setting Title="{x:Static locales:Locale.Calendar_Countdown_ShowHours}">
                 <ToggleSwitch IsChecked="{Binding ShowHours, Mode=TwoWay}" />

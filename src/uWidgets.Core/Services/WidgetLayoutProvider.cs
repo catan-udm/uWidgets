@@ -6,6 +6,8 @@ namespace uWidgets.Core.Services;
 /// <inheritdoc />
 public class WidgetLayoutProvider(ILayoutProvider layoutProvider, WidgetLayout? widgetLayout) : IWidgetLayoutProvider
 {
+    private bool isRemoved;
+
     /// <inheritdoc />
     public event DataChangedEvent<WidgetLayout>? DataChanging;
 
@@ -18,22 +20,25 @@ public class WidgetLayoutProvider(ILayoutProvider layoutProvider, WidgetLayout? 
     /// <inheritdoc />
     public void Save(WidgetLayout data)
     {
-        if (widgetLayout == null) return;
+        if (widgetLayout == null || isRemoved) return;
 
         var targetId = data.Id != Guid.Empty
             ? data.Id
             : (widgetLayout.Id != Guid.Empty ? widgetLayout.Id : Guid.NewGuid());
         var sanitizedData = data with { Id = targetId };
 
-        DataChanging?.Invoke(this, widgetLayout, sanitizedData);
-        var layout = layoutProvider.Get();
+        if (sanitizedData.Equals(widgetLayout))
+            return;
+
+        var layout = layoutProvider.Get().ToList();
         var index = FindIndex(layout, widgetLayout);
 
         if (index == -1) return;
 
+        var oldData = widgetLayout;
+        DataChanging?.Invoke(this, oldData, sanitizedData);
         layout[index] = sanitizedData;
         layoutProvider.Save(layout);
-        var oldData = widgetLayout;
         widgetLayout = sanitizedData;
         DataChanged?.Invoke(this, oldData, sanitizedData);
     }
@@ -41,25 +46,26 @@ public class WidgetLayoutProvider(ILayoutProvider layoutProvider, WidgetLayout? 
     /// <inheritdoc />
     public void Remove()
     {
-        if (widgetLayout == null) return;
+        if (widgetLayout == null || isRemoved) return;
 
-        var layout = layoutProvider.Get();
+        var layout = layoutProvider.Get().ToList();
         var index = FindIndex(layout, widgetLayout);
 
+        isRemoved = true;
         if (index != -1)
         {
+            var oldData = widgetLayout;
+            DataChanging?.Invoke(this, oldData, oldData);
             layout.RemoveAt(index);
             layoutProvider.Save(layout);
+            DataChanged?.Invoke(this, oldData, oldData);
         }
     }
 
     private static int FindIndex(List<WidgetLayout> layout, WidgetLayout target)
     {
         if (target.Id != Guid.Empty)
-        {
-            var byId = layout.FindIndex(item => item.Id == target.Id);
-            if (byId != -1) return byId;
-        }
+            return layout.FindIndex(item => item.Id == target.Id);
 
         var byCoords = layout.FindIndex(item =>
             item.Type == target.Type &&

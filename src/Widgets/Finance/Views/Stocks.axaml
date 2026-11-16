@@ -11,18 +11,29 @@
                           Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
                 <TextBlock Text="Stocks &amp; Indices" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
             </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                <TextBlock Text="Offline"
+                           IsVisible="{Binding IsOffline}"
+                           FontSize="9" Opacity="0.6" VerticalAlignment="Center" />
+                <Button Command="{Binding RefreshCommand}"
+                        IsEnabled="{Binding !IsRefreshing}"
+                        Padding="5,2" Background="Transparent" ToolTip.Tip="Refresh quotes">
+                    <TextBlock Text="↻" FontSize="12" />
+                </Button>
+            </StackPanel>
         </Grid>
 
         <!-- Quotes List -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" IsVisible="{Binding HasQuotes}">
             <ItemsControl ItemsSource="{Binding Quotes}" Margin="4,0">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="viewModels:StockItemViewModel">
                         <Border Margin="0,2,0,3" Padding="6,4" CornerRadius="6"
+                                ToolTip.Tip="{Binding SummaryTooltip}"
                                 Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}">
                             <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
                                 <!-- Stock info -->
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="1">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="1" Margin="0,0,6,0">
                                     <TextBlock Text="{Binding Symbol}" FontSize="11" FontWeight="SemiBold" />
                                     <TextBlock Text="{Binding DisplayName}" FontSize="9" Opacity="0.6"
                                                TextTrimming="CharacterEllipsis" />
@@ -34,8 +45,12 @@
                                                HorizontalAlignment="Right" />
                                     <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
                                             CornerRadius="3" Padding="4,1" HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding FormattedChange}" FontSize="9" FontWeight="Medium"
-                                                   Foreground="{Binding DeltaBrush}" />
+                                        <StackPanel Orientation="Horizontal" Spacing="3">
+                                            <TextBlock Text="{Binding FormattedDelta}" FontSize="9" Opacity="0.8"
+                                                       Foreground="{Binding DeltaBrush}" />
+                                            <TextBlock Text="{Binding FormattedChange}" FontSize="9" FontWeight="Medium"
+                                                       Foreground="{Binding DeltaBrush}" />
+                                        </StackPanel>
                                     </Border>
                                 </StackPanel>
                             </Grid>
@@ -44,5 +59,13 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
+
+        <!-- Empty state -->
+        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="4"
+                    IsVisible="{Binding IsEmpty}" Margin="8">
+            <TextBlock Text="No Tickers Found" FontSize="11" FontWeight="SemiBold" Opacity="0.65" HorizontalAlignment="Center" />
+            <TextBlock Text="Add valid stock tickers in Settings (e.g. AAPL, ^GSPC)"
+                       FontSize="9.5" Opacity="0.5" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" />
+        </StackPanel>
     </Grid>
 </UserControl>

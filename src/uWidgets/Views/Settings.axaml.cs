@@ -24,7 +24,7 @@ public partial class Settings : Window
         KeyDown += OnKeyDown;
         Unloaded += OnUnloaded;
         InitializeComponent();
-        ListBox.SelectedItem = SettingsViewModel.MenuItems[0];
+        viewModel.SelectedMenuItem = viewModel.MenuItems[0];
     }
     
     protected override void OnClosing(WindowClosingEventArgs e)
@@ -51,10 +51,20 @@ public partial class Settings : Window
 
     public void NavigateToPage(Type pageType)
     {
-        var item = viewModel.AllItems.FirstOrDefault(p => p.Type == pageType);
+        if (!string.IsNullOrEmpty(viewModel.SearchQuery) &&
+            viewModel.FilteredItems.All(p => p.Type != pageType))
+        {
+            viewModel.SearchQuery = string.Empty;
+        }
+
+        var item = viewModel.FilteredItems.FirstOrDefault(p => p.Type == pageType)
+                   ?? viewModel.AllItems.FirstOrDefault(p => p.Type == pageType);
         if (item != null)
-            ListBox.SelectedItem = item;
+            viewModel.SelectedMenuItem = item;
     }
+
+    private void TogglePane_OnClick(object? sender, RoutedEventArgs e) =>
+        SplitView.IsPaneOpen = !SplitView.IsPaneOpen;
 
     private void Restart(object? sender, RoutedEventArgs e) =>
         AppRestartHelper.RestartApplication();
@@ -88,12 +98,10 @@ public partial class Settings : Window
         viewModel.Dispose();
     }
 
-    private void OnResized(object? sender, WindowResizedEventArgs e) => 
-        SplitView.IsPaneOpen = Width >= 800;
-
-    private void OnMenuItemChanged(object? _, SelectionChangedEventArgs e)
+    private void OnResized(object? sender, WindowResizedEventArgs e)
     {
-        if (e.AddedItems.Count > 0)
-            viewModel.SetCurrentPage(e.AddedItems[0] as PageViewModel);
+        var isNarrow = Width < 800;
+        PaneToggleButton.IsVisible = isNarrow;
+        SplitView.IsPaneOpen = !isNarrow;
     }
 }

@@ -11,15 +11,12 @@ public record StockQuoteInfo(
     string DisplayName,
     double CurrentPrice,
     double Change,
-    double PercentChange)
+    double PercentChange,
+    string Currency = "USD")
 {
     public bool IsPositive => Change >= 0;
 
-    public string FormattedPrice => CurrentPrice switch
-    {
-        >= 1000 => $"{CurrentPrice:N2}",
-        _ => $"{CurrentPrice:N2}"
-    };
+    public string FormattedPrice => $"{CurrencyFormatting.GetSymbolOrPrefix(Currency)}{CurrentPrice:N2}";
 
     public string FormattedChange => $"{(IsPositive ? "+" : "")}{PercentChange:F2}%";
     public string FormattedDelta => $"{(IsPositive ? "+" : "")}{Change:F2}";

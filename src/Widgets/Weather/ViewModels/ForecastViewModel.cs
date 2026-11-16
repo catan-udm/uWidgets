@@ -27,13 +27,15 @@ public class ForecastViewModel : ReactiveObject, IDisposable
         cooldownTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         cooldownTimer.Tick += OnCooldownTick;
 
-        RetryCommand = ReactiveCommand.CreateFromTask(RetryAsync, outputScheduler: RxApp.MainThreadScheduler);
+        RetryCommand = ReactiveCommand.CreateFromTask(() => UpdateForecastAsync(forceRefresh: true), outputScheduler: RxApp.MainThreadScheduler);
+        RefreshCommand = ReactiveCommand.CreateFromTask(() => UpdateForecastAsync(forceRefresh: true), outputScheduler: RxApp.MainThreadScheduler);
 
         TimerService.Timer1Hour.Subscribe(UpdateForecast);
         UpdateForecast();
     }
 
     public ICommand RetryCommand { get; }
+    public ICommand RefreshCommand { get; }
 
     private void OnCooldownTick(object? sender, EventArgs e)
     {
@@ -51,15 +53,9 @@ public class ForecastViewModel : ReactiveObject, IDisposable
         }
     }
 
-    private async Task RetryAsync()
-    {
-        if (!CanRetry) return;
-        await UpdateForecastAsync();
-    }
+    private void UpdateForecast() => _ = UpdateForecastAsync(forceRefresh: false);
 
-    private void UpdateForecast() => _ = UpdateForecastAsync();
-
-    private async Task UpdateForecastAsync()
+    private async Task UpdateForecastAsync(bool forceRefresh)
     {
         if (isFetching) return;
         isFetching = true;
@@ -67,11 +63,11 @@ public class ForecastViewModel : ReactiveObject, IDisposable
 
         try
         {
-            var result = await provider.GetForecastWithStatusAsync(model.Latitude, model.Longitude, model.TemperatureUnit);
+            var result = await provider.GetForecastWithStatusAsync(model.Latitude, model.Longitude, model.TemperatureUnit, forceRefresh);
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                if (result.Forecast is not { } forecast)
+                if (result.Forecast is not { } forecast || forecast.Current == null || forecast.Hourly == null || forecast.Daily == null)
                 {
                     HasErrorBanner = true;
                     isRateLimited = result.IsRateLimited;
@@ -92,30 +88,83 @@ public class ForecastViewModel : ReactiveObject, IDisposable
                     return;
                 }
 
-                HasErrorBanner = false;
-                isRateLimited = false;
-                lastSuccessAt = DateTime.Now;
+                isRateLimited = result.IsRateLimited;
+                HasErrorBanner = result.IsCached || result.IsOffline || result.IsRateLimited;
+                lastSuccessAt = result.CachedAtLocalTime ?? DateTime.Now;
                 LastUpdatedText = $"Updated {lastSuccessAt.Value:HH:mm}";
                 UpdateStatusText();
 
-                var currentHour = DateTime.Now.Hour;
+                var cityNow = forecast.Current.Time != default ? forecast.Current.Time : DateTime.Now;
+                var upcomingIndices = GetUpcomingHourlyIndices(forecast, cityNow, 24);
+                var currentHourIndex = upcomingIndices.Count > 0 ? upcomingIndices[0] : 0;
+
+                var unitSuffix = string.Equals(model.TemperatureUnit, "fahrenheit", StringComparison.OrdinalIgnoreCase)
+                    ? "°F"
+                    : "°C";
+
+                var dailyMinCount = forecast.Daily.Min?.Count ?? 0;
+                var dailyMaxCount = forecast.Daily.Max?.Count ?? 0;
+                var todayMin = dailyMinCount > 0 ? forecast.Daily.Min![0] : forecast.Current.Temperature;
+                var todayMax = dailyMaxCount > 0 ? forecast.Daily.Max![0] : forecast.Current.Temperature;
+                var periodMin = dailyMinCount > 0 ? forecast.Daily.Min!.Min() : todayMin;
+                var periodMax = dailyMaxCount > 0 ? forecast.Daily.Max!.Max() : todayMax;
+
+                var isDayNow = forecast.Hourly.IsDay is { Count: > 0 } &&
+                               currentHourIndex < forecast.Hourly.IsDay.Count
+                    ? forecast.Hourly.IsDay[currentHourIndex] > 0
+                    : true;
+
+                var currentUv = forecast.Hourly.UVIndex is { Count: > 0 } &&
+                                currentHourIndex < forecast.Hourly.UVIndex.Count
+                    ? forecast.Hourly.UVIndex[currentHourIndex]
+                    : 0;
 
                 CurrentTemperature = $"{forecast.Current.Temperature:0}°";
-                CurrentIcon = forecast.Hourly.IsDay[currentHour] > 0 ? WeatherIconProvider.GetIcon(forecast.Current.WeatherCode) : WeatherIcon.Night.Value;
-                CurrentCondition = GetCondition(forecast.Current.WeatherCode);
-                CurrentMinMax = $"{forecast.Daily.Max[0]:0}°  {forecast.Daily.Min[0]:0}°";
-                CurrentMin = $"{forecast.Daily.Min[0]:0}";
-                CurrentMax = $"{forecast.Daily.Max[0]:0}";
-                TemperatureMetric = new(forecast.Daily.Min.Min(), forecast.Daily.Max.Max(), forecast.Current.Temperature, null);
-                UVIndex = new(0, 10, forecast.Hourly.UVIndex[currentHour], WeatherIcon.Clear.Value);
-                Pressure = new(960, 1050, forecast.Current.Pressure, WeatherIcon.Pressure.Value);
-                SunsetSunrise = GetSunsetSunrise(forecast);
-                HourlyForecast = Enumerable
-                    .Range(currentHour, 24)
-                    .Select(hour => GetHourlyForecast(forecast, hour % 24));
+                CurrentIcon = isDayNow ? WeatherIconProvider.GetIcon(forecast.Current.WeatherCode) : WeatherIcon.Night.Value;
+                CurrentCondition = GetCondition(forecast.Current.WeatherCode) ?? forecast.Current.WeatherCode.ToString();
+                CurrentMinMax = $"{todayMax:0}°  {todayMin:0}°";
+                CurrentMin = $"{todayMin:0}";
+                CurrentMax = $"{todayMax:0}";
+
+                TemperatureMetric = new(
+                    periodMin,
+                    periodMax,
+                    forecast.Current.Temperature,
+                    null,
+                    $"{CityName} • {forecast.Current.Temperature:0.#}{unitSuffix} (Range {periodMin:0.#}..{periodMax:0.#}{unitSuffix})");
+
+                UVIndex = new(
+                    0,
+                    10,
+                    currentUv,
+                    WeatherIcon.Clear.Value,
+                    $"{CityName} • UV Index: {currentUv:0.#}");
+
+                Pressure = new(
+                    960,
+                    1050,
+                    forecast.Current.Pressure,
+                    WeatherIcon.Pressure.Value,
+                    $"{CityName} • Pressure: {forecast.Current.Pressure:0.#} hPa");
+
+                SunsetSunrise = GetSunsetSunrise(forecast, cityNow);
+
+                HourlyForecast = upcomingIndices
+                    .Select(idx => GetHourlyForecast(forecast, idx))
+                    .ToArray();
+
+                var dailyCount = new[]
+                {
+                    forecast.Daily.Time?.Count ?? 0,
+                    forecast.Daily.Min?.Count ?? 0,
+                    forecast.Daily.Max?.Count ?? 0,
+                    forecast.Daily.WeatherCode?.Count ?? 0
+                }.Min();
+
                 DailyForecast = Enumerable
-                    .Range(0, forecast.Daily.Min.Count)
-                    .Select(day => GetDailyForecast(forecast, day));
+                    .Range(0, dailyCount)
+                    .Select(day => GetDailyForecast(forecast, day, periodMin, periodMax))
+                    .ToArray();
             });
         }
         finally
@@ -123,6 +172,50 @@ public class ForecastViewModel : ReactiveObject, IDisposable
             isFetching = false;
             Dispatcher.UIThread.Post(() => this.RaisePropertyChanged(nameof(CanRetry)));
         }
+    }
+
+    public static IReadOnlyList<int> GetUpcomingHourlyIndices(ForecastResponse forecast, DateTime cityNow, int count = 24)
+    {
+        if (forecast.Hourly == null || forecast.Hourly.Temperature == null || forecast.Hourly.Temperature.Count == 0)
+            return Array.Empty<int>();
+
+        var maxCount = new[]
+        {
+            forecast.Hourly.Temperature.Count,
+            forecast.Hourly.WeatherCode?.Count ?? 0,
+            forecast.Hourly.IsDay?.Count ?? 0
+        }.Min();
+
+        if (maxCount <= 0) return Array.Empty<int>();
+
+        int startIndex = 0;
+        var times = forecast.Hourly.Time;
+        if (times is { Count: > 0 })
+        {
+            var targetHour = new DateTime(cityNow.Year, cityNow.Month, cityNow.Day, cityNow.Hour, 0, 0);
+            int limit = Math.Min(times.Count, maxCount);
+            bool found = false;
+            for (int i = 0; i < limit; i++)
+            {
+                if (times[i] >= targetHour)
+                {
+                    startIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                startIndex = Math.Max(0, limit - 1);
+            }
+        }
+        else
+        {
+            startIndex = Math.Clamp(cityNow.Hour, 0, maxCount - 1);
+        }
+
+        var takeCount = Math.Min(count, Math.Max(0, maxCount - startIndex));
+        return Enumerable.Range(startIndex, takeCount).ToArray();
     }
 
     private void StartRateLimitCooldown()
@@ -163,48 +256,54 @@ public class ForecastViewModel : ReactiveObject, IDisposable
         }
     }
 
-    private SunriseSunsetViewModel GetSunsetSunrise(ForecastResponse forecast)
+    private SunriseSunsetViewModel GetSunsetSunrise(ForecastResponse forecast, DateTime cityNow)
     {
+        if (forecast.Daily.Sunrise == null || forecast.Daily.Sunrise.Count == 0 ||
+            forecast.Daily.Sunset == null || forecast.Daily.Sunset.Count == 0)
+        {
+            return new(WeatherIcon.Sunrise.Value, "--:--", $"{CityName} • Sunrise/Sunset unavailable");
+        }
+
         var sunrise = forecast.Daily.Sunrise[0];
         var sunset = forecast.Daily.Sunset[0];
-        var sunriseTomorrow = forecast.Daily.Sunrise[1];
-        var now = DateTime.Now;
+        var sunriseTomorrow = forecast.Daily.Sunrise.Count > 1 ? forecast.Daily.Sunrise[1] : sunrise.AddDays(1);
 
-        if (now < sunrise)
-            return new(WeatherIcon.Sunrise.Value, sunrise.ToString("HH:mm"));
-        if (now < sunset)
-            return new(WeatherIcon.Sunset.Value, sunset.ToString("HH:mm"));
-        return new(WeatherIcon.Sunrise.Value, sunriseTomorrow.ToString("HH:mm"));
+        if (cityNow < sunrise)
+            return new(WeatherIcon.Sunrise.Value, sunrise.ToString("HH:mm"), $"{CityName} • Sunrise at {sunrise:HH:mm}");
+        if (cityNow < sunset)
+            return new(WeatherIcon.Sunset.Value, sunset.ToString("HH:mm"), $"{CityName} • Sunset at {sunset:HH:mm}");
+        return new(WeatherIcon.Sunrise.Value, sunriseTomorrow.ToString("HH:mm"), $"{CityName} • Next Sunrise at {sunriseTomorrow:HH:mm}");
     }
 
-    private DailyForecastViewModel GetDailyForecast(ForecastResponse forecast, int day)
+    private DailyForecastViewModel GetDailyForecast(ForecastResponse forecast, int day, double totalMin, double totalMax)
     {
-        var dayOfWeek = (int) forecast.Daily.Time[day].DayOfWeek;
+        var dayOfWeek = (int)forecast.Daily.Time[day].DayOfWeek;
         var dayOfWeekName = Thread.CurrentThread.CurrentUICulture.DateTimeFormat.AbbreviatedDayNames[dayOfWeek];
         var code = forecast.Daily.WeatherCode[day];
         var icon = WeatherIconProvider.GetIcon(code);
         var min = forecast.Daily.Min[day];
         var max = forecast.Daily.Max[day];
 
-        var totalMin = forecast.Daily.Min.Min();
-        var totalMax = forecast.Daily.Max.Max();
-        
-        List<GridLength> graph =
-        [
-            new GridLength(min - totalMin, GridUnitType.Star),
-            new GridLength(max - min, GridUnitType.Star),
-            new GridLength(totalMax - max, GridUnitType.Star),
-        ];
-        
+        double span = totalMax - totalMin;
+        List<GridLength> graph = span <= 0
+            ? [new GridLength(0, GridUnitType.Star), new GridLength(1, GridUnitType.Star), new GridLength(0, GridUnitType.Star)]
+            : [
+                new GridLength(Math.Max(0, min - totalMin), GridUnitType.Star),
+                new GridLength(Math.Max(0.01, max - min), GridUnitType.Star),
+                new GridLength(Math.Max(0, totalMax - max), GridUnitType.Star),
+            ];
+
         return new DailyForecastViewModel(dayOfWeekName, icon, $"{min:0}°", $"{max:0}°", graph);
     }
 
-    private HourlyForecastViewModel GetHourlyForecast(ForecastResponse forecast, int hour)
+    private HourlyForecastViewModel GetHourlyForecast(ForecastResponse forecast, int index)
     {
-        var time = hour.ToString();
-        var code = forecast.Hourly.WeatherCode[hour];
-        var icon = forecast.Hourly.IsDay[hour] > 0 ? WeatherIconProvider.GetIcon(code) : WeatherIcon.Night.Value;
-        var temperature = forecast.Hourly.Temperature[hour];
+        var time = forecast.Hourly.Time != null && index < forecast.Hourly.Time.Count
+            ? forecast.Hourly.Time[index].Hour.ToString()
+            : (index % 24).ToString();
+        var code = forecast.Hourly.WeatherCode[index];
+        var icon = forecast.Hourly.IsDay[index] > 0 ? WeatherIconProvider.GetIcon(code) : WeatherIcon.Night.Value;
+        var temperature = forecast.Hourly.Temperature[index];
 
         return new HourlyForecastViewModel(time, icon, $"{temperature:0}°");
     }

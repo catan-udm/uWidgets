@@ -10,6 +10,16 @@ public static class StorageService
     private static bool initialized;
 
     /// <summary>
+    /// Indicates whether initialization had to fall back to the temporary directory instead of AppData/portable storage.
+    /// </summary>
+    public static bool IsUsingTempFallback { get; private set; }
+
+    /// <summary>
+    /// Optional diagnostic reason if storage fell back to <see cref="Path.GetTempPath()"/>.
+    /// </summary>
+    public static string? FallbackReason { get; private set; }
+
+    /// <summary>
     /// Resolves <see cref="Const.CurrentFolder"/> (portable mode or <c>%APPDATA%\uWidgets</c>),
     /// ensures required directories exist, and migrates legacy configuration files if needed.
     /// </summary>
@@ -29,13 +39,24 @@ public static class StorageService
             if ((File.Exists(portableFlag) || portableEnv) && IsDirectoryWritable(appDir))
             {
                 Const.CurrentFolder = appDir;
+                IsUsingTempFallback = false;
+                FallbackReason = null;
             }
             else
             {
                 var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                Const.CurrentFolder = string.IsNullOrWhiteSpace(appData)
-                    ? Path.Combine(Path.GetTempPath(), Const.AppName)
-                    : Path.Combine(appData, Const.AppName);
+                if (string.IsNullOrWhiteSpace(appData))
+                {
+                    Const.CurrentFolder = Path.Combine(Path.GetTempPath(), Const.AppName);
+                    IsUsingTempFallback = true;
+                    FallbackReason = "Environment ApplicationData folder path is unavailable.";
+                }
+                else
+                {
+                    Const.CurrentFolder = Path.Combine(appData, Const.AppName);
+                    IsUsingTempFallback = false;
+                    FallbackReason = null;
+                }
 
                 Directory.CreateDirectory(Const.CurrentFolder);
                 MigrateLegacyFiles(appDir, Const.CurrentFolder);
@@ -50,6 +71,8 @@ public static class StorageService
             try
             {
                 Const.CurrentFolder = Path.Combine(Path.GetTempPath(), Const.AppName);
+                IsUsingTempFallback = true;
+                FallbackReason = ex.Message;
                 Directory.CreateDirectory(Const.CurrentFolder);
                 Directory.CreateDirectory(Const.LogsFolder);
                 Directory.CreateDirectory(Const.ProfilesFolder);

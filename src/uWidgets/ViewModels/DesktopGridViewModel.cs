@@ -1,10 +1,31 @@
+using System;
 using ReactiveUI;
 using uWidgets.Core.Interfaces;
+using uWidgets.Core.Models.Settings;
 
 namespace uWidgets.ViewModels;
 
-public class DesktopGridViewModel(IAppSettingsProvider appSettingsProvider) : ReactiveObject
+public class DesktopGridViewModel : ReactiveObject, IDisposable
 {
+    private readonly IAppSettingsProvider appSettingsProvider;
+    private bool disposed;
+
+    public DesktopGridViewModel(IAppSettingsProvider appSettingsProvider)
+    {
+        this.appSettingsProvider = appSettingsProvider;
+        appSettingsProvider.DataChanged += OnSettingsChanged;
+    }
+
+    private void OnSettingsChanged(object sender, AppSettings? oldData, AppSettings newData)
+    {
+        this.RaisePropertyChanged(nameof(Size));
+        this.RaisePropertyChanged(nameof(Margin));
+        this.RaisePropertyChanged(nameof(SnapPosition));
+        this.RaisePropertyChanged(nameof(SnapSize));
+        this.RaisePropertyChanged(nameof(LockPosition));
+        this.RaisePropertyChanged(nameof(LockSize));
+        this.RaisePropertyChanged(nameof(MasterLock));
+    }
     public int Size
     {
         get => appSettingsProvider.Get().Dimensions.Size;
@@ -89,5 +110,13 @@ public class DesktopGridViewModel(IAppSettingsProvider appSettingsProvider) : Re
             this.RaisePropertyChanged(nameof(LockSize));
             this.RaisePropertyChanged(nameof(MasterLock));
         }
+    }
+
+    public void Dispose()
+    {
+        if (disposed) return;
+        disposed = true;
+        appSettingsProvider.DataChanged -= OnSettingsChanged;
+        GC.SuppressFinalize(this);
     }
 }

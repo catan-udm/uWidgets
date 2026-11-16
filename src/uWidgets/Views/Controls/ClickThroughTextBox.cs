@@ -64,11 +64,12 @@ public class ClickThroughTextBox : TextBox, IStyleable
 
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (!IsFocused && e.ClickCount == 1 && VisualRoot is Widget widget)
+        if (!IsFocused && e.ClickCount == 1 && VisualRoot is Widget widget && !widget.IsPositionLocked)
         {
             widget.OnPointerPressed(sender, e);
             e.Handled = true;
-        } else
+        }
+        else
         {
             Focusable = true;
             ContextFlyout = DefaultContextFlyout;

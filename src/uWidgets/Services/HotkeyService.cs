@@ -96,18 +96,26 @@ public sealed class HotkeyService : IDisposable
             return;
         }
 
-        TryRegister(IdToggleWidgets, hotkeys.ToggleWidgets, "Show / Hide Widgets");
-        TryRegister(IdToggleLock, hotkeys.ToggleLock, "Lock / Unlock Positions");
-        TryRegister(IdOpenSettings, hotkeys.OpenSettings, "Open Settings");
+        var seenCombos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        TryRegister(IdToggleWidgets, hotkeys.ToggleWidgets, "Show / Hide Widgets", seenCombos);
+        TryRegister(IdToggleLock, hotkeys.ToggleLock, "Master Lock / Unlock", seenCombos);
+        TryRegister(IdOpenSettings, hotkeys.OpenSettings, "Open Settings", seenCombos);
 
         WarningsChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void TryRegister(int id, string shortcut, string label)
+    private void TryRegister(int id, string shortcut, string label, HashSet<string> seenCombos)
     {
         if (!TryParseShortcut(shortcut, out var modifiers, out var vk))
         {
             registrationWarnings.Add($"{label}: invalid shortcut '{shortcut}'.");
+            return;
+        }
+
+        var normalizedKey = $"{modifiers}:{vk}";
+        if (!seenCombos.Add(normalizedKey))
+        {
+            registrationWarnings.Add($"{label} ({shortcut}): duplicate shortcut assigned to another uWidgets action.");
             return;
         }
 
@@ -199,7 +207,31 @@ public sealed class HotkeyService : IDisposable
             return modifiers != 0;
         }
 
-        return false;
+        virtualKey = keyToken switch
+        {
+            "SPACE" => 0x20,
+            "TAB" => 0x09,
+            "ENTER" or "RETURN" => 0x0D,
+            "PGUP" or "PAGEUP" => 0x21,
+            "PGDN" or "PAGEDOWN" => 0x22,
+            "END" => 0x23,
+            "HOME" => 0x24,
+            "LEFT" => 0x25,
+            "UP" => 0x26,
+            "RIGHT" => 0x27,
+            "DOWN" => 0x28,
+            "INS" or "INSERT" => 0x2D,
+            "DEL" or "DELETE" => 0x2E,
+            "PLUS" or "=" => 0xBB,
+            "MINUS" or "-" => 0xBD,
+            "," or "COMMA" => 0xBC,
+            "." or "PERIOD" => 0xBE,
+            "/" or "SLASH" => 0xBF,
+            "`" or "TILDE" or "OEM3" => 0xC0,
+            _ => 0
+        };
+
+        return virtualKey != 0 && modifiers != 0;
     }
 
     public void Dispose()

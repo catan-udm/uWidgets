@@ -3,7 +3,7 @@
              xmlns:viewModels="clr-namespace:Development.ViewModels"
              x:Class="Development.Views.Docker"
              x:DataType="viewModels:DockerViewModel">
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,*,Auto">
         <!-- Header -->
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="6,4,6,6">
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
@@ -16,11 +16,12 @@
         </Grid>
 
         <!-- Containers List -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" IsVisible="{Binding IsDockerOnline}">
-            <ItemsControl ItemsSource="{Binding Containers}" Margin="4,0">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" IsVisible="{Binding HasContainers}">
+            <ItemsControl ItemsSource="{Binding Containers}" Margin="4,0" IsEnabled="{Binding !IsBusy}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="viewModels:DockerContainerItemViewModel">
                         <Border Margin="0,2,0,3" Padding="6,4" CornerRadius="6"
+                                ToolTip.Tip="{Binding SummaryTooltip}"
                                 Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}">
                             <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
                                 <!-- Status dot -->
@@ -60,12 +61,47 @@
             </ItemsControl>
         </ScrollViewer>
 
+        <!-- Empty state (Engine online, no containers matching filter) -->
+        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="4"
+                    IsVisible="{Binding IsEmptyState}" Margin="8"
+                    ToolTip.Tip="No Docker containers found">
+            <PathIcon Data="{x:Static viewModels:DevelopmentIcon.DockerGeometry}" Width="28" Height="28" Opacity="0.3"
+                      HorizontalAlignment="Center" />
+            <TextBlock Text="No Containers Found" FontSize="11" Opacity="0.65" HorizontalAlignment="Center" />
+            <TextBlock Text="Enable 'Show all containers' in settings to view stopped ones"
+                       FontSize="9.5" Opacity="0.45" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" />
+        </StackPanel>
+
         <!-- Offline state -->
         <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6"
-                    IsVisible="{Binding !IsDockerOnline}">
+                    IsVisible="{Binding !IsDockerOnline}"
+                    ToolTip.Tip="Docker Engine is Offline">
             <PathIcon Data="{x:Static viewModels:DevelopmentIcon.DockerGeometry}" Width="32" Height="32" Opacity="0.3"
                       HorizontalAlignment="Center" />
             <TextBlock Text="Docker Engine is Offline" FontSize="11" Opacity="0.6" HorizontalAlignment="Center" />
         </StackPanel>
+
+        <!-- Error / status bar -->
+        <Border Grid.Row="2"
+                IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Margin="4,2,4,4"
+                Padding="6,4"
+                CornerRadius="6"
+                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding StatusMessage}"
+                           FontSize="10"
+                           TextWrapping="Wrap"
+                           Margin="0,0,6,0"
+                           Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"
+                           VerticalAlignment="Center" />
+                <Button Grid.Column="1"
+                        Content="✕"
+                        FontSize="9"
+                        Padding="4,1"
+                        Command="{Binding DismissStatusCommand}" />
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>

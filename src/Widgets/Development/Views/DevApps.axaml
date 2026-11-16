@@ -48,8 +48,16 @@
                                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
                                     </Button>
                                     <Button Classes="small" Command="{Binding StopCommand}"
-                                            Padding="4" Background="Transparent" ToolTip.Tip="Stop Process">
-                                        <PathIcon Data="{x:Static viewModels:DevelopmentIcon.StopGeometry}" Width="10" Height="10" Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" />
+                                            Padding="4" Background="Transparent" ToolTip.Tip="{Binding StopTooltip}">
+                                        <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                                            <PathIcon Data="{x:Static viewModels:DevelopmentIcon.StopGeometry}" Width="10" Height="10" Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" />
+                                            <TextBlock Text="Kill?"
+                                                       IsVisible="{Binding IsConfirmingStop}"
+                                                       FontSize="9"
+                                                       FontWeight="Bold"
+                                                       Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
                                     </Button>
                                 </StackPanel>
                             </Grid>

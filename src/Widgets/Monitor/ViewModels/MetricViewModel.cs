@@ -2,8 +2,9 @@ using Avalonia.Media;
 
 namespace Monitor.ViewModels;
 
-public record MetricViewModel(double Value, StreamGeometry? Icon = null)
+public record MetricViewModel(double? Value, StreamGeometry? Icon = null)
 {
-    public double StrokeDashOffset => 31.4 * (1 - Value);
-    public string Text => $"{Value:P0}";
-};
+    private double ClampedValue => Math.Clamp(Value ?? 0d, 0d, 1d);
+    public double StrokeDashOffset => 31.4 * (1 - ClampedValue);
+    public string Text => Value.HasValue ? $"{ClampedValue:P0}" : "--";
+}

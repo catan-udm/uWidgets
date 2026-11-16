@@ -388,6 +388,12 @@ public static class ShortcutIcon
         {
             if (!File.Exists(sourceFilePath)) return null;
 
+            var ext = Path.GetExtension(sourceFilePath).ToLowerInvariant();
+            if (ext == ".svg" && TryParseSvgGeometry(sourceFilePath) == null)
+            {
+                return null;
+            }
+
             Directory.CreateDirectory(CustomIconsFolder);
             var fileName = Path.GetFileName(sourceFilePath);
             var destPath = Path.Combine(CustomIconsFolder, fileName);
@@ -414,6 +420,15 @@ public static class ShortcutIcon
             {
                 CustomIcons.Remove(opt);
                 OptionsByKey.Remove(key);
+                if (!string.Equals(opt.Key, key, StringComparison.Ordinal))
+                {
+                    OptionsByKey.Remove(opt.Key);
+                }
+
+                if (opt.Image is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
             }
 
             var fileName = key.StartsWith("custom:", StringComparison.OrdinalIgnoreCase) ? key[7..] : key;
@@ -435,34 +450,34 @@ public static class ShortcutIcon
             var fileName = Path.GetFileName(filePath);
             var key = $"custom:{fileName}";
 
-            var existing = CustomIcons.FirstOrDefault(x => string.Equals(x.Key, key, StringComparison.OrdinalIgnoreCase));
-            if (existing != null)
-            {
-                return existing;
-            }
-
             var ext = Path.GetExtension(filePath).ToLowerInvariant();
             ShortcutIconOption option;
 
             if (ext == ".svg")
             {
                 var geom = TryParseSvgGeometry(filePath);
-                if (geom != null)
+                if (geom == null)
                 {
-                    option = new ShortcutIconOption(key, Geometry: geom, IsCustom: true);
+                    return null;
                 }
-                else
-                {
-                    using var stream = File.OpenRead(filePath);
-                    var bmp = new Bitmap(stream);
-                    option = new ShortcutIconOption(key, Image: bmp, IsCustom: true);
-                }
+
+                option = new ShortcutIconOption(key, Geometry: geom, IsCustom: true);
             }
             else
             {
                 using var stream = File.OpenRead(filePath);
                 var bmp = new Bitmap(stream);
                 option = new ShortcutIconOption(key, Image: bmp, IsCustom: true);
+            }
+
+            var existing = CustomIcons.FirstOrDefault(x => string.Equals(x.Key, key, StringComparison.OrdinalIgnoreCase));
+            if (existing != null)
+            {
+                CustomIcons.Remove(existing);
+                if (existing.Image is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
             }
 
             OptionsByKey[key] = option;

@@ -9,22 +9,22 @@
     <ScrollViewer>
         <StackPanel Orientation="Vertical" Spacing="5">
             <controls:Setting Title="{x:Static locales:Locale.Clock_ShowSeconds}">
-                <ToggleSwitch IsChecked="{Binding ShowSeconds} "/>
+                <ToggleSwitch IsChecked="{Binding ShowSeconds}" />
             </controls:Setting> 
             <controls:Setting Title="{x:Static locales:Locale.Clock_ShowDate}">
-                <ToggleSwitch IsChecked="{Binding ShowDate} "/>
+                <ToggleSwitch IsChecked="{Binding ShowDate}" />
             </controls:Setting> 
             <controls:Setting Title="{x:Static locales:Locale.Clock_Use24Hours}">
-                <ToggleSwitch IsChecked="{Binding Use24Hours} "/>
+                <ToggleSwitch IsChecked="{Binding Use24Hours}" />
             </controls:Setting>
             <controls:Setting Title="{x:Static locales:Locale.Clock_LocalTimeZone}">
-                <ToggleSwitch IsChecked="{Binding UseLocalTimeZone} "/>
+                <ToggleSwitch IsChecked="{Binding UseLocalTimeZone}" />
             </controls:Setting>
             <controls:Setting IsVisible="{Binding ShowTimeZones}" Title="{x:Static locales:Locale.Clock_TimeZone}">
-                <ComboBox ItemsSource="{Binding TimeZones}" Width="130" SelectedItem="{Binding TimeZone}">
+                <ComboBox ItemsSource="{Binding TimeZones}" Width="160" SelectedItem="{Binding TimeZone}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate DataType="system:TimeZoneInfo">
-                            <TextBlock Text="{Binding  DisplayName}" Margin="0 4" />
+                            <TextBlock Text="{Binding DisplayName}" Margin="0 4" />
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>

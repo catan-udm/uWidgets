@@ -11,6 +11,7 @@ using uWidgets.Core;
 using uWidgets.Core.Interfaces;
 using uWidgets.Core.Models;
 using uWidgets.Core.Models.Attributes;
+using uWidgets.Core.Services;
 using uWidgets.Services;
 using uWidgets.Views;
 
@@ -47,13 +48,14 @@ public record LayoutProfileItemViewModel(
     int WidgetCount,
     DateTime LastModified);
 
-public class WidgetManagerViewModel : ReactiveObject
+public class WidgetManagerViewModel : ReactiveObject, IDisposable
 {
     private readonly ILayoutProvider layoutProvider;
     private readonly IAssemblyProvider assemblyProvider;
     private readonly IWidgetFactory<Window, UserControl> widgetFactory;
     private readonly WidgetRegistry widgetRegistry;
     private readonly WidgetPlacementService placementService;
+    private bool disposed;
 
     private string catalogSearch = string.Empty;
     private string selectedCategory = "All";
@@ -124,6 +126,27 @@ public class WidgetManagerViewModel : ReactiveObject
         RefreshActiveWidgets();
         LoadCatalog();
         RefreshProfiles();
+        layoutProvider.DataChanged += OnLayoutDataChanged;
+
+        if (StorageService.IsUsingTempFallback)
+        {
+            StatusMessage = $"⚠ Settings are temporarily stored in %TEMP% ({StorageService.FallbackReason ?? "AppData unavailable"}).";
+        }
+        else if (widgetFactory is WidgetFactory wf && wf.StartupWarnings.Count > 0)
+        {
+            StatusMessage = $"⚠ {wf.StartupWarnings.Count} saved widget(s) could not be loaded ({wf.StartupWarnings[0]}).";
+        }
+    }
+
+    private void OnLayoutDataChanged(object sender, List<WidgetLayout>? oldData, List<WidgetLayout> newData) =>
+        RefreshActiveWidgets();
+
+    public void Dispose()
+    {
+        if (disposed) return;
+        disposed = true;
+        layoutProvider.DataChanged -= OnLayoutDataChanged;
+        GC.SuppressFinalize(this);
     }
 
     public void RefreshActiveWidgets()
@@ -171,9 +194,7 @@ public class WidgetManagerViewModel : ReactiveObject
 
     public void RecoverAllOffscreen()
     {
-        foreach (var win in widgetRegistry.ActiveWidgets)
-            win.RecoverIfOffscreen();
-
+        widgetRegistry.RecoverAllOffscreen();
         RefreshActiveWidgets();
         StatusMessage = "Checked all active widgets and recovered any offscreen placements.";
     }
@@ -203,19 +224,50 @@ public class WidgetManagerViewModel : ReactiveObject
         StatusMessage = $"✓ Saved layout profile \"{safeName}\".";
     }
 
-    public void ApplyProfile(LayoutProfileItemViewModel profile)
+    public bool ApplyProfile(LayoutProfileItemViewModel profile)
     {
-        if (!File.Exists(profile.FilePath)) return;
+        if (!File.Exists(profile.FilePath))
+        {
+            StatusMessage = $"Profile file \"{profile.Name}\" no longer exists.";
+            RefreshProfiles();
+            return false;
+        }
 
-        var json = File.ReadAllText(profile.FilePath);
-        var loaded = JsonSerializer.Deserialize<List<WidgetLayout>>(json) ?? [];
+        try
+        {
+            var json = File.ReadAllText(profile.FilePath);
+            var loaded = JsonSerializer.Deserialize<List<WidgetLayout>>(json);
+            if (loaded == null)
+            {
+                StatusMessage = $"Profile \"{profile.Name}\" is empty or invalid JSON.";
+                return false;
+            }
 
-        ApplyLayoutList(loaded);
-        StatusMessage = $"✓ Loaded profile \"{profile.Name}\" ({loaded.Count} widgets).";
+            if (!ApplyLayoutList(loaded))
+                return false;
+
+            StatusMessage = $"✓ Loaded profile \"{profile.Name}\" ({loaded.Count} widgets).";
+            return true;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to apply profile \"{profile.Name}\": {ex.Message}";
+            return false;
+        }
     }
 
-    public void ApplyLayoutList(List<WidgetLayout> loaded)
+    public bool ApplyLayoutList(List<WidgetLayout> loaded)
     {
+        if (widgetFactory is WidgetFactory wf)
+        {
+            var validationErrors = wf.ValidateLayouts(loaded);
+            if (validationErrors.Count > 0)
+            {
+                StatusMessage = $"Layout not applied: {validationErrors[0]}";
+                return false;
+            }
+        }
+
         widgetRegistry.CloseAll();
         var sanitized = loaded.Select(w => w.Id == Guid.Empty ? w with { Id = Guid.NewGuid() } : w).ToList();
         layoutProvider.Save(sanitized);
@@ -224,6 +276,7 @@ public class WidgetManagerViewModel : ReactiveObject
             widget.Show();
 
         RefreshActiveWidgets();
+        return true;
     }
 
     public void DeleteProfile(LayoutProfileItemViewModel profile)
@@ -326,7 +379,7 @@ public class WidgetManagerViewModel : ReactiveObject
         _ => "Utilities"
     };
 
-    private static (int Cols, int Rows) GetRecommendedGridSize(string type, string subType) => (type, subType) switch
+    public static (int Cols, int Rows) GetRecommendedGridSize(string type, string subType) => (type, subType) switch
     {
         ("Weather", "Forecast") or ("Media", "NowPlaying") or ("Development", "GitWorkingTree") => (4, 2),
         _ => (2, 2)

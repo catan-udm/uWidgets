@@ -21,7 +21,9 @@ public class ConverterSettingsViewModel : ReactiveObject
         get => model.RootFontSizePx;
         set
         {
-            model = model with { RootFontSizePx = value };
+            var clamped = Math.Clamp(value, 8.0, 64.0);
+            if (Math.Abs(model.RootFontSizePx - clamped) < 0.001) return;
+            model = model with { RootFontSizePx = clamped };
             SaveModel();
             this.RaisePropertyChanged(nameof(RootFontSizePx));
         }

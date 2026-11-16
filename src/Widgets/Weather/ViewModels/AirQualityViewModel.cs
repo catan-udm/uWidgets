@@ -24,7 +24,8 @@ public class AirQualityViewModel : ReactiveObject, IDisposable
     {
         var forecast = await provider.GetAirQualityAsync(model.Latitude, model.Longitude);
         if (forecast?.Current == null) return;
-        Metric = new(0, 100, forecast.Current.AirQualityIndex, WeatherIcon.Wind.Value);
+        var aqi = forecast.Current.AirQualityIndex;
+        Metric = new(0, 100, aqi, WeatherIcon.Wind.Value, $"{model.Name} • European AQI: {aqi}");
     }
     
     private MetricViewModel metric = new(0, 100, 0, null);

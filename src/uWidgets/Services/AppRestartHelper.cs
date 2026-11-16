@@ -11,8 +11,11 @@ namespace uWidgets.Services;
 /// </summary>
 public static class AppRestartHelper
 {
-    public static void RestartApplication(string arguments = "--settings")
+    public static void RestartApplication(string arguments = "--settings --restarted")
     {
+        SingleInstanceService.StopPipeServer();
+        SingleInstanceService.ReleaseMutex();
+
         var executablePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
         if (!string.IsNullOrEmpty(executablePath))
         {

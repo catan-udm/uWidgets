@@ -17,9 +17,18 @@ public partial class NoteSmall : UserControl
         InitializeComponent();
     }
 
+    private void OnTitleTextChanged(object? sender, TextChangedEventArgs e) =>
+        (Parent as Note)?.OnTitleTextChanged(sender, e);
+
+    private void OnContentTextChanged(object? sender, TextChangedEventArgs e) =>
+        (Parent as Note)?.OnContentTextChanged(sender, e);
+
     private void UpdateTitle(object? sender, RoutedEventArgs e) =>
         (Parent as Note)?.UpdateTitle(sender, e);
 
     private void UpdateContent(object? sender, RoutedEventArgs e) =>
         (Parent as Note)?.UpdateContent(sender, e);
+
+    private void CopyNote_OnClick(object? sender, RoutedEventArgs e) =>
+        (Parent as Note)?.CopyNote_OnClick(sender, e);
 }

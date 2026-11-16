@@ -2,6 +2,7 @@ using System.IO;
 using System.Threading;
 using System.Windows.Input;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Development.Models;
@@ -13,45 +14,103 @@ namespace Development.ViewModels;
 
 public class GitWorkingTreeViewModel : ReactiveObject, IDisposable
 {
-    private readonly GitWorkingTreeModel model;
+    private GitWorkingTreeModel model;
+    private readonly Action<GitWorkingTreeModel>? onModelUpdated;
     private FileSystemWatcher? watcher;
     private int isUpdating;
 
-    public GitWorkingTreeViewModel(GitWorkingTreeModel model)
+    public GitWorkingTreeViewModel(GitWorkingTreeModel model, Action<GitWorkingTreeModel>? onModelUpdated = null)
     {
         this.model = model;
+        this.onModelUpdated = onModelUpdated;
 
-        OpenEditorCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInEditor(ActivePath, model.PreferredEditor, model.CustomEditorCommand), outputScheduler: RxApp.MainThreadScheduler);
+        OpenEditorCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInEditor(ActivePath, this.model.PreferredEditor, this.model.CustomEditorCommand), outputScheduler: RxApp.MainThreadScheduler);
         OpenVSCodeCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInVSCode(ActivePath), outputScheduler: RxApp.MainThreadScheduler);
         OpenTerminalCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInTerminal(ActivePath), outputScheduler: RxApp.MainThreadScheduler);
         OpenExplorerCommand = ReactiveCommand.Create(() => GitRepositoryService.OpenInExplorer(ActivePath), outputScheduler: RxApp.MainThreadScheduler);
         PromptOpenWithCommand = ReactiveCommand.Create(() => GitRepositoryService.PromptOpenWith(ActivePath), outputScheduler: RxApp.MainThreadScheduler);
+        NextRepositoryCommand = ReactiveCommand.Create(() => CycleRepository(1), outputScheduler: RxApp.MainThreadScheduler);
+        PrevRepositoryCommand = ReactiveCommand.Create(() => CycleRepository(-1), outputScheduler: RxApp.MainThreadScheduler);
 
-        CopyBranchCommand = ReactiveCommand.Create(async () =>
-        {
-            if (!string.IsNullOrWhiteSpace(Branch) && Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow?.Clipboard != null)
-            {
-                await desktop.MainWindow.Clipboard.SetTextAsync(Branch);
-            }
-        }, outputScheduler: RxApp.MainThreadScheduler);
-
-        CopyPathCommand = ReactiveCommand.Create(async () =>
-        {
-            if (!string.IsNullOrWhiteSpace(ActivePath) && Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow?.Clipboard != null)
-            {
-                await desktop.MainWindow.Clipboard.SetTextAsync(ActivePath);
-            }
-        }, outputScheduler: RxApp.MainThreadScheduler);
+        CopyBranchCommand = ReactiveCommand.Create(() => { }, outputScheduler: RxApp.MainThreadScheduler);
+        CopyPathCommand = ReactiveCommand.Create(() => { }, outputScheduler: RxApp.MainThreadScheduler);
 
         AttachWatcher();
         Update();
         TimerService.Timer5Seconds.Subscribe(Update);
     }
 
-    private string ActivePath =>
-        model.Repositories.Count > 0 && model.SelectedIndex >= 0 && model.SelectedIndex < model.Repositories.Count
-            ? model.Repositories[model.SelectedIndex]
-            : (model.Repositories.FirstOrDefault() ?? "");
+    private int ActiveRepoIndex =>
+        model.Repositories.Count == 0
+            ? 0
+            : Math.Clamp(model.SelectedIndex, 0, model.Repositories.Count - 1);
+
+    public string ActivePath =>
+        model.Repositories.Count > 0
+            ? model.Repositories[ActiveRepoIndex]
+            : "";
+
+    public bool HasMultipleRepos => model.Repositories.Count > 1;
+    public string RepoPositionDisplay => HasMultipleRepos ? $"{ActiveRepoIndex + 1}/{model.Repositories.Count}" : "";
+    public bool IsQuickPickEditor => model.PreferredEditor == CodeEditorType.QuickPick;
+
+    private string? copyFeedback;
+    public string? CopyFeedback
+    {
+        get => copyFeedback;
+        private set => this.RaiseAndSetIfChanged(ref copyFeedback, value);
+    }
+
+    public void ApplyModel(GitWorkingTreeModel updated)
+    {
+        model = updated;
+        this.RaisePropertyChanged(nameof(ActivePath));
+        this.RaisePropertyChanged(nameof(HasMultipleRepos));
+        this.RaisePropertyChanged(nameof(RepoPositionDisplay));
+        this.RaisePropertyChanged(nameof(IsQuickPickEditor));
+        this.RaisePropertyChanged(nameof(EditorButtonLabel));
+        this.RaisePropertyChanged(nameof(EditorIcon));
+        this.RaisePropertyChanged(nameof(EditorTooltip));
+        AttachWatcher();
+        Update();
+    }
+
+    private void CycleRepository(int delta)
+    {
+        if (model.Repositories.Count <= 1) return;
+        var nextIndex = (ActiveRepoIndex + delta + model.Repositories.Count) % model.Repositories.Count;
+        model = model with { SelectedIndex = nextIndex };
+        onModelUpdated?.Invoke(model);
+        this.RaisePropertyChanged(nameof(ActivePath));
+        this.RaisePropertyChanged(nameof(RepoPositionDisplay));
+        AttachWatcher();
+        Update();
+    }
+
+    public async Task CopyBranchAsync(TopLevel? topLevel)
+    {
+        if (string.IsNullOrWhiteSpace(Branch) || !HasRepo || topLevel?.Clipboard == null) return;
+        await topLevel.Clipboard.SetTextAsync(Branch);
+        await ShowCopyFeedbackAsync($"Copied '{Branch}'");
+    }
+
+    public async Task CopyPathAsync(TopLevel? topLevel)
+    {
+        if (string.IsNullOrWhiteSpace(ActivePath) || topLevel?.Clipboard == null) return;
+        await topLevel.Clipboard.SetTextAsync(ActivePath);
+        await ShowCopyFeedbackAsync("Copied path");
+    }
+
+    private async Task ShowCopyFeedbackAsync(string message)
+    {
+        CopyFeedback = message;
+        await Task.Delay(1400);
+        if (CopyFeedback == message)
+            CopyFeedback = null;
+    }
+
+    public void OpenInSelectedEditor(CodeEditorType editorType) =>
+        GitRepositoryService.OpenInEditor(ActivePath, editorType, model.CustomEditorCommand);
 
     private string repoName = "Select Repository in Settings";
     public string RepoName
@@ -116,6 +175,8 @@ public class GitWorkingTreeViewModel : ReactiveObject, IDisposable
     public ICommand OpenTerminalCommand { get; }
     public ICommand OpenExplorerCommand { get; }
     public ICommand PromptOpenWithCommand { get; }
+    public ICommand NextRepositoryCommand { get; }
+    public ICommand PrevRepositoryCommand { get; }
     public ICommand CopyBranchCommand { get; }
     public ICommand CopyPathCommand { get; }
 

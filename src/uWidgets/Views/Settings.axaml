@@ -21,7 +21,13 @@
     </Window.Styles>
     
     <Grid RowDefinitions="Auto,*">
-        <TextBlock Name="AppTitle" IsHitTestVisible="False" Margin="16 16 0  16" FontWeight="Bold">uWidgets</TextBlock>
+        <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,10,0,10">
+            <Button Name="PaneToggleButton" Click="TogglePane_OnClick" IsVisible="False"
+                    Background="Transparent" Padding="6,4" ToolTip.Tip="Toggle navigation sidebar">
+                <TextBlock Text="☰" FontSize="14" />
+            </Button>
+            <TextBlock Name="AppTitle" VerticalAlignment="Center" IsHitTestVisible="False" FontWeight="Bold">uWidgets</TextBlock>
+        </StackPanel>
         <SplitView Name="SplitView" Grid.Row="1" IsPaneOpen="True" DisplayMode="CompactInline" PaneBackground="Transparent" OpenPaneLength="240" CompactPaneLength="60">
             <SplitView.Pane>
                 <Grid RowDefinitions="Auto,*" Margin="8,0,12,0">
@@ -32,7 +38,9 @@
                              BorderThickness="1" CornerRadius="6" Padding="10,6" />
                     <ScrollViewer Grid.Row="1">
                         <StackPanel>
-                            <ListBox Name="ListBox" Background="Transparent" SelectionMode="Single" ItemsSource="{Binding FilteredItems}" SelectionChanged="OnMenuItemChanged">
+                            <ListBox Name="ListBox" Background="Transparent" SelectionMode="Single"
+                                     ItemsSource="{Binding FilteredItems}"
+                                     SelectedItem="{Binding SelectedMenuItem, Mode=TwoWay}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate DataType="viewModels:PageViewModel">
                                         <StackPanel Orientation="Horizontal" Spacing="12" IsVisible="{Binding IsNotSeparator}">
@@ -50,10 +58,10 @@
                 <Grid RowDefinitions="Auto, *" ColumnDefinitions="*, Auto" MaxWidth="800">
                     <TextBlock Grid.Row="0" Grid.Column="0" FontSize="28" FontWeight="SemiBold" Text="{Binding CurrentPageTitle}" Margin="0 0 0 32" />
                     <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Spacing="4" Margin="16 0">
-                        <Button Click="Restart" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+                        <Button Click="Restart" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" ToolTip.Tip="Restart uWidgets">
                             <PathIcon Data="{DynamicResource Refresh}" />
                         </Button>
-                        <Button Click="Exit" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+                        <Button Click="Exit" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" ToolTip.Tip="Quit uWidgets">
                             <PathIcon Data="{DynamicResource Power}" />
                         </Button>
                     </StackPanel>

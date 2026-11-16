@@ -12,7 +12,7 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
             <DataTemplate DataType="viewModels:DashboardItemViewModel">
-                <Grid RowDefinitions="3*,*" Margin="3">
+                <Grid RowDefinitions="3*,*" Margin="3" Background="Transparent" ToolTip.Tip="{Binding SummaryText}">
                     <controls:Metric Grid.Row="0"
                                      HorizontalAlignment="Center"
                                      VerticalAlignment="Center"

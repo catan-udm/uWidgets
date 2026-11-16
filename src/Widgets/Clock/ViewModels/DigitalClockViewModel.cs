@@ -1,4 +1,5 @@
 ﻿using Clock.Models;
+using Clock.Services;
 using ReactiveUI;
 using uWidgets.Services;
 
@@ -30,9 +31,7 @@ public class DigitalClockViewModel : ReactiveObject, IDisposable
         this.RaisePropertyChanged(nameof(TimeText));
     }
     
-    private TimeZoneInfo TimeZoneInfo => clockModel.TimeZoneId != null
-        ? TimeZoneInfo.FindSystemTimeZoneById(clockModel.TimeZoneId)
-        : TimeZoneInfo.Local;
+    private TimeZoneInfo TimeZoneInfo => ClockTimeZoneHelper.FindSafeTimeZone(clockModel.TimeZoneId);
 
     private DateTime time;
     public DateTime Time

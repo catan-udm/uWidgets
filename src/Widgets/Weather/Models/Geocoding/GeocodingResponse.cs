@@ -8,7 +8,7 @@ public class GeocodingResponse
     public List<City> Cities { get; set; }
     
     [JsonPropertyName("error")]
-    public string Error { get; set; }
+    public bool Error { get; set; }
     
     [JsonPropertyName("reason")]
     public string Reason { get; set; }

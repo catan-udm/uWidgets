@@ -25,6 +25,8 @@ public partial class NowPlaying : UserControl, IDisposable
 
     private void OnSizeChanged(object? sender, SizeChangedEventArgs e)
     {
+        viewModel.IsUltraCompactTiny = e.NewSize.Height < 80;
+
         var newType = e.NewSize switch
         {
             { Width: <= 120 } or { Height: <= 120 } => typeof(NowPlayingTiny),

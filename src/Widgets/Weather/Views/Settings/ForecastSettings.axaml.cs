@@ -21,9 +21,19 @@ public partial class ForecastSettings : UserControl
 
     private async Task<IEnumerable<object>> SearchCity(string? query, CancellationToken token)
     {
-        return (await provider.GetCitiesAsync(query ?? "") ?? []);
+        var trimmed = query?.Trim();
+        if (string.IsNullOrEmpty(trimmed) || trimmed.Length < 2)
+            return [];
+
+        return await provider.GetCitiesAsync(trimmed, token) ?? [];
     }
-    
+
+    private void Search_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (DataContext is not ForecastSettingsViewModel viewModel || Search.SelectedItem is not City city) return;
+        viewModel.Location = city;
+    }
+
     private void Search_OnLostFocus(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not ForecastSettingsViewModel viewModel || Search.SelectedItem is not City city) return;

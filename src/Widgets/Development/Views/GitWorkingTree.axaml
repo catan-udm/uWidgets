@@ -7,8 +7,8 @@
         <!-- 1. Detailed Standard View (Wide / Large / Medium) -->
         <Grid RowDefinitions="Auto,*,Auto" IsVisible="{Binding !IsSmallView}">
             <!-- Header -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="4,2,4,6">
-                <Button Grid.Column="0" Command="{Binding CopyPathCommand}"
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="4,2,4,6">
+                <Button Grid.Column="0" Click="CopyPath_OnClick"
                         Background="Transparent" BorderThickness="0" Padding="0"
                         HorizontalAlignment="Left"
                         ToolTip.Tip="Click to copy repository path">
@@ -19,8 +19,20 @@
                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                     </Grid>
                 </Button>
+                <!-- Repo cycling control when multiple repositories are tracked -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center" Margin="6,0,0,0"
+                            IsVisible="{Binding HasMultipleRepos}">
+                    <Button Content="‹" Command="{Binding PrevRepositoryCommand}"
+                            Padding="5,1" FontSize="11" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                            ToolTip.Tip="Previous repository" />
+                    <TextBlock Text="{Binding RepoPositionDisplay}" FontSize="10" Opacity="0.7"
+                               VerticalAlignment="Center" Margin="2,0" />
+                    <Button Content="›" Command="{Binding NextRepositoryCommand}"
+                            Padding="5,1" FontSize="11" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                            ToolTip.Tip="Next repository" />
+                </StackPanel>
                 <!-- Divergence badge: only shown when ahead or behind > 0 (no "synced" text) -->
-                <Border Grid.Column="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                <Border Grid.Column="2" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
                         CornerRadius="4" Padding="6,2" VerticalAlignment="Center" Margin="6,0,0,0"
                         IsVisible="{Binding SyncStatus.Length}">
                     <TextBlock Text="{Binding SyncStatus}" FontSize="10" FontWeight="SemiBold" />
@@ -33,7 +45,7 @@
                     IsVisible="{Binding HasRepo}">
                 <StackPanel Spacing="6" VerticalAlignment="Center">
                     <!-- Branch Row (Click to copy) -->
-                    <Button Command="{Binding CopyBranchCommand}"
+                    <Button Click="CopyBranch_OnClick"
                             Background="Transparent" BorderThickness="0" Padding="0"
                             HorizontalAlignment="Stretch"
                             ToolTip.Tip="Click to copy branch name">
@@ -64,7 +76,7 @@
 
             <!-- Quick Actions Bottom Bar -->
             <Grid Grid.Row="2" ColumnDefinitions="*,*,*" Margin="0,2,0,0" IsVisible="{Binding HasRepo}">
-                <Button Grid.Column="0" Command="{Binding OpenEditorCommand}"
+                <Button Grid.Column="0" Click="Editor_OnClick"
                         Margin="2,0" Padding="6,4" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                         ToolTip.Tip="{Binding EditorTooltip}">
                     <StackPanel Orientation="Horizontal" Spacing="4">
@@ -92,8 +104,17 @@
         </Grid>
 
         <!-- 2. Small View (2x2): Icon-Only Mode (No Text) -->
-        <Grid RowDefinitions="*,Auto" IsVisible="{Binding IsSmallView}">
-            <StackPanel Grid.Row="0" Grid.RowSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="4"
+        <Grid RowDefinitions="Auto,*,Auto" IsVisible="{Binding IsSmallView}">
+            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4"
+                        Margin="0,2,0,0" IsVisible="{Binding HasMultipleRepos}">
+                <Button Content="‹" Command="{Binding PrevRepositoryCommand}"
+                        Padding="5,0" FontSize="10" Background="Transparent" ToolTip.Tip="Previous repository" />
+                <TextBlock Text="{Binding RepoPositionDisplay}" FontSize="9.5" Opacity="0.65" VerticalAlignment="Center" />
+                <Button Content="›" Command="{Binding NextRepositoryCommand}"
+                        Padding="5,0" FontSize="10" Background="Transparent" ToolTip.Tip="Next repository" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Grid.RowSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="4"
                         IsVisible="{Binding !HasRepo}" Margin="6"
                         ToolTip.Tip="No repository configured. Right-click widget and choose 'Edit' to select a folder.">
                 <PathIcon Data="{x:Static viewModels:DevelopmentIcon.FolderGeometry}" Width="24" Height="24" Opacity="0.35"
@@ -103,7 +124,7 @@
             </StackPanel>
 
             <!-- Center: Branch Status Icon with Status Color Indicator -->
-            <Button Grid.Row="0" Command="{Binding CopyBranchCommand}"
+            <Button Grid.Row="1" Click="CopyBranch_OnClick"
                     IsVisible="{Binding HasRepo}"
                     Background="Transparent" BorderThickness="0"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -125,9 +146,9 @@
             </Button>
 
             <!-- Bottom: Action Icons Bar (Editor, Terminal, Folder) -->
-            <UniformGrid Grid.Row="1" Rows="1" Columns="4" HorizontalAlignment="Center" Margin="0,0,0,4"
+            <UniformGrid Grid.Row="2" Rows="1" Columns="4" HorizontalAlignment="Center" Margin="0,0,0,4"
                          IsVisible="{Binding HasRepo}">
-                <Button Command="{Binding OpenEditorCommand}"
+                <Button Click="Editor_OnClick"
                         Margin="2,0" Padding="5" CornerRadius="6" HorizontalAlignment="Center"
                         ToolTip.Tip="{Binding EditorTooltip}">
                     <PathIcon Data="{Binding EditorIcon}" Width="14" Height="14" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
@@ -149,5 +170,15 @@
                 </Button>
             </UniformGrid>
         </Grid>
+
+        <Border IsVisible="{Binding CopyFeedback, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Center"
+                Margin="0,0,0,6"
+                Padding="8,3"
+                CornerRadius="6"
+                Background="#DD1F2937">
+            <TextBlock Text="{Binding CopyFeedback}" FontSize="10" Foreground="White" />
+        </Border>
     </Grid>
 </UserControl>

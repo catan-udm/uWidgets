@@ -2,7 +2,7 @@ using Avalonia.Media;
 
 namespace Weather.ViewModels;
 
-public record MetricViewModel(double Min, double Max, double Value, StreamGeometry? Icon)
+public record MetricViewModel(double Min, double Max, double Value, StreamGeometry? Icon, string? ToolTipText = null)
 {
     public int? DisplayMin => Icon != null ? null : (int)Math.Round(Min);
     public int? DisplayMax => Icon != null ? null : (int)Math.Round(Max);
@@ -10,6 +10,9 @@ public record MetricViewModel(double Min, double Max, double Value, StreamGeomet
     public int FontSize => DisplayValue.ToString()?.Length > 2
         ? 50 * 2 / DisplayValue.ToString()?.Length ?? 2
         : 50;
-    
-    public double StrokeDashOffset => (Math.Clamp(Value, Min, Max) - Min) / (Max - Min) * 21;
+
+    public double StrokeDashOffset =>
+        Max <= Min
+            ? 21.0
+            : (1.0 - (Math.Clamp(Value, Min, Max) - Min) / (Max - Min)) * 21.0;
 }

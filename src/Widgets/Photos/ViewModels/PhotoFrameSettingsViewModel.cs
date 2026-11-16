@@ -23,19 +23,51 @@ public class PhotoFrameSettingsViewModel(IWidgetLayoutProvider widgetLayoutProvi
     public int IntervalMinutes
     {
         get => model.IntervalMinutes;
-        set => Save(model with { IntervalMinutes = Math.Clamp(value, 1, 1440) });
+        set
+        {
+            Save(model with { IntervalMinutes = Math.Clamp(value, 1, 1440) });
+            this.RaisePropertyChanged();
+        }
     }
 
     public bool FillWidget
     {
         get => model.FillWidget;
-        set => Save(model with { FillWidget = value });
+        set
+        {
+            Save(model with { FillWidget = value });
+            this.RaisePropertyChanged();
+        }
     }
 
     public string Caption
     {
         get => model.Caption;
-        set => Save(model with { Caption = value });
+        set
+        {
+            Save(model with { Caption = value });
+            this.RaisePropertyChanged();
+        }
+    }
+
+    public bool Shuffle
+    {
+        get => model.Shuffle;
+        set
+        {
+            Save(model with { Shuffle = value });
+            this.RaisePropertyChanged();
+        }
+    }
+
+    public bool IncludeSubfolders
+    {
+        get => model.IncludeSubfolders;
+        set
+        {
+            Save(model with { IncludeSubfolders = value });
+            this.RaisePropertyChanged();
+        }
     }
 
     private void Save(PhotoFrameModel updated)

@@ -15,13 +15,19 @@
                 <Button Content="{x:Static locales:Locale.Photos_BrowseFolder}" Click="BrowseFolder_OnClick" />
             </StackPanel>
             <controls:Setting Title="{x:Static locales:Locale.Photos_Caption}">
-                <TextBox Width="140" Text="{Binding Caption}" />
+                <TextBox Width="140" Text="{Binding Caption, UpdateSourceTrigger=LostFocus}" />
             </controls:Setting>
             <controls:Setting Title="{x:Static locales:Locale.Photos_Interval}">
-                <NumericUpDown Width="130" Minimum="1" Maximum="1440" Increment="5" FormatString="0" Value="{Binding IntervalMinutes}" />
+                <NumericUpDown Width="130" Minimum="1" Maximum="1440" Increment="1" FormatString="0" Value="{Binding IntervalMinutes}" />
             </controls:Setting>
             <controls:Setting Title="{x:Static locales:Locale.Photos_Fill}">
                 <ToggleSwitch IsChecked="{Binding FillWidget}" />
+            </controls:Setting>
+            <controls:Setting Title="Shuffle slideshow order">
+                <ToggleSwitch IsChecked="{Binding Shuffle}" />
+            </controls:Setting>
+            <controls:Setting Title="Include subfolders">
+                <ToggleSwitch IsChecked="{Binding IncludeSubfolders}" />
             </controls:Setting>
         </StackPanel>
     </ScrollViewer>

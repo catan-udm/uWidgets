@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:Calendar.ViewModels"
              x:Class="Calendar.Views.Countdown"
+             ToolTip.Tip="{Binding TooltipText}"
              x:DataType="viewModels:CountdownViewModel">
     <Grid RowDefinitions="Auto,*,Auto,Auto">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">

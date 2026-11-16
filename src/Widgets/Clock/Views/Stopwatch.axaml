@@ -27,11 +27,18 @@
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto,Auto">
-        <TextBlock Grid.Row="0"
-                   Text="{x:Static locales:Locale.Clock_Stopwatch_Title}"
-                   FontSize="11"
-                   FontWeight="Bold"
-                   Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+            <TextBlock Grid.Column="0"
+                       Text="{x:Static locales:Locale.Clock_Stopwatch_Title}"
+                       FontSize="11"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+            <Border Grid.Column="1" Name="CompactLapBanner" IsVisible="False"
+                    Padding="5,1" CornerRadius="4" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+                <TextBlock Text="{Binding CompactLapSummary}" FontSize="10" FontWeight="SemiBold"
+                           IsVisible="{Binding HasLaps}" />
+            </Border>
+        </Grid>
 
         <Viewbox Grid.Row="1" Stretch="Uniform" Margin="0,4">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -62,14 +69,14 @@
         </ScrollViewer>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-            <Button Classes="controlBtn" Click="Reset_OnClick">
+            <Button Classes="controlBtn" Click="Reset_OnClick" ToolTip.Tip="Reset stopwatch and laps">
                 <PathIcon Width="12" Height="12"
                           Data="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466" />
             </Button>
-            <Button Classes="primaryBtn" Click="StartPause_OnClick">
+            <Button Classes="primaryBtn" Click="StartPause_OnClick" ToolTip.Tip="Start / Pause stopwatch">
                 <PathIcon Width="13" Height="13" Foreground="{DynamicResource SystemControlForegroundAltHighBrush}" Data="{Binding PlayPauseIcon}" />
             </Button>
-            <Button Classes="controlBtn" Click="Lap_OnClick">
+            <Button Classes="controlBtn" Click="Lap_OnClick" ToolTip.Tip="Record lap">
                 <PathIcon Width="12" Height="12"
                           Data="M14.778.085A.5.5 0 0 1 15 .5V8a.5.5 0 0 1-.314.464L14.5 8l.186.464-.003.001-.006.003-.023.009a12 12 0 0 1-.397.15c-.264.095-.631.223-1.047.35-.816.252-1.879.523-2.71.523-.847 0-1.548-.28-2.158-.525l-.028-.01C7.68 8.71 7.14 8.5 6.5 8.5c-.7 0-1.638.23-2.437.477A20 20 0 0 0 3 9.342V15.5a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 1 0v.282c.226-.079.496-.17.79-.26C4.606.272 5.67 0 6.5 0c.84 0 1.524.277 2.121.519l.043.018C9.286.788 9.828 1 10.5 1c.7 0 1.638-.23 2.437-.477a20 20 0 0 0 1.349-.476l.019-.007.004-.002h.001" />
             </Button>

@@ -63,10 +63,13 @@ public class ThemeService : IThemeService
 
         if (theme.AccentColor != null && Color.TryParse(theme.AccentColor, out var color))
         {
-            foreach (var key in accentKeys)
-            {
-                Application.Current.Resources[key] = color;
-            }
+            Application.Current.Resources["SystemAccentColor"] = color;
+            Application.Current.Resources["SystemAccentColorDark1"] = ScaleColor(color, 0.85);
+            Application.Current.Resources["SystemAccentColorDark2"] = ScaleColor(color, 0.70);
+            Application.Current.Resources["SystemAccentColorDark3"] = ScaleColor(color, 0.55);
+            Application.Current.Resources["SystemAccentColorLight1"] = TintColor(color, 0.20);
+            Application.Current.Resources["SystemAccentColorLight2"] = TintColor(color, 0.40);
+            Application.Current.Resources["SystemAccentColorLight3"] = TintColor(color, 0.60);
         }
         else
         {
@@ -80,6 +83,20 @@ public class ThemeService : IThemeService
         SwitchStyle(monochromeStyle, theme.Monochrome);
         SwitchStyle(liquidGlassStyle, theme.LiquidGlass);
     }
+
+    private static Color ScaleColor(Color color, double factor) =>
+        Color.FromArgb(
+            color.A,
+            (byte)Math.Clamp((int)(color.R * factor), 0, 255),
+            (byte)Math.Clamp((int)(color.G * factor), 0, 255),
+            (byte)Math.Clamp((int)(color.B * factor), 0, 255));
+
+    private static Color TintColor(Color color, double amount) =>
+        Color.FromArgb(
+            color.A,
+            (byte)Math.Clamp((int)(color.R + (255 - color.R) * amount), 0, 255),
+            (byte)Math.Clamp((int)(color.G + (255 - color.G) * amount), 0, 255),
+            (byte)Math.Clamp((int)(color.B + (255 - color.B) * amount), 0, 255));
 
     private static void SwitchStyle(StyleInclude style, bool enable)
     {

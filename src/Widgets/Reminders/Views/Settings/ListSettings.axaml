@@ -6,10 +6,10 @@
     <ScrollViewer>
         <StackPanel Orientation="Vertical" Spacing="5">
             <controls:Setting Title="{x:Static locales:Locale.Reminders_DeleteCompleted}">
-                <Button Content="{x:Static locales:Locale.Reminders_Delete}" Click="DeleteCompleted" />
+                <Button Name="DeleteCompletedButton" Content="{x:Static locales:Locale.Reminders_Delete}" Click="DeleteCompleted" />
             </controls:Setting>
             <controls:Setting Title="{x:Static locales:Locale.Reminders_DeleteAll}">
-                <Button Content="{x:Static locales:Locale.Reminders_Delete}" Click="DeleteAll"/>
+                <Button Name="DeleteAllButton" Content="{x:Static locales:Locale.Reminders_Delete}" Click="DeleteAll"/>
             </controls:Setting>
         </StackPanel>
     </ScrollViewer>

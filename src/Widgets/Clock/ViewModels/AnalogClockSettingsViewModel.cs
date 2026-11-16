@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Clock.Models;
+using Clock.Services;
 using ReactiveUI;
 using uWidgets.Core.Interfaces;
 
@@ -41,13 +42,15 @@ public class AnalogClockSettingsViewModel(IWidgetLayoutProvider widgetLayoutProv
 
     public TimeZoneInfo TimeZone
     {
-        get => clockModel.TimeZoneId != null
-                ? TimeZoneInfo.FindSystemTimeZoneById(clockModel.TimeZoneId)
-                : TimeZoneInfo.Local;
-        set => UpdateClockModel(clockModel with { TimeZoneId = value.Id });
+        get => ClockTimeZoneHelper.FindSafeTimeZone(clockModel.TimeZoneId);
+        set
+        {
+            if (value == null) return;
+            UpdateClockModel(clockModel with { TimeZoneId = value.Id });
+        }
     }
 
-    public TimeZoneInfo[] TimeZones => TimeZoneInfo.GetSystemTimeZones().Append(TimeZone).ToArray();
+    public TimeZoneInfo[] TimeZones => ClockTimeZoneHelper.CachedTimeZones;
 
     private void UpdateClockModel(ClockModel newClockModel)
     {

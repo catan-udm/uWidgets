@@ -8,6 +8,7 @@
         ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="60"
         WindowStartupLocation="CenterOwner"
+        Title="{Binding WindowTitle}"
         Width="440" Height="520" MinWidth="360" MinHeight="360" CanResize="True"
         x:DataType="views:EditWidget">
     <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto, Auto,*"

@@ -22,9 +22,10 @@ public partial class Gallery : UserControl
     private readonly AssemblyInfo assemblyInfo;
     private readonly IWidgetFactory<Window, UserControl> widgetFactory;
     private readonly WidgetPlacementService? placementService;
+    private List<WidgetPreviewViewModel>? cachedWidgets;
     private int toastSequence;
 
-    public List<WidgetPreviewViewModel> Widgets => GetWidgets();
+    public List<WidgetPreviewViewModel> Widgets => cachedWidgets ??= GetWidgets();
     public int WidgetSize => 160;
     public CornerRadius Radius => new(appSettingsProvider.Get().Dimensions.Radius / (VisualRoot?.RenderScaling ?? 1.0));
 
@@ -66,6 +67,20 @@ public partial class Gallery : UserControl
     
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        Unloaded -= OnUnloaded;
+
+        if (cachedWidgets != null)
+        {
+            foreach (var item in cachedWidgets)
+            {
+                if (item.Control.DataContext is IDisposable dcDisposable && !ReferenceEquals(dcDisposable, item.Control))
+                    dcDisposable.Dispose();
+                if (item.Control is IDisposable controlDisposable)
+                    controlDisposable.Dispose();
+            }
+            cachedWidgets = null;
+        }
+
         if (layoutProvider.Get().All(x => x.Type != assemblyInfo.AssemblyName))
         {
             assemblyProvider.UnloadAssembly(assemblyInfo.AssemblyName);
@@ -83,8 +98,9 @@ public partial class Gallery : UserControl
 
         if (placementService != null && hostWindow != null)
         {
+            var (cols, rows) = WidgetManagerViewModel.GetRecommendedGridSize(viewModel.Type, viewModel.Subtype);
             var avoidRect = WidgetPlacementService.GetWindowPixelBounds(hostWindow);
-            widgetSettings = placementService.CreateSmartLayout(hostWindow, viewModel.Type, viewModel.Subtype, 2, 2, avoidRect);
+            widgetSettings = placementService.CreateSmartLayout(hostWindow, viewModel.Type, viewModel.Subtype, cols, rows, avoidRect);
         }
         else
         {

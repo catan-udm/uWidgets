@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Clock.Locales;
 using Clock.Models;
+using Clock.Services;
 using ReactiveUI;
 using uWidgets.Core.Interfaces;
 
@@ -19,7 +20,7 @@ public class WorldClockSettingsViewModel(IWidgetLayoutProvider widgetLayoutProvi
         return model;
     }
     
-    public TimeZoneInfo[] TimeZones => TimeZoneInfo.GetSystemTimeZones().Append(TimeZone1).Append(TimeZone2).Append(TimeZone3).Append(TimeZone4).ToArray();
+    public TimeZoneInfo[] TimeZones => ClockTimeZoneHelper.CachedTimeZones;
 
     public string TimeZone1Title => $"{Locale.Clock_TimeZone} 1";
     public string TimeZone2Title => $"{Locale.Clock_TimeZone} 2";
@@ -53,10 +54,7 @@ public class WorldClockSettingsViewModel(IWidgetLayoutProvider widgetLayoutProvi
     private TimeZoneInfo Get(int index)
     {
         var id = clockModel.TimeZoneIds[index];
-        
-        return id != null
-            ? TimeZoneInfo.FindSystemTimeZoneById(id)
-            : TimeZoneInfo.Local;
+        return ClockTimeZoneHelper.FindSafeTimeZone(id);
     }
 
     private void Set(int index, TimeZoneInfo timeZone)

@@ -100,8 +100,10 @@ public class AssemblyProvider : IAssemblyProvider
     public Assembly LoadAssembly(string name)
     {
         if (loadedContexts.TryGetValue(name, out var context))
-            return context.Assemblies.Single(assembly => 
-                assembly.ManifestModule.Name == $"{name}.dll");
+        {
+            return context.Assemblies.Single(assembly =>
+                string.Equals(assembly.GetName().Name, name, StringComparison.OrdinalIgnoreCase));
+        }
         
         var filePath = GetAssemblyPath(name);
         context = new PluginLoadContext(filePath);
@@ -138,8 +140,17 @@ public class AssemblyProvider : IAssemblyProvider
     /// <inheritdoc />
     public ResourceManager? GetLocaleResourceManager(Assembly assembly)
     {
-        return assembly
-            .DefinedTypes
+        IEnumerable<Type> types;
+        try
+        {
+            types = assembly.DefinedTypes.Select(t => t.AsType());
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            types = ex.Types.Where(t => t != null)!;
+        }
+
+        return types
             .FirstOrDefault(type => type.Name == "Locale")?
             .GetProperty(nameof(ResourceManager), BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)?
             .GetValue(null) as ResourceManager;

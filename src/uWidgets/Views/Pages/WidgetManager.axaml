@@ -18,7 +18,10 @@
                 CornerRadius="6" Padding="12,8"
                 Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
                 BorderBrush="{DynamicResource SystemControlForegroundAccentBrush}" BorderThickness="1.5">
-            <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock VerticalAlignment="Center" Text="{Binding StatusMessage}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,8,0" />
+                <Button Grid.Column="1" Content="✕" Padding="6,2" Background="Transparent" Click="DismissStatus_OnClick" />
+            </Grid>
         </Border>
 
         <TabControl>
@@ -53,6 +56,7 @@
                                             <Button Content="Highlight" Click="HighlightWidget_OnClick" />
                                             <Button Content="Center" Click="CenterWidget_OnClick" />
                                             <Button Content="{Binding VisibilityLabel}" Click="ToggleWidgetVisibility_OnClick" />
+                                            <Button Content="Duplicate" Click="DuplicateWidget_OnClick" />
                                             <Button Content="Edit" IsVisible="{Binding CanEdit}" Click="EditWidget_OnClick" />
                                             <Button Content="Remove" Click="RemoveWidget_OnClick" />
                                         </StackPanel>
@@ -110,6 +114,7 @@
                             <TextBox Grid.Column="0" Margin="0,0,8,0"
                                      Watermark="New profile name (e.g. Work Setup)..."
                                      Text="{Binding ProfileNameInput, Mode=TwoWay}"
+                                     KeyDown="ProfileNameInput_OnKeyDown"
                                      Background="{DynamicResource SettingsBackground}"
                                      BorderThickness="1" CornerRadius="4" Padding="10,6" />
                             <Button Grid.Column="1" Margin="0,0,8,0" Classes="accent" Content="Save Current Layout" Click="SaveProfile_OnClick" />

@@ -14,7 +14,7 @@ public class ForecastResponse
     public DailyForecast Daily { get; set; }
         
     [JsonPropertyName("error")]
-    public string Error { get; set; }
+    public bool Error { get; set; }
     
     [JsonPropertyName("reason")]
     public string Reason { get; set; }

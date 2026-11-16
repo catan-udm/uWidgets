@@ -139,7 +139,7 @@
         <value>Pressure</value>
     </data>
     <data name="Weather_Pressure_Subtitle" xml:space="preserve">
-        <value>Significan, rapid changes in pressure are used to predict changes in the weather</value>
+        <value>Significant, rapid changes in pressure are used to predict changes in the weather</value>
     </data>
     <data name="Weather_SunriseSunset_Title" xml:space="preserve">
         <value>Sunrise and Sunset</value>

@@ -58,20 +58,20 @@
         <controls:Setting Title="Show / Hide all widgets (Boss Key)"
                           Subtitle="Instantly hide or restore every desktop widget (e.g. Win+Shift+W)"
                           IsEnabled="{Binding HotkeysEnabled}">
-            <TextBox MinWidth="150" Text="{Binding ToggleWidgetsHotkey}"
+            <TextBox MinWidth="150" Text="{Binding ToggleWidgetsHotkey, UpdateSourceTrigger=LostFocus}"
                      Background="{DynamicResource SettingsBackground}" BorderThickness="1" CornerRadius="4" Padding="8,5" />
         </controls:Setting>
-        <controls:Setting Title="Lock / Unlock widget positions"
-                          Subtitle="Toggle accidental drag protection (e.g. Win+Alt+L)"
+        <controls:Setting Title="Lock / Unlock all widgets (Master Lock)"
+                          Subtitle="Toggle both position and size protection (e.g. Win+Alt+L)"
                           IsEnabled="{Binding HotkeysEnabled}">
-            <TextBox MinWidth="150" Text="{Binding ToggleLockHotkey}"
+            <TextBox MinWidth="150" Text="{Binding ToggleLockHotkey, UpdateSourceTrigger=LostFocus}"
                      Background="{DynamicResource SettingsBackground}" BorderThickness="1" CornerRadius="4" Padding="8,5" />
         </controls:Setting>
         <controls:Setting Title="Open Settings"
                           Subtitle="Open this Settings window from anywhere (e.g. Ctrl+Shift+U)"
                           IsEnabled="{Binding HotkeysEnabled}">
             <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBox MinWidth="150" Text="{Binding OpenSettingsHotkey}"
+                <TextBox MinWidth="150" Text="{Binding OpenSettingsHotkey, UpdateSourceTrigger=LostFocus}"
                          Background="{DynamicResource SettingsBackground}" BorderThickness="1" CornerRadius="4" Padding="8,5" />
                 <Button Content="Reset" Click="ResetHotkeys_OnClick" />
             </StackPanel>

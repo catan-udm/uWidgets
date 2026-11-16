@@ -25,7 +25,15 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
             <DataTemplate DataType="viewModels:ShortcutItemViewModel">
-                <Button Classes="microTile" Click="Shortcut_OnClick" ToolTip.Tip="{Binding Name}">
+                <Button Classes="microTile" Click="Shortcut_OnClick" ToolTip.Tip="{Binding ToolTipText}">
+                    <Button.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Copy Target" Click="CopyTarget_OnClick" />
+                            <MenuItem Header="Open Containing Folder"
+                                      IsEnabled="{Binding CanOpenContainingFolder}"
+                                      Click="OpenContainingFolder_OnClick" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
                     <Viewbox MaxWidth="16" MaxHeight="16">
                         <Panel Width="16" Height="16">
                             <PathIcon IsVisible="{Binding !HasImage}"

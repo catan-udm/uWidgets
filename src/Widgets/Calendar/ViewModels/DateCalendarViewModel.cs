@@ -9,13 +9,13 @@ public class DateCalendarViewModel : ReactiveObject, IDisposable
     
     public DateCalendarViewModel()
     {
-        TimerService.Timer5Minutes.Subscribe(UpdateTime);
+        TimerService.Timer1Minute.Subscribe(UpdateTime);
         UpdateTime();
     }
     
     public void Dispose()
     {
-        TimerService.Timer5Minutes.Unsubscribe(UpdateTime);
+        TimerService.Timer1Minute.Unsubscribe(UpdateTime);
         GC.SuppressFinalize(this);
     }
 

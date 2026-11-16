@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:Weather.ViewModels"
              x:Class="Weather.Views.Controls.ForecastWide"
-             x:DataType="viewModels:ForecastViewModel">
+             x:DataType="viewModels:ForecastViewModel"
+             ToolTip.Tip="{Binding StatusTooltip}">
     <Grid RowDefinitions="Auto,*">
         <!-- Header Section -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,4">
@@ -14,9 +15,14 @@
                            Text="{Binding CurrentTemperature}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Right" VerticalAlignment="Top">
-                <PathIcon HorizontalAlignment="Right" Width="20" Height="20" Margin="0,0,0,2"
-                          Foreground="{DynamicResource SystemControlForegroundAccentBrush}" 
-                          Data="{Binding CurrentIcon}" />
+                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" Margin="0,0,0,2">
+                    <Button Content="↻" Command="{Binding RefreshCommand}" IsEnabled="{Binding CanRetry}"
+                            Padding="4,0" FontSize="11" Background="Transparent" VerticalAlignment="Center"
+                            ToolTip.Tip="{Binding StatusTooltip}" />
+                    <PathIcon Width="20" Height="20"
+                              Foreground="{DynamicResource SystemControlForegroundAccentBrush}" 
+                              Data="{Binding CurrentIcon}" />
+                </StackPanel>
                 <TextBlock FontSize="13" FontWeight="Bold" Opacity="0.5"
                            HorizontalAlignment="Right"
                            Text="{Binding CurrentCondition}" />
@@ -36,12 +42,12 @@
         <!-- Hourly Forecast Section -->
         <ScrollViewer Grid.Row="1" 
                       VerticalScrollBarVisibility="Disabled" 
-                      HorizontalScrollBarVisibility="Auto" 
+                      HorizontalScrollBarVisibility="Hidden" 
                       VerticalAlignment="Center">
             <ItemsControl ItemsSource="{Binding HourlyForecast}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="viewModels:HourlyForecastViewModel">
-                        <Grid RowDefinitions="Auto,Auto,Auto" MinWidth="57">
+                        <Grid RowDefinitions="Auto,Auto,Auto" MinWidth="54">
                             <TextBlock Grid.Row="0" Text="{Binding Time}" FontSize="12" Opacity="0.5" HorizontalAlignment="Center" FontWeight="SemiBold" />
                             <PathIcon Grid.Row="1" HorizontalAlignment="Center" Width="16" Height="16"
                                       Foreground="{DynamicResource SystemControlForegroundAccentBrush}" 

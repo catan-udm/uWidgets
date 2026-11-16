@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using uWidgets.Core.Interfaces;
@@ -42,6 +43,8 @@ public partial class WidgetManager : UserControl
         Unloaded -= OnUnloaded;
     }
 
+    private void DismissStatus_OnClick(object? sender, RoutedEventArgs e) => viewModel.StatusMessage = string.Empty;
+
     private void RecoverOffscreen_OnClick(object? sender, RoutedEventArgs e) => viewModel.RecoverAllOffscreen();
     private void ToggleAll_OnClick(object? sender, RoutedEventArgs e) => viewModel.ToggleAllVisibility();
 
@@ -72,10 +75,19 @@ public partial class WidgetManager : UserControl
         }
     }
 
+    private void DuplicateWidget_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if ((sender as Button)?.DataContext is ActiveWidgetItemViewModel item && item.WindowRef != null)
+        {
+            item.WindowRef.DuplicateWidget();
+            viewModel.RefreshActiveWidgets();
+        }
+    }
+
     private void EditWidget_OnClick(object? sender, RoutedEventArgs e)
     {
         if ((sender as Button)?.DataContext is ActiveWidgetItemViewModel item && item.WindowRef != null)
-            item.WindowRef.EditWidget();
+            item.WindowRef.EditWidget(VisualRoot as Window);
     }
 
     private void RemoveWidget_OnClick(object? sender, RoutedEventArgs e)
@@ -91,6 +103,15 @@ public partial class WidgetManager : UserControl
     {
         if ((sender as Button)?.DataContext is CatalogWidgetItemViewModel item)
             viewModel.AddCatalogWidget(item, VisualRoot as Window);
+    }
+
+    private void ProfileNameInput_OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            e.Handled = true;
+            viewModel.SaveProfile(viewModel.ProfileNameInput);
+        }
     }
 
     private void SaveProfile_OnClick(object? sender, RoutedEventArgs e) =>
@@ -110,42 +131,63 @@ public partial class WidgetManager : UserControl
 
     private async void ExportLayout_OnClick(object? sender, RoutedEventArgs e)
     {
-        var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
-        if (storage == null) return;
-
-        var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+        try
         {
-            Title = "Export uWidgets Layout",
-            SuggestedFileName = "uwidgets-layout.json",
-            DefaultExtension = "json"
-        });
-        if (file == null) return;
+            var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
+            if (storage == null) return;
 
-        await using var stream = await file.OpenWriteAsync();
-        await JsonSerializer.SerializeAsync(stream, layoutProvider.Get(), new JsonSerializerOptions { WriteIndented = true });
-        viewModel.StatusMessage = $"✓ Exported layout to {file.Name}.";
+            var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Export uWidgets Layout",
+                SuggestedFileName = "uwidgets-layout.json",
+                DefaultExtension = "json"
+            });
+            if (file == null) return;
+
+            await using var stream = await file.OpenWriteAsync();
+            if (stream.CanSeek)
+                stream.SetLength(0);
+            await JsonSerializer.SerializeAsync(stream, layoutProvider.Get(), new JsonSerializerOptions { WriteIndented = true });
+            await stream.FlushAsync();
+            viewModel.StatusMessage = $"✓ Exported layout to {file.Name}.";
+        }
+        catch (Exception ex)
+        {
+            viewModel.StatusMessage = $"Failed to export layout: {ex.Message}";
+        }
     }
 
     private async void ImportLayout_OnClick(object? sender, RoutedEventArgs e)
     {
-        var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
-        if (storage == null) return;
-
-        var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
+        try
         {
-            Title = "Import uWidgets Layout",
-            AllowMultiple = false,
-            FileTypeFilter = [new FilePickerFileType("JSON Files") { Patterns = ["*.json"] }]
-        });
-        if (files.Count == 0) return;
+            var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
+            if (storage == null) return;
 
-        await using var stream = await files[0].OpenReadAsync();
-        using var reader = new StreamReader(stream);
-        var json = await reader.ReadToEndAsync();
-        var loaded = JsonSerializer.Deserialize<List<WidgetLayout>>(json);
-        if (loaded == null) return;
+            var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Import uWidgets Layout",
+                AllowMultiple = false,
+                FileTypeFilter = [new FilePickerFileType("JSON Files") { Patterns = ["*.json"] }]
+            });
+            if (files.Count == 0) return;
 
-        viewModel.ApplyLayoutList(loaded);
-        viewModel.StatusMessage = $"✓ Imported {loaded.Count} widget(s) from {files[0].Name}.";
+            await using var stream = await files[0].OpenReadAsync();
+            using var reader = new StreamReader(stream);
+            var json = await reader.ReadToEndAsync();
+            var loaded = JsonSerializer.Deserialize<List<WidgetLayout>>(json);
+            if (loaded == null)
+            {
+                viewModel.StatusMessage = $"Failed to import {files[0].Name}: file does not contain a valid widget layout list.";
+                return;
+            }
+
+            if (viewModel.ApplyLayoutList(loaded))
+                viewModel.StatusMessage = $"✓ Imported {loaded.Count} widget(s) from {files[0].Name}.";
+        }
+        catch (Exception ex)
+        {
+            viewModel.StatusMessage = $"Failed to import layout: {ex.Message}";
+        }
     }
 }

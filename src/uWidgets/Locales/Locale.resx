@@ -1,10 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-
 <root>
     <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-        <xsd:element name="root" msdata:IsDataSet="true">
-            
-        </xsd:element>
+        <xsd:element name="root" msdata:IsDataSet="true"></xsd:element>
     </xsd:schema>
     <resheader name="resmimetype">
         <value>text/microsoft-resx</value>
@@ -45,17 +42,8 @@
     <data name="Settings_Appearance_DarkMode_Null" xml:space="preserve">
         <value>System</value>
     </data>
-    <data name="Settings_Appearance_Transparency_Title" xml:space="preserve">
-        <value>Transparency effects</value>
-    </data>
-    <data name="Settings_Appearance_Transparency_Subtitle" xml:space="preserve">
-        <value>Widgets appear translucent</value>
-    </data>
     <data name="Settings_Appearance_AccentColor_Title" xml:space="preserve">
         <value>Accent color</value>
-    </data>
-    <data name="Settings_Advanced_Size" xml:space="preserve">
-        <value>Size</value>
     </data>
     <data name="Settings_Advanced_WidgetSize_Title" xml:space="preserve">
         <value>Widget size</value>
@@ -83,9 +71,6 @@
     </data>
     <data name="Widget_Edit" xml:space="preserve">
         <value>Edit</value>
-    </data>
-    <data name="Widget_OpenSettings" xml:space="preserve">
-        <value>Edit widgets</value>
     </data>
     <data name="Settings" xml:space="preserve">
         <value>Settings</value>
@@ -117,23 +102,8 @@
     <data name="Settings_Advanced_WidgetSize_Subtitle" xml:space="preserve">
         <value>Size of the small widget</value>
     </data>
-    <data name="Settings_General_Exit_Title" xml:space="preserve">
-        <value>Exit the application</value>
-    </data>
-    <data name="Settings_General_Exit_Action" xml:space="preserve">
-        <value>Exit</value>
-    </data>
-    <data name="Settings_General_Restart_Action" xml:space="preserve">
-        <value>Restart</value>
-    </data>
-    <data name="Settings_General_Restart_Title" xml:space="preserve">
-        <value>Restart the application</value>
-    </data>
     <data name="Settings_General_Language" xml:space="preserve">
         <value>Language</value>
-    </data>
-    <data name="Settings_General_Actions" xml:space="preserve">
-        <value>Actions</value>
     </data>
     <data name="Settings_About_Repository_Action" xml:space="preserve">
         <value>Visit</value>
@@ -160,7 +130,7 @@
         <value>Software Update</value>
     </data>
     <data name="Update_UpdateFormat" xml:space="preserve">
-        <value>uWidgets {0} is available to&#160;download</value>
+        <value>uWidgets {0} is available to download</value>
     </data>
     <data name="Update_Download" xml:space="preserve">
         <value>Download</value>
@@ -198,15 +168,6 @@
     <data name="Settings_Advanced_LockPosition_Title" xml:space="preserve">
         <value>Lock position</value>
     </data>
-    <data name="Settings_Advanced_LockSize_Subtitle" xml:space="preserve">
-        <value>Prevent accidental widget resizing</value>
-    </data>
-    <data name="Settings_Advanced_LockPosition_Subtitle" xml:space="preserve">
-        <value>Prevent accidental widget repositioning</value>
-    </data>
-    <data name="Settings_Advanced_Position" xml:space="preserve">
-        <value>Position</value>
-    </data>
     <data name="Settings_Advanced_WidgetRadius_Title" xml:space="preserve">
         <value>Widget radius</value>
     </data>
@@ -224,21 +185,6 @@
     </data>
     <data name="Settings_Appearance_ApplyTheme" xml:space="preserve">
         <value>Apply a theme</value>
-    </data>
-    <data name="Settings_Appearance_Presets_Windows_Title" xml:space="preserve">
-        <value>Windows</value>
-    </data>
-    <data name="Settings_Appearance_Presets_Windows_Subtitle" xml:space="preserve">
-        <value>Segoe UI, sharp corners, native frame</value>
-    </data>
-    <data name="Settings_Appearance_Presets_Apply" xml:space="preserve">
-        <value>Apply</value>
-    </data>
-    <data name="Settings_Appearance_Presets_Apple_Title" xml:space="preserve">
-        <value>Apple</value>
-    </data>
-    <data name="Settings_Appearance_Presets_Apple_Subtitle" xml:space="preserve">
-        <value>Inter, round corners, no border, no shadow</value>
     </data>
     <data name="Settings_Advanced_Appearance" xml:space="preserve">
         <value>Appearance</value>
@@ -266,5 +212,74 @@
     </data>
     <data name="Settings_Appearance_LiquidGlass_Subtitle" xml:space="preserve">
         <value>Apply refractive glass warping effect to widgets</value>
+    </data>
+    <data name="Layering_AlwaysOnTop" xml:space="preserve">
+        <value>Always on Top</value>
+    </data>
+    <data name="Layering_DesktopPinned" xml:space="preserve">
+        <value>Desktop Pinned (Behind Windows)</value>
+    </data>
+    <data name="Layering_Normal" xml:space="preserve">
+        <value>Normal Floating Window</value>
+    </data>
+    <data name="Settings_DesktopGrid" xml:space="preserve">
+        <value>Desktop &amp; Grid</value>
+    </data>
+    <data name="Settings_HelpAndGuide" xml:space="preserve">
+        <value>Help &amp; Guide</value>
+    </data>
+    <data name="Settings_VisualEffects" xml:space="preserve">
+        <value>Visual Effects</value>
+    </data>
+    <data name="Settings_WidgetManager" xml:space="preserve">
+        <value>Widget Manager</value>
+    </data>
+    <data name="Tray_AddWidget" xml:space="preserve">
+        <value>Add Widget</value>
+    </data>
+    <data name="Tray_BrowseAll" xml:space="preserve">
+        <value>Browse All Widgets...</value>
+    </data>
+    <data name="Tray_Exit" xml:space="preserve">
+        <value>Exit uWidgets</value>
+    </data>
+    <data name="Tray_Help" xml:space="preserve">
+        <value>Help &amp; Shortcuts</value>
+    </data>
+    <data name="Tray_OpenSettings" xml:space="preserve">
+        <value>Open Settings... (Ctrl+Shift+U)</value>
+    </data>
+    <data name="Tray_Quick_Clock" xml:space="preserve">
+        <value>Analog Clock</value>
+    </data>
+    <data name="Tray_Quick_Media" xml:space="preserve">
+        <value>Media Player</value>
+    </data>
+    <data name="Tray_Quick_Monitor" xml:space="preserve">
+        <value>System Monitor</value>
+    </data>
+    <data name="Tray_Quick_Notes" xml:space="preserve">
+        <value>Quick Note</value>
+    </data>
+    <data name="Tray_Quick_Weather" xml:space="preserve">
+        <value>Weather Forecast</value>
+    </data>
+    <data name="Tray_Restart" xml:space="preserve">
+        <value>Restart uWidgets</value>
+    </data>
+    <data name="Tray_ToggleLock" xml:space="preserve">
+        <value>Lock / Unlock Widgets (Win+Alt+L)</value>
+    </data>
+    <data name="Tray_ToggleWidgets" xml:space="preserve">
+        <value>Show / Hide All Widgets (Win+Shift+W)</value>
+    </data>
+    <data name="Tray_ToolTip" xml:space="preserve">
+        <value>uWidgets Desktop Widgets</value>
+    </data>
+    <data name="Widget_Center" xml:space="preserve">
+        <value>Center on Screen</value>
+    </data>
+    <data name="Widget_Duplicate" xml:space="preserve">
+        <value>Duplicate Widget</value>
     </data>
 </root>

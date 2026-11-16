@@ -21,7 +21,9 @@ public class DevAppsSettingsViewModel : ReactiveObject
         get => model.RefreshIntervalSeconds;
         set
         {
-            model = model with { RefreshIntervalSeconds = value };
+            var clamped = Math.Clamp(value, 1, 60);
+            if (model.RefreshIntervalSeconds == clamped) return;
+            model = model with { RefreshIntervalSeconds = clamped };
             SaveModel();
             this.RaisePropertyChanged(nameof(RefreshIntervalSeconds));
         }

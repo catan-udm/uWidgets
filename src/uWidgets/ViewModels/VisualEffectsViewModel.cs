@@ -5,6 +5,11 @@ namespace uWidgets.ViewModels;
 
 public class VisualEffectsViewModel(IAppSettingsProvider appSettingsProvider) : ReactiveObject
 {
+    public bool IsGlossyGlassUnavailable => !Program.IsGlossyGlassAvailable;
+    public string GlossyGlassStatusMessage => Program.GlossyGlassError != null
+        ? $"Liquid Glass engine unavailable ({Program.GlossyGlassError}). Standard acrylic/transparency remains active."
+        : "Liquid Glass engine did not start on this machine. Standard acrylic/transparency remains active.";
+
     public bool LiquidGlass
     {
         get => appSettingsProvider.Get().Theme.LiquidGlass;

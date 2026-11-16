@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
     <resheader name="resmimetype">
         <value>text/microsoft-resx</value>
@@ -20,9 +21,6 @@
     <data name="Settings_About_Actions" xml:space="preserve">
         <value>Aktionen</value>
     </data>
-    <data name="Settings_General_Actions" xml:space="preserve">
-        <value>Aktionen</value>
-    </data>
     <data name="Settings_About_ReportBug" xml:space="preserve">
         <value>Fehler melden</value>
     </data>
@@ -34,9 +32,6 @@
     </data>
     <data name="Settings_About_Repository_Action" xml:space="preserve">
         <value>gehen</value>
-    </data>
-    <data name="Settings_Advanced_Size" xml:space="preserve">
-        <value>Makette</value>
     </data>
     <data name="Settings_Appearance" xml:space="preserve">
         <value>Dekor</value>
@@ -58,12 +53,6 @@
     </data>
     <data name="Settings_Appearance_Colors" xml:space="preserve">
         <value>Thema</value>
-    </data>
-    <data name="Settings_Appearance_Transparency_Subtitle" xml:space="preserve">
-        <value>Transluzente Widgets</value>
-    </data>
-    <data name="Settings_Appearance_Transparency_Title" xml:space="preserve">
-        <value>Transparenzeffekte</value>
     </data>
     <data name="Settings_Advanced_WidgetMargin_Subtitle" xml:space="preserve">
         <value>Minimaler Abstand zwischen Widgets</value>
@@ -91,9 +80,6 @@
     </data>
     <data name="Widget_Edit" xml:space="preserve">
         <value>Bearbeiten</value>
-    </data>
-    <data name="Widget_OpenSettings" xml:space="preserve">
-        <value>Widgets bearbeiten</value>
     </data>
     <data name="Widget_Remove" xml:space="preserve">
         <value>Widget entfernen</value>
@@ -124,5 +110,80 @@
     </data>
     <data name="Settings_Appearance_DarkMode_Null" xml:space="preserve">
         <value>System</value>
+    </data>
+    <data name="Layering_AlwaysOnTop" xml:space="preserve">
+        <value>Immer im Vordergrund</value>
+    </data>
+    <data name="Layering_DesktopPinned" xml:space="preserve">
+        <value>Desktop-fixiert (Hinter Fenstern)</value>
+    </data>
+    <data name="Layering_Normal" xml:space="preserve">
+        <value>Normales schwebendes Fenster</value>
+    </data>
+    <data name="Settings_Appearance_LiquidGlass_Subtitle" xml:space="preserve">
+        <value>Lichtbrechenden Glaseffekt auf Widgets anwenden</value>
+    </data>
+    <data name="Settings_Appearance_LiquidGlass_Title" xml:space="preserve">
+        <value>Flüssiges Glas</value>
+    </data>
+    <data name="Settings_DesktopGrid" xml:space="preserve">
+        <value>Desktop &amp; Raster</value>
+    </data>
+    <data name="Settings_HelpAndGuide" xml:space="preserve">
+        <value>Hilfe &amp; Anleitung</value>
+    </data>
+    <data name="Settings_VisualEffects" xml:space="preserve">
+        <value>Visuelle Effekte</value>
+    </data>
+    <data name="Settings_WidgetManager" xml:space="preserve">
+        <value>Widget-Manager</value>
+    </data>
+    <data name="Tray_AddWidget" xml:space="preserve">
+        <value>Widget hinzufügen</value>
+    </data>
+    <data name="Tray_BrowseAll" xml:space="preserve">
+        <value>Alle Widgets durchsuchen...</value>
+    </data>
+    <data name="Tray_Exit" xml:space="preserve">
+        <value>uWidgets beenden</value>
+    </data>
+    <data name="Tray_Help" xml:space="preserve">
+        <value>Hilfe &amp; Tastenkürzel</value>
+    </data>
+    <data name="Tray_OpenSettings" xml:space="preserve">
+        <value>Einstellungen öffnen... (Ctrl+Shift+U)</value>
+    </data>
+    <data name="Tray_Quick_Clock" xml:space="preserve">
+        <value>Analoguhr</value>
+    </data>
+    <data name="Tray_Quick_Media" xml:space="preserve">
+        <value>Medienplayer</value>
+    </data>
+    <data name="Tray_Quick_Monitor" xml:space="preserve">
+        <value>Systemmonitor</value>
+    </data>
+    <data name="Tray_Quick_Notes" xml:space="preserve">
+        <value>Schnellnotiz</value>
+    </data>
+    <data name="Tray_Quick_Weather" xml:space="preserve">
+        <value>Wettervorhersage</value>
+    </data>
+    <data name="Tray_Restart" xml:space="preserve">
+        <value>uWidgets neu starten</value>
+    </data>
+    <data name="Tray_ToggleLock" xml:space="preserve">
+        <value>Widgets sperren / entsperren (Win+Alt+L)</value>
+    </data>
+    <data name="Tray_ToggleWidgets" xml:space="preserve">
+        <value>Alle Widgets ein-/ausblenden (Win+Shift+W)</value>
+    </data>
+    <data name="Tray_ToolTip" xml:space="preserve">
+        <value>uWidgets Desktop-Widgets</value>
+    </data>
+    <data name="Widget_Center" xml:space="preserve">
+        <value>Auf Bildschirm zentrieren</value>
+    </data>
+    <data name="Widget_Duplicate" xml:space="preserve">
+        <value>Widget duplizieren</value>
     </data>
 </root>

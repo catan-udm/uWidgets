@@ -19,7 +19,7 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
     private static readonly StreamGeometry SpeakerMuteGeometry = StreamGeometry.Parse("M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06m7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 1 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0");
 
     private readonly NowPlayingModel model;
-    private string trackTitle = Locale.Media_NowPlaying_Title;
+    private string trackTitle = Locale.Media_NoTrack;
     private string artistOrApp = Locale.Media_SystemAudio;
     private string album = "";
     private string currentAppId = "";
@@ -30,6 +30,7 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
     private double durationSeconds;
     private bool canSeek;
     private bool isUserDragging;
+    private bool isUltraCompactTiny;
     private Bitmap? albumArt;
     private byte[]? currentThumbnailBytes;
     private bool isUpdating;
@@ -47,6 +48,19 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
 
     public bool ShowTimeline => model.ShowTimeline;
     public bool ShowMuteButton => model.ShowMuteButton;
+    public bool HasAlbum => !string.IsNullOrWhiteSpace(Album);
+
+    public bool IsUltraCompactTiny
+    {
+        get => isUltraCompactTiny;
+        set
+        {
+            if (this.RaiseAndSetIfChanged(ref isUltraCompactTiny, value) == value)
+                this.RaisePropertyChanged(nameof(ShowTinyTimeline));
+        }
+    }
+
+    public bool ShowTinyTimeline => ShowTimeline && !IsUltraCompactTiny;
 
     public double PositionSeconds
     {
@@ -111,6 +125,7 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
         private set
         {
             this.RaiseAndSetIfChanged(ref album, value);
+            this.RaisePropertyChanged(nameof(HasAlbum));
             this.RaisePropertyChanged(nameof(TooltipText));
         }
     }
@@ -182,19 +197,33 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
         var clamped = Math.Clamp(targetPositionSeconds, 0.0, Math.Max(0.0, DurationSeconds));
         PositionSeconds = clamped;
         await MediaService.SeekAsync(clamped, model.PrefersMusicPlayer, model.AllowBrowserMedia);
+        await RefreshSoonAsync();
     }
 
     public async void PlayPause()
     {
         await MediaService.PlayPauseAsync(model.PrefersMusicPlayer, model.AllowBrowserMedia);
         IsPlaying = !IsPlaying;
+        await RefreshSoonAsync();
     }
 
-    public async void NextTrack() =>
+    public async void NextTrack()
+    {
         await MediaService.NextTrackAsync(model.PrefersMusicPlayer, model.AllowBrowserMedia);
+        await RefreshSoonAsync();
+    }
 
-    public async void PreviousTrack() =>
+    public async void PreviousTrack()
+    {
         await MediaService.PreviousTrackAsync(model.PrefersMusicPlayer, model.AllowBrowserMedia);
+        await RefreshSoonAsync();
+    }
+
+    private async Task RefreshSoonAsync()
+    {
+        await Task.Delay(150);
+        Update();
+    }
 
     public void ToggleMute() => IsAppMuted = MediaService.ToggleAppMute(currentAppId);
 
@@ -221,12 +250,16 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
         {
             var snapshot = await MediaService.GetSnapshotAsync(model.PrefersMusicPlayer, model.AllowBrowserMedia);
 
-            bool isFallbackSnapshot = string.Equals(snapshot.Title, Locale.Media_NowPlaying_Title, StringComparison.OrdinalIgnoreCase);
+            bool isFallbackSnapshot =
+                string.Equals(snapshot.Title, Locale.Media_NoTrack, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(snapshot.Title, Locale.Media_NowPlaying_Title, StringComparison.OrdinalIgnoreCase);
 
             // R3 Hysteresis: add grace period before falling back to system audio default text
             if (isFallbackSnapshot)
             {
-                bool hasActiveTrack = !string.Equals(trackTitle, Locale.Media_NowPlaying_Title, StringComparison.OrdinalIgnoreCase);
+                bool hasActiveTrack =
+                    !string.Equals(trackTitle, Locale.Media_NoTrack, StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(trackTitle, Locale.Media_NowPlaying_Title, StringComparison.OrdinalIgnoreCase);
                 if (hasActiveTrack && fallbackGraceTicks < FallbackGracePeriodTicks)
                 {
                     fallbackGraceTicks++;
@@ -243,6 +276,9 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
             {
                 fallbackGraceTicks = 0;
             }
+
+            bool appMuted = ShowMuteButton && !string.IsNullOrWhiteSpace(snapshot.SourceAppUserModelId) &&
+                            MediaService.IsAppMuted(snapshot.SourceAppUserModelId);
 
             bool trackChanged = !string.Equals(snapshot.Title, trackTitle, StringComparison.Ordinal)
                 || !string.Equals(snapshot.ArtistOrApp, artistOrApp, StringComparison.Ordinal)
@@ -281,7 +317,7 @@ public class NowPlayingViewModel : ReactiveObject, IDisposable
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 currentAppId = snapshot.SourceAppUserModelId;
-                IsAppMuted = MediaService.IsAppMuted(currentAppId);
+                IsAppMuted = appMuted;
                 TrackTitle = snapshot.Title;
                 ArtistOrApp = snapshot.ArtistOrApp;
                 Album = snapshot.Album;

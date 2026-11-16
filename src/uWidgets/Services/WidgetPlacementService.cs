@@ -21,18 +21,22 @@ public class WidgetPlacementService(
         var width = cols * size + Math.Max(0, cols - 1) * margin;
         var height = rows * size + Math.Max(0, rows - 1) * margin;
 
-        var screen = GetPrimaryOrFirstScreen(referenceWindow);
+        var screen = GetTargetOrPrimaryScreen(referenceWindow);
         var work = screen?.WorkingArea ?? new PixelRect(0, 0, 1920, 1080);
         var scaling = screen?.Scaling ?? 1.0;
 
         var cellSpan = Math.Max(1, (int)(scaling * (size + margin)));
-        var startX = work.X + (int)(scaling * margin * 2);
-        var startY = work.Y + (int)(scaling * margin * 2);
+        var startX = work.X + (int)(scaling * margin);
+        var startY = work.Y + (int)(scaling * margin);
         var pixelW = Math.Max(1, (int)(width * scaling));
         var pixelH = Math.Max(1, (int)(height * scaling));
 
         var existingRects = layoutProvider.Get()
-            .Select(w => new PixelRect(w.X, w.Y, Math.Max(1, (int)(w.Width * scaling)), Math.Max(1, (int)(w.Height * scaling))))
+            .Select(w =>
+            {
+                var wScale = referenceWindow.Screens.ScreenFromPoint(new PixelPoint(w.X, w.Y))?.Scaling ?? scaling;
+                return new PixelRect(w.X, w.Y, Math.Max(1, (int)(w.Width * wScale)), Math.Max(1, (int)(w.Height * wScale)));
+            })
             .ToList();
 
         PixelPoint? fallbackFreeSlot = null;
@@ -55,20 +59,27 @@ public class WidgetPlacementService(
             }
         }
 
-        var chosen = fallbackFreeSlot ?? new PixelPoint(startX, startY);
-        return new WidgetLayout(Guid.NewGuid(), type, subType, chosen.X, chosen.Y, width, height, null);
+        if (fallbackFreeSlot.HasValue)
+            return new WidgetLayout(Guid.NewGuid(), type, subType, fallbackFreeSlot.Value.X, fallbackFreeSlot.Value.Y, width, height, null);
+
+        var cascadeOffset = (existingRects.Count % 6) * Math.Max(16, (int)(24 * scaling));
+        var maxOverflowX = Math.Max(work.X, work.X + work.Width - pixelW);
+        var maxOverflowY = Math.Max(work.Y, work.Y + work.Height - pixelH);
+        var overflowX = Math.Clamp(startX + cascadeOffset, work.X, maxOverflowX);
+        var overflowY = Math.Clamp(startY + cascadeOffset, work.Y, maxOverflowY);
+        return new WidgetLayout(Guid.NewGuid(), type, subType, overflowX, overflowY, width, height, null);
     }
 
     public int SpawnStarterPack(Window referenceWindow, IReadOnlyList<(string Type, string SubType, int Cols, int Rows)> items)
     {
-        var screen = GetPrimaryOrFirstScreen(referenceWindow);
+        var screen = GetTargetOrPrimaryScreen(referenceWindow);
         var workArea = screen?.WorkingArea ?? new PixelRect(0, 0, 1920, 1080);
         var scaling = screen?.Scaling ?? 1.0;
         var (size, margin, _) = appSettingsProvider.Get().Dimensions;
-        var cellSpan = scaling * (size + margin);
+        var existingCount = layoutProvider.Get().Count;
 
-        var startX = (int)(workArea.X + scaling * margin * 2);
-        var startY = (int)(workArea.Y + scaling * margin * 2);
+        var startX = (int)(workArea.X + scaling * margin);
+        var startY = (int)(workArea.Y + scaling * margin);
         var currentX = startX;
         var currentY = startY;
         var maxRowPixelHeight = 0;
@@ -81,21 +92,32 @@ public class WidgetPlacementService(
             var pixelW = (int)(dipW * scaling);
             var pixelH = (int)(dipH * scaling);
 
-            if (currentX + pixelW > workArea.X + workArea.Width - (int)(scaling * margin * 2))
+            WidgetLayout layout;
+            if (existingCount > 0)
             {
-                currentX = startX;
-                currentY += maxRowPixelHeight + (int)(scaling * margin);
-                maxRowPixelHeight = 0;
+                layout = CreateSmartLayout(referenceWindow, type, subType, cols, rows, GetWindowPixelBounds(referenceWindow));
             }
-
-            if (currentY + pixelH > workArea.Y + workArea.Height)
+            else
             {
-                currentY = Math.Max(startY, (int)(workArea.Y + workArea.Height - pixelH - scaling * margin));
+                if (currentX + pixelW > workArea.X + workArea.Width - (int)(scaling * margin))
+                {
+                    currentX = startX;
+                    currentY += maxRowPixelHeight + (int)(scaling * margin);
+                    maxRowPixelHeight = 0;
+                }
+
+                if (currentY + pixelH > workArea.Y + workArea.Height)
+                {
+                    currentY = Math.Max(startY, (int)(workArea.Y + workArea.Height - pixelH - scaling * margin));
+                }
+
+                layout = new WidgetLayout(Guid.NewGuid(), type, subType, currentX, currentY, dipW, dipH, null);
+                currentX += pixelW + (int)(scaling * margin);
+                maxRowPixelHeight = Math.Max(maxRowPixelHeight, pixelH);
             }
 
             try
             {
-                var layout = new WidgetLayout(Guid.NewGuid(), type, subType, currentX, currentY, dipW, dipH, null);
                 widgetFactory.Add(layout).Show();
                 spawned++;
             }
@@ -103,9 +125,6 @@ public class WidgetPlacementService(
             {
                 Debug.WriteLine($"[WidgetPlacementService] Failed to spawn {type}.{subType}: {ex.Message}");
             }
-
-            currentX += pixelW + (int)(scaling * margin);
-            maxRowPixelHeight = Math.Max(maxRowPixelHeight, pixelH);
         }
 
         return spawned;
@@ -122,6 +141,8 @@ public class WidgetPlacementService(
             Math.Max(1, (int)(window.Height * scaling)));
     }
 
-    private static Screen? GetPrimaryOrFirstScreen(Window window) =>
-        window.Screens.Primary ?? window.Screens.All.FirstOrDefault();
+    private static Screen? GetTargetOrPrimaryScreen(Window window) =>
+        window.Screens.ScreenFromWindow(window)
+        ?? window.Screens.Primary
+        ?? window.Screens.All.FirstOrDefault();
 }

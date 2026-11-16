@@ -1,3 +1,4 @@
+using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -6,7 +7,7 @@ using Weather.ViewModels;
 
 namespace Weather.Views;
 
-public partial class SunriseSunset : UserControl
+public partial class SunriseSunset : UserControl, IDisposable
 {
     public SunriseSunset() : this(new ForecastModel("Cupertino", 37.3230, -122.0322, "celsius")) {}
 
@@ -20,8 +21,14 @@ public partial class SunriseSunset : UserControl
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
-        SizeChanged -= OnSizeChanged;
         Unloaded -= OnUnloaded;
+        Dispose();
+    }
+
+    public void Dispose()
+    {
+        SizeChanged -= OnSizeChanged;
+        (DataContext as IDisposable)?.Dispose();
     }
 
     private void OnSizeChanged(object? sender, SizeChangedEventArgs e)

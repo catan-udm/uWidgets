@@ -3,26 +3,32 @@ using ReactiveUI;
 
 namespace Clock.ViewModels;
 
-public class WorldClockViewModel(WorldClockModel worldClockModel) : ReactiveObject, IDisposable
+public class WorldClockViewModel : ReactiveObject, IDisposable
 {
-    private List<AnalogClockViewModel> ViewModels => Enumerable
-        .Range(0, 4)
-        .Select(i =>
-            new AnalogClockViewModel(new ClockModel(
-                false, 
-                false,
-                false, 
-                worldClockModel.TimeZoneIds.ElementAtOrDefault(i))))
-        .ToList();
+    private readonly List<AnalogClockViewModel> viewModels;
 
-    public AnalogClockViewModel First => ViewModels[0];
-    public AnalogClockViewModel Second => ViewModels[1];
-    public AnalogClockViewModel Third => ViewModels[2];
-    public AnalogClockViewModel Fourth => ViewModels[3];
+    public WorldClockViewModel(WorldClockModel worldClockModel)
+    {
+        viewModels = Enumerable
+            .Range(0, 4)
+            .Select(i =>
+                new AnalogClockViewModel(new ClockModel(
+                    false,
+                    false,
+                    false,
+                    worldClockModel.TimeZoneIds.ElementAtOrDefault(i))))
+            .ToList();
+    }
+
+    public AnalogClockViewModel First => viewModels[0];
+    public AnalogClockViewModel Second => viewModels[1];
+    public AnalogClockViewModel Third => viewModels[2];
+    public AnalogClockViewModel Fourth => viewModels[3];
 
     public void Dispose()
     {
-        ViewModels.ForEach(x => x.Dispose());
+        foreach (var vm in viewModels)
+            vm.Dispose();
         GC.SuppressFinalize(this);
     }
 }

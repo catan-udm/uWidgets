@@ -19,9 +19,23 @@
     </UserControl.Styles>
     
     <Grid RowDefinitions="Auto,*" ColumnDefinitions="*,13*">
-        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Month}" 
-                   Margin="{Binding MonthMargin, RelativeSource={RelativeSource AncestorType={x:Type views:Month}}}"
-                   Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+        <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,Auto"
+              Margin="{Binding MonthMargin, RelativeSource={RelativeSource AncestorType={x:Type views:Month}}}">
+            <TextBlock Grid.Column="0" Text="{Binding Month}" VerticalAlignment="Center"
+                       Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                <Button Content="•" Padding="4,0" FontSize="11" Background="Transparent" BorderThickness="0"
+                        IsVisible="{Binding IsViewingOtherMonth}"
+                        Command="{Binding ResetToToday}"
+                        ToolTip.Tip="Return to current month" />
+                <Button Content="‹" Padding="5,0" FontSize="12" Background="Transparent" BorderThickness="0"
+                        Command="{Binding PreviousMonth}"
+                        ToolTip.Tip="Previous month" />
+                <Button Content="›" Padding="5,0" FontSize="12" Background="Transparent" BorderThickness="0"
+                        Command="{Binding NextMonth}"
+                        ToolTip.Tip="Next month" />
+            </StackPanel>
+        </Grid>
         <ItemsControl Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" ItemsSource="{Binding Days}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="viewModels:DayViewModel">

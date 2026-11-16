@@ -66,6 +66,7 @@ public class SingleMetricSettingsViewModel : ReactiveObject
         get => AllTypes.FirstOrDefault(x => x.Type == model.Metric) ?? AllTypes[0];
         set
         {
+            if (value == null) return;
             model = model with { Metric = value.Type };
             SaveModel();
             this.RaisePropertyChanged(nameof(SelectedType));

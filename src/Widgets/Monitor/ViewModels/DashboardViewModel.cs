@@ -42,13 +42,10 @@ public class DashboardItemViewModel : ReactiveObject
         {
             var value = await MetricService.GetMetricValue(type);
             var icon = MetricService.GetMetricIcon(type);
-            if (value.HasValue)
+            await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                await Dispatcher.UIThread.InvokeAsync(() =>
-                {
-                    Metric = new MetricViewModel(Math.Clamp(value.Value, 0d, 1d), icon);
-                });
-            }
+                Metric = new MetricViewModel(value.HasValue ? Math.Clamp(value.Value, 0d, 1d) : null, icon);
+            });
         }
         catch (Exception)
         {

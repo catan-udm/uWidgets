@@ -6,6 +6,11 @@
              x:Class="uWidgets.Views.Pages.VisualEffects"
              x:DataType="viewModels:VisualEffectsViewModel">
     <StackPanel Orientation="Vertical" Spacing="6">
+        <Border IsVisible="{Binding IsGlossyGlassUnavailable}"
+                Margin="0,0,0,8" Padding="12,8" CornerRadius="6"
+                Background="#25FFA500" BorderBrush="#80FFA500" BorderThickness="1.5">
+            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding GlossyGlassStatusMessage}" />
+        </Border>
         <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6" Text="Liquid Glass Effect" />
         <controls:Setting Icon="{DynamicResource LiquidGlass}"
                           Title="{x:Static locales:Locale.Settings_Appearance_LiquidGlass_Title}"

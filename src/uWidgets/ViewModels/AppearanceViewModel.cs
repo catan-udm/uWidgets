@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Media;
 using ReactiveUI;
 using uWidgets.Core.Interfaces;
@@ -174,8 +175,19 @@ public class AppearanceViewModel : ReactiveObject, IDisposable
     }
 
     // Live Preview Properties
-    public CornerRadius PreviewCornerRadius => UseNativeFrame ? new CornerRadius(2) : new CornerRadius(CornerRadius);
-    public Thickness PreviewBorderThickness => new(UseNativeFrame ? 1.5 : 1);
+    public CornerRadius PreviewCornerRadius
+    {
+        get
+        {
+            var theme = appSettingsProvider.Get().Theme;
+            if (theme.UseNativeFrame && !theme.LiquidGlass)
+                return new CornerRadius(2);
+            var radius = theme.LiquidGlass ? Math.Max(CornerRadius, 22) : CornerRadius;
+            return new CornerRadius(radius);
+        }
+    }
+
+    public Thickness PreviewBorderThickness => new(UseNativeFrame && !appSettingsProvider.Get().Theme.LiquidGlass ? 1.5 : 1);
 
     public IBrush PreviewBackground
     {
@@ -192,7 +204,10 @@ public class AppearanceViewModel : ReactiveObject, IDisposable
     {
         get
         {
-            var isDark = appSettingsProvider.Get().Theme.DarkMode ?? (Application.Current?.ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark);
+            var theme = appSettingsProvider.Get().Theme;
+            if (theme.Monochrome)
+                return PreviewAccentBrush;
+            var isDark = theme.DarkMode ?? (Application.Current?.ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark);
             return new SolidColorBrush(isDark ? Colors.White : Color.Parse("#1F1F1F"));
         }
     }
@@ -202,9 +217,10 @@ public class AppearanceViewModel : ReactiveObject, IDisposable
         get
         {
             var theme = appSettingsProvider.Get().Theme;
-            if (theme.Monochrome) return PreviewForeground;
             if (theme.AccentColor != null && Color.TryParse(theme.AccentColor, out var custom))
                 return new SolidColorBrush(custom);
+            if (Application.Current?.TryFindResource("SystemAccentColor", out var res) == true && res is Color sysAccent)
+                return new SolidColorBrush(sysAccent);
             return new SolidColorBrush(Color.Parse("#3376CD"));
         }
     }

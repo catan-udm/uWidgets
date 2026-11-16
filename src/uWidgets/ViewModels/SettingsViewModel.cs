@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
 using uWidgets.Core;
 using uWidgets.Core.Interfaces;
+using uWidgets.Core.Models.Attributes;
 using uWidgets.Locales;
 using uWidgets.Services;
 using uWidgets.Views.Pages;
@@ -25,6 +27,7 @@ public class SettingsViewModel : ReactiveObject, IDisposable
     private UserControl? currentPage;
     private string? currentPageTitle;
     private string searchQuery = string.Empty;
+    private PageViewModel? selectedMenuItem;
 
     public SettingsViewModel(
         IAppSettingsProvider appSettingsProvider,
@@ -44,17 +47,67 @@ public class SettingsViewModel : ReactiveObject, IDisposable
             .ToDictionary(
                 group => group.Key,
                 group => group.MaxBy(assembly => assembly.Version)!)
-            .Select(assembly => new PageViewModel(
-                typeof(Gallery),
-                StreamGeometry.Parse(assembly.Value.IconData),
-                assembly.Value.DisplayName,
-                assembly.Value,
-                assembly.Value.AssemblyName))
+            .Select(assembly =>
+            {
+                var subKeywords = BuildWidgetSearchKeywords(assembly.Value.AssemblyName);
+                return new PageViewModel(
+                    typeof(Gallery),
+                    StreamGeometry.Parse(assembly.Value.IconData),
+                    assembly.Value.DisplayName,
+                    assembly.Value,
+                    subKeywords);
+            })
             .OrderBy(page => page.Text)
             .ToArray();
 
+        MenuItems =
+        [
+            new PageViewModel(typeof(General), GetIcon(nameof(General)), Locale.Settings_General, null, "startup tray hotkey shortcut language layering update"),
+            new PageViewModel(typeof(Appearance), GetIcon(nameof(Appearance)), Locale.Settings_Appearance, null, "theme dark light opacity accent monochrome font radius frame preview"),
+            new PageViewModel(typeof(VisualEffects), GetIcon("LiquidGlass"), Locale.Settings_VisualEffects, null, "liquid glass blur frost refraction dispersion optics shader"),
+            new PageViewModel(typeof(DesktopGrid), GetIcon("SnapPosition"), Locale.Settings_DesktopGrid, null, "grid snap lock position size margin spacing dimensions"),
+            new PageViewModel(typeof(WidgetManager), GetIcon("WidgetSize"), Locale.Settings_WidgetManager, null, "active widgets catalog profiles export import recover offscreen"),
+            new PageViewModel(typeof(HelpAndGuide), GetIcon("Play"), Locale.Settings_HelpAndGuide, null, "tutorial welcome tour shortcuts gestures faq logs data folder"),
+            new PageViewModel(typeof(About), GetIcon(nameof(About)), Locale.Settings_About, null, "version github bug reset logs data"),
+            new PageViewModel(null, null, null)
+        ];
+
         AllItems = MenuItems.Concat(widgetItems).ToArray();
         RefreshFilteredItems();
+        SelectedMenuItem = MenuItems[0];
+    }
+
+    private string BuildWidgetSearchKeywords(string assemblyName)
+    {
+        try
+        {
+            var asm = assemblyProvider.LoadAssembly(assemblyName);
+            var locale = assemblyProvider.GetLocaleResourceManager(asm);
+            var tokens = asm.GetCustomAttributes<WidgetInfoAttribute>()
+                .SelectMany(attr => new[]
+                {
+                    attr.ViewType.Name,
+                    locale?.GetString(attr.Title ?? string.Empty),
+                    locale?.GetString(attr.Subtitle ?? string.Empty)
+                })
+                .Where(s => !string.IsNullOrWhiteSpace(s));
+            return string.Join(" ", tokens.Prepend(assemblyName));
+        }
+        catch
+        {
+            return assemblyName;
+        }
+    }
+
+    public PageViewModel? SelectedMenuItem
+    {
+        get => selectedMenuItem;
+        set
+        {
+            if (value == null || ReferenceEquals(selectedMenuItem, value)) return;
+            this.RaiseAndSetIfChanged(ref selectedMenuItem, value);
+            SetCurrentPage(value);
+        }
     }
 
     public UserControl? CurrentPage
@@ -81,18 +134,7 @@ public class SettingsViewModel : ReactiveObject, IDisposable
 
     public ObservableCollection<PageViewModel> FilteredItems { get; } = [];
     public PageViewModel[] AllItems { get; }
-
-    public static readonly PageViewModel[] MenuItems =
-    [
-        new PageViewModel(typeof(General), GetIcon(nameof(General)), Locale.Settings_General, null, "startup tray hotkey shortcut language layering update"),
-        new PageViewModel(typeof(Appearance), GetIcon(nameof(Appearance)), Locale.Settings_Appearance, null, "theme dark light opacity accent monochrome font radius frame preview"),
-        new PageViewModel(typeof(VisualEffects), GetIcon("LiquidGlass"), "Visual Effects", null, "liquid glass blur frost refraction dispersion optics shader"),
-        new PageViewModel(typeof(DesktopGrid), GetIcon("SnapPosition"), "Desktop & Grid", null, "grid snap lock position size margin spacing dimensions"),
-        new PageViewModel(typeof(WidgetManager), GetIcon("WidgetSize"), "Widget Manager", null, "active widgets catalog profiles export import recover offscreen"),
-        new PageViewModel(typeof(HelpAndGuide), GetIcon("Play"), "Help & Guide", null, "tutorial welcome tour shortcuts gestures faq logs data folder"),
-        new PageViewModel(typeof(About), GetIcon(nameof(About)), Locale.Settings_About, null, "version github bug reset logs data"),
-        new PageViewModel(null, null, null)
-    ];
+    public PageViewModel[] MenuItems { get; }
 
     private readonly PageViewModel[] widgetItems;
 
@@ -101,6 +143,7 @@ public class SettingsViewModel : ReactiveObject, IDisposable
 
     private void RefreshFilteredItems()
     {
+        var active = selectedMenuItem;
         FilteredItems.Clear();
         var query = searchQuery.Trim();
 
@@ -108,17 +151,24 @@ public class SettingsViewModel : ReactiveObject, IDisposable
         {
             foreach (var item in AllItems)
                 FilteredItems.Add(item);
-            return;
+        }
+        else
+        {
+            foreach (var item in AllItems)
+            {
+                if (item.IsSeparator) continue;
+                if ((item.Text?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    item.SearchKeywords.Contains(query, StringComparison.OrdinalIgnoreCase))
+                {
+                    FilteredItems.Add(item);
+                }
+            }
         }
 
-        foreach (var item in AllItems)
+        if (active != null && FilteredItems.Contains(active))
         {
-            if (item.IsSeparator) continue;
-            if ((item.Text?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                item.SearchKeywords.Contains(query, StringComparison.OrdinalIgnoreCase))
-            {
-                FilteredItems.Add(item);
-            }
+            selectedMenuItem = active;
+            this.RaisePropertyChanged(nameof(SelectedMenuItem));
         }
     }
 

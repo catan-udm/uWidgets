@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:Weather.ViewModels"
              x:Class="Weather.Views.Controls.ForecastLarge"
-             x:DataType="viewModels:ForecastViewModel">
+             x:DataType="viewModels:ForecastViewModel"
+             ToolTip.Tip="{Binding StatusTooltip}">
     <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*">
         <TextBlock Grid.Row="0" Grid.Column="0"
                    FontSize="16" FontWeight="Bold" 
@@ -17,6 +18,9 @@
                         Command="{Binding RetryCommand}" IsEnabled="{Binding CanRetry}"
                         FontSize="10" Padding="6,2" CornerRadius="4" />
             </StackPanel>
+            <Button Content="↻" Command="{Binding RefreshCommand}" IsEnabled="{Binding CanRetry}"
+                    Padding="4,0" FontSize="12" Background="Transparent" VerticalAlignment="Center"
+                    ToolTip.Tip="{Binding StatusTooltip}" />
             <PathIcon Foreground="{DynamicResource SystemControlForegroundAccentBrush}" 
                       Data="{Binding CurrentIcon}" />
         </StackPanel>

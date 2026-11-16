@@ -18,5 +18,11 @@ public partial class LauncherSmall : UserControl
     }
 
     private void Shortcut_OnClick(object? sender, RoutedEventArgs e) =>
-        (Parent as Launcher)?.Shortcut_OnClick(sender, e);
+        Launcher.HandleShortcutClick(sender);
+
+    private void CopyTarget_OnClick(object? sender, RoutedEventArgs e) =>
+        Launcher.HandleCopyTargetClick(this, sender);
+
+    private void OpenContainingFolder_OnClick(object? sender, RoutedEventArgs e) =>
+        Launcher.HandleOpenFolderClick(sender);
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -14,11 +15,12 @@ namespace uWidgets.ViewModels;
 
 public record LayeringModeOption(string Name, LayeringMode Value);
 
-public class GeneralViewModel : ReactiveObject
+public class GeneralViewModel : ReactiveObject, IDisposable
 {
     private readonly IAppSettingsProvider appSettingsProvider;
     private readonly HotkeyService? hotkeyService;
     private bool languageChangedPendingRestart;
+    private bool disposed;
 
     public GeneralViewModel(IAppSettingsProvider appSettingsProvider, HotkeyService? hotkeyService = null)
     {
@@ -26,11 +28,13 @@ public class GeneralViewModel : ReactiveObject
         this.hotkeyService = hotkeyService;
 
         if (hotkeyService != null)
-            hotkeyService.WarningsChanged += (_, _) =>
-            {
-                this.RaisePropertyChanged(nameof(HotkeyWarningText));
-                this.RaisePropertyChanged(nameof(HasHotkeyWarnings));
-            };
+            hotkeyService.WarningsChanged += OnHotkeyWarningsChanged;
+    }
+
+    private void OnHotkeyWarningsChanged(object? sender, EventArgs e)
+    {
+        this.RaisePropertyChanged(nameof(HotkeyWarningText));
+        this.RaisePropertyChanged(nameof(HasHotkeyWarnings));
     }
 
     public CultureInfo[] Languages => GetAvailableCultures().ToHashSet().OrderBy(x => x.DisplayName).ToArray();
@@ -62,10 +66,15 @@ public class GeneralViewModel : ReactiveObject
         get => appSettingsProvider.Get().RunOnStartup;
         set
         {
-            if (!new StartupService().SetRunOnStartup(value)) return;
+            if (!new StartupService().SetRunOnStartup(value))
+            {
+                this.RaisePropertyChanged(nameof(RunOnStartup));
+                return;
+            }
 
             var settings = appSettingsProvider.Get();
             appSettingsProvider.Save(settings with { RunOnStartup = value });
+            this.RaisePropertyChanged(nameof(RunOnStartup));
         }
     }
 
@@ -91,9 +100,9 @@ public class GeneralViewModel : ReactiveObject
 
     public LayeringModeOption[] LayeringModes { get; } =
     [
-        new("Desktop Pinned (Behind Windows)", LayeringMode.DesktopPinned),
-        new("Normal Floating Window", LayeringMode.Normal),
-        new("Always on Top", LayeringMode.AlwaysOnTop)
+        new(Locale.Layering_DesktopPinned, LayeringMode.DesktopPinned),
+        new(Locale.Layering_Normal, LayeringMode.Normal),
+        new(Locale.Layering_AlwaysOnTop, LayeringMode.AlwaysOnTop)
     ];
 
     public LayeringModeOption SelectedLayeringMode
@@ -169,7 +178,7 @@ public class GeneralViewModel : ReactiveObject
         this.RaisePropertyChanged(nameof(OpenSettingsHotkey));
     }
 
-    private static IEnumerable<CultureInfo> GetAvailableCultures()
+    public static IEnumerable<CultureInfo> GetAvailableCultures()
     {
         var cultures = CultureInfo.GetCultures(CultureTypes.NeutralCultures);
 
@@ -177,7 +186,12 @@ public class GeneralViewModel : ReactiveObject
 
         foreach (var culture in cultures)
         {
-            if (culture.Equals(CultureInfo.InvariantCulture)) continue;
+            if (culture.Equals(CultureInfo.InvariantCulture) ||
+                string.Equals(culture.Name, "en", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
             ResourceSet? resourceSet = null;
 
             try
@@ -188,8 +202,17 @@ public class GeneralViewModel : ReactiveObject
             {
             }
 
-            if (resourceSet != null)
+            if (resourceSet != null && resourceSet.Cast<DictionaryEntry>().Any())
                 yield return culture;
         }
+    }
+
+    public void Dispose()
+    {
+        if (disposed) return;
+        disposed = true;
+        if (hotkeyService != null)
+            hotkeyService.WarningsChanged -= OnHotkeyWarningsChanged;
+        GC.SuppressFinalize(this);
     }
 }

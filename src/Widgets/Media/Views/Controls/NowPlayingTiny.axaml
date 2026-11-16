@@ -48,6 +48,7 @@
                 Classes="playBtn"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
+                ToolTip.Tip="Play / Pause"
                 Click="PlayPause_OnClick">
             <Panel>
                 <Image Source="{Binding AlbumArt}"
@@ -65,7 +66,7 @@
         <Slider x:Name="TimelineSlider"
                 Grid.Row="1"
                 Classes="timelineSlider"
-                IsVisible="{Binding ShowTimeline}"
+                IsVisible="{Binding ShowTinyTimeline}"
                 IsEnabled="{Binding CanSeek}"
                 Minimum="0"
                 Maximum="{Binding SliderMaximum}"

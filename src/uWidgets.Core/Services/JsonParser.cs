@@ -8,6 +8,7 @@ namespace uWidgets.Core.Services;
 public class JsonParser<T>(Func<string> filePathResolver, Func<T>? defaultFactory = null) : IDataProvider<T>
 {
     private static readonly JsonSerializerOptions WriteOptions = new() { WriteIndented = true };
+    private readonly object syncLock = new();
     private T? data;
 
     public JsonParser(string filePath, Func<T>? defaultFactory = null)
@@ -23,63 +24,105 @@ public class JsonParser<T>(Func<string> filePathResolver, Func<T>? defaultFactor
     /// <inheritdoc />
     public virtual T Get()
     {
-        if (data != null) return data;
+        lock (syncLock)
+        {
+            if (data != null) return data;
 
-        var filePath = filePathResolver();
+            var filePath = filePathResolver();
 
-        if (TryDeserializeFile(filePath, out var loaded))
-            return data = loaded!;
+            if (TryDeserializeFile(filePath, out var loaded))
+                return data = loaded!;
 
-        var backupFile = $"{filePath}.bak";
-        if (TryDeserializeFile(backupFile, out var backupLoaded))
-            return data = backupLoaded!;
+            if (File.Exists(filePath))
+            {
+                try
+                {
+                    File.Copy(filePath, $"{filePath}.corrupt", overwrite: true);
+                }
+                catch
+                {
+                    // Best effort preservation of unreadable primary file
+                }
+            }
 
-        if (defaultFactory != null)
-            return data = defaultFactory();
+            var backupFile = $"{filePath}.bak";
+            if (TryDeserializeFile(backupFile, out var backupLoaded))
+                return data = backupLoaded!;
 
-        throw new FormatException($"Can't deserialize {typeof(T).Name}");
+            if (defaultFactory != null)
+                return data = defaultFactory();
+
+            throw new FormatException($"Can't deserialize {typeof(T).Name}");
+        }
     }
 
     /// <inheritdoc />
     public virtual void Save(T newData)
     {
-        var filePath = filePathResolver();
-        var oldData = data;
-        DataChanging?.Invoke(this, data, newData);
-        var json = JsonSerializer.Serialize(data = newData, WriteOptions);
-
-        var directory = Path.GetDirectoryName(filePath);
-        if (!string.IsNullOrEmpty(directory))
-            Directory.CreateDirectory(directory);
-
-        var tempFile = $"{filePath}.tmp";
-        var backupFile = $"{filePath}.bak";
-
-        using (var fs = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
-        using (var writer = new StreamWriter(fs))
+        T? oldDataSnapshot;
+        lock (syncLock)
         {
-            writer.Write(json);
+            oldDataSnapshot = data;
         }
 
-        const int maxRetries = 3;
-        for (var attempt = 1; attempt <= maxRetries; attempt++)
+        DataChanging?.Invoke(this, oldDataSnapshot, newData);
+        var json = JsonSerializer.Serialize(newData, WriteOptions);
+
+        T? previousData;
+        lock (syncLock)
         {
+            var filePath = filePathResolver();
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory))
+                Directory.CreateDirectory(directory);
+
+            var tempFile = $"{filePath}.tmp";
+            var backupFile = $"{filePath}.bak";
+            const int maxRetries = 3;
+
             try
             {
-                if (File.Exists(filePath))
-                    File.Replace(tempFile, filePath, backupFile, ignoreMetadataErrors: true);
-                else
-                    File.Move(tempFile, filePath, overwrite: true);
+                for (var attempt = 1; attempt <= maxRetries; attempt++)
+                {
+                    try
+                    {
+                        using (var fs = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
+                        using (var writer = new StreamWriter(fs))
+                        {
+                            writer.Write(json);
+                        }
 
-                break;
+                        if (File.Exists(filePath))
+                            File.Replace(tempFile, filePath, backupFile, ignoreMetadataErrors: true);
+                        else
+                            File.Move(tempFile, filePath, overwrite: true);
+
+                        break;
+                    }
+                    catch (IOException) when (attempt < maxRetries)
+                    {
+                        Thread.Sleep(30 * attempt);
+                    }
+                }
             }
-            catch (IOException) when (attempt < maxRetries)
+            finally
             {
-                Thread.Sleep(30 * attempt);
+                try
+                {
+                    if (File.Exists(tempFile))
+                        File.Delete(tempFile);
+                }
+                catch
+                {
+                    // Ignore temp cleanup failures
+                }
             }
+
+            previousData = data;
+            data = newData;
         }
 
-        DataChanged?.Invoke(this, oldData, newData);
+        DataChanged?.Invoke(this, previousData, newData);
     }
 
     private static bool TryDeserializeFile(string path, out T? result)

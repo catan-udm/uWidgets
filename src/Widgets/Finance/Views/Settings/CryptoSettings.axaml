@@ -6,6 +6,18 @@
              x:Class="Finance.Views.Settings.CryptoSettings">
     <ScrollViewer>
         <StackPanel Orientation="Vertical" Spacing="8">
+            <controls:Setting Title="Fiat Currency">
+                <ComboBox ItemsSource="{Binding AvailableFiats}"
+                          SelectedItem="{Binding FiatCurrency}"
+                          Width="110" />
+            </controls:Setting>
+
+            <controls:Setting Title="Refresh Interval (Minutes)">
+                <NumericUpDown Minimum="1" Maximum="60"
+                               Value="{Binding RefreshMinutes}"
+                               Width="110" />
+            </controls:Setting>
+
             <controls:Setting Title="Add Coin (ID e.g. bitcoin, solana)">
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBox Grid.Column="0" Text="{Binding NewCoinId}" Watermark="coin id..." Width="120" />

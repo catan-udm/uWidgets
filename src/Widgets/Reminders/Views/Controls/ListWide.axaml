@@ -2,29 +2,32 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:Reminders.ViewModels"
              xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
-             xmlns:models="clr-namespace:Reminders.Models"
              x:Class="Reminders.Views.Controls.ListWide"
              x:DataType="viewModels:RemindersViewModel"
              Margin="12,6,6,0">
     <Grid RowDefinitions="*, Auto, Auto" ColumnDefinitions="Auto, *">
+        <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Top" HorizontalAlignment="Left" Spacing="4">
+            <Button Content="Clear Done" FontSize="10" Padding="6,2" CornerRadius="4"
+                    IsVisible="{Binding HasCompleted}" Click="ClearCompleted" ToolTip.Tip="Clear completed items" />
+        </StackPanel>
         <TextBlock Grid.Row="1" Grid.Column="0" Margin="0 -3 6 0" FontSize="32" FontWeight="Bold"
-                   VerticalAlignment="Top" HorizontalAlignment="Left" Text="{Binding Count}" />
+                   VerticalAlignment="Top" HorizontalAlignment="Left" Text="{Binding PendingCount}" />
         <controls:ClickThroughTextBox Grid.Row="2" Grid.Column="0" Padding="0" Margin="0 0 8 0" 
                                       MinHeight="16" MinWidth="90" MaxWidth="110" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"
                                       Text="{Binding ListName}" Watermark="List title..." LostFocus="ListNameChanged"
                                       Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
-        <ScrollViewer Grid.Row="0" Grid.Column="1" Grid.RowSpan="2">
+        <ScrollViewer Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
                 <TextBlock Text="No reminders yet. Click below to add one."
                            IsVisible="{Binding !Count}"
                            Opacity="0.55"
                            FontSize="11"
                            TextWrapping="Wrap"
-                           Margin="0,8" />
+                           Margin="0,8,8,8" />
                 <ItemsControl ItemsSource="{Binding Reminders}">
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="models:ReminderModel">
-                            <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto,Auto">
+                        <DataTemplate DataType="viewModels:ReminderItemViewModel">
+                            <Grid ColumnDefinitions="Auto, *, Auto, Auto" RowDefinitions="Auto,Auto">
                                 <Button Grid.Row="0" Grid.Column="0" Padding="0" Margin="0,-2,0,0" 
                                         DataContext="{Binding}" Click="CompleteReminder" 
                                         Background="Transparent" CornerRadius="12">
@@ -37,10 +40,17 @@
                                     </Canvas>
                                 </Button>
                                 <controls:ClickThroughTextBox Grid.Row="0" Grid.Column="1" Padding="8,6,0,6" 
-                                                              Text="{Binding Title}" 
-                                                              x:DataType="models:ReminderModel" DataContext="{Binding}" 
+                                                              Text="{Binding Title}" TextWrapping="Wrap"
+                                                              Opacity="{Binding TitleOpacity}"
+                                                              x:DataType="viewModels:ReminderItemViewModel" DataContext="{Binding}" 
                                                               LostFocus="EditReminder" />
-                                <Path Grid.Row="1" Grid.Column="1" Height="1" Stretch="Fill" Opacity="0.2" Margin="8,0"
+                                <Button Grid.Row="0" Grid.Column="2" Content="↑" FontSize="11" Padding="4,1"
+                                        Background="Transparent" BorderThickness="0" Opacity="0.45"
+                                        VerticalAlignment="Center" ToolTip.Tip="Move up" Click="MoveReminderUp" />
+                                <Button Grid.Row="0" Grid.Column="3" Content="×" FontSize="12" Padding="4,1"
+                                        Background="Transparent" BorderThickness="0" Opacity="0.5"
+                                        VerticalAlignment="Center" ToolTip.Tip="Delete item" Click="DeleteReminder" />
+                                <Path Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Height="1" Stretch="Fill" Opacity="0.2" Margin="8,0"
                                       StrokeThickness="1.5" StrokeDashArray="1,1" StrokeDashOffset="1"
                                       Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" >
                                     <Path.Data>
@@ -63,7 +73,7 @@
                 <Ellipse Width="16" Height="16" StrokeThickness="1" StrokeDashArray="2,2"
                          Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" />
             </Canvas>
-            <controls:ClickThroughTextBox Grid.Column="1" LostFocus="CreateReminder" Padding="8,6,0,6" Watermark="Add a new reminder..." />
+            <controls:ClickThroughTextBox Grid.Column="1" LostFocus="CreateReminder" KeyDown="CreateReminderKeyDown" Padding="8,6,0,6" Watermark="Add a new reminder..." />
         </Grid>
     </Grid>
 </UserControl>

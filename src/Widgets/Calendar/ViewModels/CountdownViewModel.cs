@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Calendar.Locales;
 using Calendar.Models;
 using ReactiveUI;
@@ -25,7 +26,8 @@ public class CountdownViewModel : ReactiveObject, IDisposable
         ? Locale.Calendar_Countdown_DefaultEvent
         : model.Title;
 
-    public string TargetDateText => model.TargetDate.ToString("MMM d, yyyy");
+    public string TargetDateText => model.TargetDate.ToString("MMM d, yyyy", Thread.CurrentThread.CurrentUICulture);
+    public string TooltipText => $"{Title} • {TargetDateText}";
 
     public bool ShowHours => model.ShowHours;
 
@@ -56,33 +58,45 @@ public class CountdownViewModel : ReactiveObject, IDisposable
     private void Update()
     {
         var now = DateTime.Now;
-        var diff = model.TargetDate - now;
+        var targetDate = model.TargetDate.Date;
+        var diff = targetDate - now;
 
-        if (diff >= TimeSpan.Zero)
+        if (targetDate == now.Date)
         {
-            DaysValue = (int)Math.Ceiling(diff.TotalDays);
+            DaysValue = 0;
+            StatusLabel = "TODAY";
+            DetailText = TargetDateText;
+            ProgressPercentage = 100.0;
+            return;
+        }
+
+        if (diff > TimeSpan.Zero)
+        {
+            DaysValue = model.ShowHours
+                ? diff.Days
+                : (int)(targetDate - now.Date).TotalDays;
             StatusLabel = Locale.Calendar_Countdown_DaysLeft;
             DetailText = model.ShowHours
-                ? $"{(int)diff.TotalDays}d {diff.Hours}h {diff.Minutes}m"
+                ? $"{diff.Days}d {diff.Hours}h {diff.Minutes}m"
                 : TargetDateText;
         }
         else
         {
-            var elapsed = now - model.TargetDate;
-            DaysValue = (int)Math.Floor(elapsed.TotalDays);
+            var elapsedDays = (int)(now.Date - targetDate).TotalDays;
+            DaysValue = Math.Max(1, elapsedDays);
             StatusLabel = Locale.Calendar_Countdown_DaysAgo;
             DetailText = TargetDateText;
         }
 
-        var totalSpan = (model.TargetDate - model.StartDate).TotalSeconds;
+        var totalSpan = (targetDate - model.StartDate.Date).TotalSeconds;
         if (totalSpan > 0)
         {
-            var elapsedSpan = (now - model.StartDate).TotalSeconds;
+            var elapsedSpan = (now - model.StartDate.Date).TotalSeconds;
             ProgressPercentage = Math.Clamp(elapsedSpan / totalSpan * 100.0, 0.0, 100.0);
         }
         else
         {
-            ProgressPercentage = diff <= TimeSpan.Zero ? 100.0 : 0.0;
+            ProgressPercentage = targetDate <= now.Date ? 100.0 : 0.0;
         }
     }
 

@@ -162,12 +162,15 @@ public static class PeripheralBatteryService
         return null;
     }
 
-    public static async Task<List<DeviceBatteryInfo>> GetAllBatteriesAsync()
+    public static Task<List<DeviceBatteryInfo>> GetAllBatteriesAsync(bool onlyConnected = true) =>
+        GetAllBatteriesInternalAsync(onlyConnected);
+
+    private static async Task<List<DeviceBatteryInfo>> GetAllBatteriesInternalAsync(bool onlyConnected)
     {
         var result = new List<DeviceBatteryInfo>();
 
         var host = GetHostBattery();
-        if (host != null)
+        if (host != null && (!onlyConnected || host.IsConnected))
         {
             result.Add(host);
         }
@@ -176,7 +179,7 @@ public static class PeripheralBatteryService
 
         try
         {
-            var peripheralBatteries = await Task.Run(GetPeripheralsAsync);
+            var peripheralBatteries = await Task.Run(() => GetPeripheralsAsync(onlyConnected));
             result.AddRange(peripheralBatteries);
         }
         catch (Exception ex)
@@ -185,21 +188,22 @@ public static class PeripheralBatteryService
             System.Diagnostics.Debug.WriteLine($"[Monitor] GetPeripheralsAsync failed: {ex}");
         }
 
-        return result;
+        return onlyConnected ? result.Where(d => d.IsConnected).ToList() : result;
     }
 
     private static readonly Guid ServiceUuidDeviceInformation = new("0000180A-0000-1000-8000-00805F9B34FB");
     private static readonly Guid CharUuidModelNumber = new("00002A24-0000-1000-8000-00805F9B34FB");
     private static readonly Guid CharUuidManufacturer = new("00002A29-0000-1000-8000-00805F9B34FB");
 
-    private static async Task<List<DeviceBatteryInfo>> GetPeripheralsAsync()
+    private static async Task<List<DeviceBatteryInfo>> GetPeripheralsAsync(bool onlyConnected)
     {
         var list = new List<DeviceBatteryInfo>();
         var seenContainers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var seenAddresses = new HashSet<ulong>();
 
         try
         {
-            // Query present devices with battery property and model/friendly identification
+            // Query devices with battery property and model/friendly identification
             var properties = new[]
             {
                 "System.ItemNameDisplay",
@@ -207,24 +211,33 @@ public static class PeripheralBatteryService
                 "System.Devices.FriendlyName",
                 "System.Devices.DeviceManufacturer",
                 "System.Devices.ContainerId",
+                "System.Devices.Present",
                 BatteryLevelPropKey
             };
-            var selector = "System.Devices.Present:=System.StructuredQueryType.Boolean#True";
-            
-            var devices = await DeviceInformation.FindAllAsync(selector, properties, DeviceInformationKind.Device);
+            var selector = onlyConnected
+                ? "System.Devices.Present:=System.StructuredQueryType.Boolean#True"
+                : "";
+
+            var devices = string.IsNullOrEmpty(selector)
+                ? await DeviceInformation.FindAllAsync(null, properties, DeviceInformationKind.Device)
+                : await DeviceInformation.FindAllAsync(selector, properties, DeviceInformationKind.Device);
 
             foreach (var d in devices)
             {
+                bool isPresent = !d.Properties.TryGetValue("System.Devices.Present", out var presentObj) ||
+                                 presentObj is not bool bPresent || bPresent;
+                if (onlyConnected && !isPresent)
+                    continue;
+
                 if (d.Properties.TryGetValue(BatteryLevelPropKey, out var batteryVal) && batteryVal != null)
                 {
                     if (Convert.ToInt32(batteryVal) is var pct and >= 0 and <= 100)
                     {
                         string name = ResolveAccessoryModelName(d);
-                        string containerKey = d.Id;
 
                         if (d.Properties.TryGetValue("System.Devices.ContainerId", out var cIdObj) && cIdObj is Guid cGuid)
                         {
-                            containerKey = cGuid.ToString();
+                            var containerKey = cGuid.ToString();
                             if (!seenContainers.Add(containerKey))
                             {
                                 continue;
@@ -233,7 +246,7 @@ public static class PeripheralBatteryService
                             try
                             {
                                 var container = await DeviceInformation.CreateFromIdAsync(
-                                    "{" + cGuid.ToString() + "}",
+                                    "{" + containerKey + "}",
                                     new[] { "System.ItemNameDisplay", "System.Devices.FriendlyName", "System.Devices.ModelName" },
                                     DeviceInformationKind.DeviceContainer);
 
@@ -244,12 +257,9 @@ public static class PeripheralBatteryService
                             }
                             catch { }
                         }
-                        else
+                        else if (!seenContainers.Add(d.Id))
                         {
-                            if (!seenContainers.Add(containerKey))
-                            {
-                                continue;
-                            }
+                            continue;
                         }
 
                         name = CleanDeviceName(name);
@@ -260,7 +270,7 @@ public static class PeripheralBatteryService
                             Type: InferDeviceType(name, d.Id),
                             BatteryLevel: pct / 100.0,
                             IsCharging: false,
-                            IsConnected: true
+                            IsConnected: isPresent
                         ));
                     }
                 }
@@ -275,13 +285,19 @@ public static class PeripheralBatteryService
         // Secondary fallback for BLE devices exposing GATT 0x180F
         try
         {
-            var bleSelector = BluetoothLEDevice.GetDeviceSelectorFromConnectionStatus(BluetoothConnectionStatus.Connected);
-            var bleDevices = await DeviceInformation.FindAllAsync(bleSelector);
+            var bleSelector = onlyConnected
+                ? BluetoothLEDevice.GetDeviceSelectorFromConnectionStatus(BluetoothConnectionStatus.Connected)
+                : BluetoothLEDevice.GetDeviceSelector();
+            var bleDevices = await DeviceInformation.FindAllAsync(bleSelector, new[] { "System.Devices.ContainerId" });
 
             foreach (var devInfo in bleDevices)
             {
-                // Check if already found via property bag
-                if (list.Any(x => x.DeviceId == devInfo.Id || x.Name.Equals(devInfo.Name, StringComparison.OrdinalIgnoreCase)))
+                string? bleContainerKey = devInfo.Properties.TryGetValue("System.Devices.ContainerId", out var cObj) && cObj is Guid g
+                    ? g.ToString()
+                    : null;
+
+                if ((bleContainerKey != null && seenContainers.Contains(bleContainerKey)) ||
+                    list.Any(x => x.DeviceId == devInfo.Id))
                 {
                     continue;
                 }
@@ -290,6 +306,9 @@ public static class PeripheralBatteryService
                 {
                     using var ble = await BluetoothLEDevice.FromIdAsync(devInfo.Id);
                     if (ble == null) continue;
+                    bool bleConnected = ble.ConnectionStatus == BluetoothConnectionStatus.Connected;
+                    if (onlyConnected && !bleConnected) continue;
+                    if (ble.BluetoothAddress > 0 && !seenAddresses.Add(ble.BluetoothAddress)) continue;
 
                     var gattResult = await ble.GetGattServicesForUuidAsync(GattServiceUuids.Battery, BluetoothCacheMode.Cached);
                     IReadOnlyList<GattDeviceService>? services = null;
@@ -320,13 +339,19 @@ public static class PeripheralBatteryService
                                             var resolvedName = await ResolveBleModelNameAsync(ble, devInfo.Name);
                                             resolvedName = CleanDeviceName(resolvedName);
 
+                                            if (list.Any(x => x.Name.Equals(resolvedName, StringComparison.OrdinalIgnoreCase)))
+                                            {
+                                                continue;
+                                            }
+                                            if (bleContainerKey != null) seenContainers.Add(bleContainerKey);
+
                                             list.Add(new DeviceBatteryInfo(
                                                 DeviceId: devInfo.Id,
                                                 Name: resolvedName,
                                                 Type: InferDeviceType(resolvedName, devInfo.Id),
                                                 BatteryLevel: b / 100.0,
                                                 IsCharging: false,
-                                                IsConnected: true
+                                                IsConnected: bleConnected
                                             ));
                                         }
                                     }

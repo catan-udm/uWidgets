@@ -13,9 +13,12 @@ namespace uWidgets.Views.Controls;
 
 public partial class ThemeButton : UserControl
 {
-    private static readonly Bitmap wallpaper = GetWallpaperPreview();
+    private static string? cachedWallpaperPath;
+    private static Bitmap? cachedWallpaperBitmap;
+    private static readonly object wallpaperLock = new();
+
     public Theme AppTheme { get; }
-    public Bitmap Wallpaper => wallpaper;
+    public Bitmap Wallpaper => GetOrRefreshWallpaperPreview();
     public bool DimWallpaper => AppTheme.DarkMode == true;
     public Brush WidgetBackground => (AppTheme.DarkMode ?? false) switch
     {
@@ -48,27 +51,70 @@ public partial class ThemeButton : UserControl
         InitializeComponent();
     }
     
-    public static Bitmap GetWallpaperPreview(int targetHeight = 150)
+    private static Bitmap GetOrRefreshWallpaperPreview()
     {
-        var wallpaperPath = InteropService.GetWallpaperPath();
-        if (string.IsNullOrWhiteSpace(wallpaperPath) || !File.Exists(wallpaperPath))
+        lock (wallpaperLock)
         {
-            return new RenderTargetBitmap(new PixelSize((int)(targetHeight * 16.0 / 9.0), targetHeight), new Vector(96, 96));
+            var path = InteropService.GetWallpaperPath();
+            if (cachedWallpaperBitmap != null && string.Equals(cachedWallpaperPath, path, StringComparison.OrdinalIgnoreCase))
+                return cachedWallpaperBitmap;
+
+            cachedWallpaperPath = path;
+            cachedWallpaperBitmap = GetWallpaperPreview(path);
+            return cachedWallpaperBitmap;
         }
+    }
 
-        using var originalBitmap = new Bitmap(wallpaperPath);
+    public static Bitmap GetWallpaperPreview(int targetHeight = 150) =>
+        GetWallpaperPreview(InteropService.GetWallpaperPath(), targetHeight);
 
-        var aspectRatio = (double)originalBitmap.PixelSize.Width / originalBitmap.PixelSize.Height;
-        var targetWidth = Math.Max(1, (int)(targetHeight * aspectRatio));
-        var renderTarget = new RenderTargetBitmap(new PixelSize(targetWidth, targetHeight), new Vector(96, 96));
+    private static Bitmap GetWallpaperPreview(string? wallpaperPath, int targetHeight = 150)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(wallpaperPath) || !File.Exists(wallpaperPath))
+                return CreateFallbackBitmap(targetHeight);
 
-        using var context = renderTarget.CreateDrawingContext(false);
-        var sourceRect = new Rect(0, 0, originalBitmap.PixelSize.Width, originalBitmap.PixelSize.Height);
-        var targetRect = new Rect(0, 0, targetWidth, targetHeight);
+            using var stream = File.OpenRead(wallpaperPath);
+            using var originalBitmap = Bitmap.DecodeToHeight(stream, targetHeight);
+            if (originalBitmap.PixelSize.Height <= 0 || originalBitmap.PixelSize.Width <= 0)
+                return CreateFallbackBitmap(targetHeight);
 
-        context.DrawImage(originalBitmap, sourceRect, targetRect);
+            var aspectRatio = (double)originalBitmap.PixelSize.Width / originalBitmap.PixelSize.Height;
+            var targetWidth = Math.Max(1, (int)(targetHeight * aspectRatio));
+            var renderTarget = new RenderTargetBitmap(new PixelSize(targetWidth, targetHeight), new Vector(96, 96));
 
-        return renderTarget;
+            using var context = renderTarget.CreateDrawingContext(false);
+            var sourceRect = new Rect(0, 0, originalBitmap.PixelSize.Width, originalBitmap.PixelSize.Height);
+            var targetRect = new Rect(0, 0, targetWidth, targetHeight);
+            context.DrawImage(originalBitmap, sourceRect, targetRect);
+
+            return renderTarget;
+        }
+        catch
+        {
+            return CreateFallbackBitmap(targetHeight);
+        }
+    }
+
+    private static RenderTargetBitmap CreateFallbackBitmap(int targetHeight)
+    {
+        var width = Math.Max(1, (int)(targetHeight * 16.0 / 9.0));
+        var bmp = new RenderTargetBitmap(new PixelSize(width, targetHeight), new Vector(96, 96));
+        using var ctx = bmp.CreateDrawingContext(false);
+        var gradient = new LinearGradientBrush
+        {
+            StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+            EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+            GradientStops =
+            [
+                new GradientStop(Color.Parse("#1F3B63"), 0),
+                new GradientStop(Color.Parse("#2D6A8E"), 0.5),
+                new GradientStop(Color.Parse("#162336"), 1)
+            ]
+        };
+        ctx.FillRectangle(gradient, new Rect(0, 0, width, targetHeight));
+        return bmp;
     }
 
     private void Apply(object? sender, RoutedEventArgs e)

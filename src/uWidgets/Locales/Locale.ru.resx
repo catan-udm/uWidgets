@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
     <resheader name="resmimetype">
         <value>text/microsoft-resx</value>
@@ -29,14 +30,8 @@
     <data name="Settings_Appearance_DarkMode_True" xml:space="preserve">
         <value>Темный</value>
     </data>
-    <data name="Settings_Advanced_Size" xml:space="preserve">
-        <value>Размер</value>
-    </data>
     <data name="Settings_Appearance_Colors" xml:space="preserve">
         <value>Цвета</value>
-    </data>
-    <data name="Settings_Appearance_Transparency_Title" xml:space="preserve">
-        <value>Эффекты прозрачности</value>
     </data>
     <data name="Settings_Advanced_WidgetMargin_Title" xml:space="preserve">
         <value>Отступ виджета</value>
@@ -52,9 +47,6 @@
     </data>
     <data name="Widget_Remove" xml:space="preserve">
         <value>Удалить виджет</value>
-    </data>
-    <data name="Widget_OpenSettings" xml:space="preserve">
-        <value>Изменить виджеты</value>
     </data>
     <data name="Widget_Size" xml:space="preserve">
         <value>Размер</value>
@@ -76,9 +68,6 @@
     </data>
     <data name="Settings_Appearance_DarkMode_Subtitle" xml:space="preserve">
         <value>Изменение цветов, отображаемых в виджетах</value>
-    </data>
-    <data name="Settings_Appearance_Transparency_Subtitle" xml:space="preserve">
-        <value>Полупрозрачные виджеты</value>
     </data>
     <data name="Widget" xml:space="preserve">
         <value>Виджет</value>
@@ -110,23 +99,8 @@
     <data name="Settings_General_Language_Title" xml:space="preserve">
         <value>Язык интерфейса</value>
     </data>
-    <data name="Settings_General_Exit_Title" xml:space="preserve">
-        <value>Выход из приложения</value>
-    </data>
-    <data name="Settings_General_Exit_Action" xml:space="preserve">
-        <value>Выйти</value>
-    </data>
-    <data name="Settings_General_Restart_Action" xml:space="preserve">
-        <value>Перезапустить</value>
-    </data>
-    <data name="Settings_General_Restart_Title" xml:space="preserve">
-        <value>Перезапуск приложения</value>
-    </data>
     <data name="Settings_General_Language" xml:space="preserve">
         <value>Язык</value>
-    </data>
-    <data name="Settings_General_Actions" xml:space="preserve">
-        <value>Действия</value>
     </data>
     <data name="Settings_About_Repository_Action" xml:space="preserve">
         <value>Открыть</value>
@@ -153,7 +127,7 @@
         <value>Обновление приложения</value>
     </data>
     <data name="Update_UpdateFormat" xml:space="preserve">
-        <value>uWidgets {0} доступно для&#160;скачивания</value>
+        <value>uWidgets {0} доступно для скачивания</value>
     </data>
     <data name="Update_Download" xml:space="preserve">
         <value>Скачать</value>
@@ -191,15 +165,6 @@
     <data name="Settings_Advanced_LockPosition_Title" xml:space="preserve">
         <value>Блокировка положения</value>
     </data>
-    <data name="Settings_Advanced_LockSize_Subtitle" xml:space="preserve">
-        <value>Запретить изменение размера виджета</value>
-    </data>
-    <data name="Settings_Advanced_LockPosition_Subtitle" xml:space="preserve">
-        <value>Запретить изменение положения виджета</value>
-    </data>
-    <data name="Settings_Advanced_Position" xml:space="preserve">
-        <value>Положение</value>
-    </data>
     <data name="Settings_AdminRequired" xml:space="preserve">
         <value>Запустите приложение от имени Администратора для изменения этой настройки</value>
     </data>
@@ -217,21 +182,6 @@
     </data>
     <data name="Settings_Appearance_ApplyTheme" xml:space="preserve">
         <value>Применить тему</value>
-    </data>
-    <data name="Settings_Appearance_Presets_Windows_Title" xml:space="preserve">
-        <value>Windows</value>
-    </data>
-    <data name="Settings_Appearance_Presets_Windows_Subtitle" xml:space="preserve">
-        <value>Segoe UI, острые углы, нативная рамка окна</value>
-    </data>
-    <data name="Settings_Appearance_Presets_Apply" xml:space="preserve">
-        <value>Применить</value>
-    </data>
-    <data name="Settings_Appearance_Presets_Apple_Title" xml:space="preserve">
-        <value>Apple</value>
-    </data>
-    <data name="Settings_Appearance_Presets_Apple_Subtitle" xml:space="preserve">
-        <value>Inter, круглые углы, без рамки и тени</value>
     </data>
     <data name="Settings_Advanced_Appearance" xml:space="preserve">
         <value>Оформление</value>
@@ -253,5 +203,80 @@
     </data>
     <data name="Settings_Appearance_OpacityLevel_Subtitle" xml:space="preserve">
         <value>Уровень прозрачности фона виджетов</value>
+    </data>
+    <data name="Layering_AlwaysOnTop" xml:space="preserve">
+        <value>Поверх всех окон</value>
+    </data>
+    <data name="Layering_DesktopPinned" xml:space="preserve">
+        <value>Закреплен на рабочем столе (позади окон)</value>
+    </data>
+    <data name="Layering_Normal" xml:space="preserve">
+        <value>Обычное плавающее окно</value>
+    </data>
+    <data name="Settings_Appearance_LiquidGlass_Subtitle" xml:space="preserve">
+        <value>Применить эффект преломляющего стекла к виджетам</value>
+    </data>
+    <data name="Settings_Appearance_LiquidGlass_Title" xml:space="preserve">
+        <value>Жидкое стекло</value>
+    </data>
+    <data name="Settings_DesktopGrid" xml:space="preserve">
+        <value>Рабочий стол и сетка</value>
+    </data>
+    <data name="Settings_HelpAndGuide" xml:space="preserve">
+        <value>Справка и руководство</value>
+    </data>
+    <data name="Settings_VisualEffects" xml:space="preserve">
+        <value>Визуальные эффекты</value>
+    </data>
+    <data name="Settings_WidgetManager" xml:space="preserve">
+        <value>Менеджер виджетов</value>
+    </data>
+    <data name="Tray_AddWidget" xml:space="preserve">
+        <value>Добавить виджет</value>
+    </data>
+    <data name="Tray_BrowseAll" xml:space="preserve">
+        <value>Все виджеты...</value>
+    </data>
+    <data name="Tray_Exit" xml:space="preserve">
+        <value>Выйти из uWidgets</value>
+    </data>
+    <data name="Tray_Help" xml:space="preserve">
+        <value>Справка и горячие клавиши</value>
+    </data>
+    <data name="Tray_OpenSettings" xml:space="preserve">
+        <value>Открыть настройки... (Ctrl+Shift+U)</value>
+    </data>
+    <data name="Tray_Quick_Clock" xml:space="preserve">
+        <value>Аналоговые часы</value>
+    </data>
+    <data name="Tray_Quick_Media" xml:space="preserve">
+        <value>Медиаплеер</value>
+    </data>
+    <data name="Tray_Quick_Monitor" xml:space="preserve">
+        <value>Системный монитор</value>
+    </data>
+    <data name="Tray_Quick_Notes" xml:space="preserve">
+        <value>Быстрая заметка</value>
+    </data>
+    <data name="Tray_Quick_Weather" xml:space="preserve">
+        <value>Прогноз погоды</value>
+    </data>
+    <data name="Tray_Restart" xml:space="preserve">
+        <value>Перезапустить uWidgets</value>
+    </data>
+    <data name="Tray_ToggleLock" xml:space="preserve">
+        <value>Заблокировать / разблокировать виджеты (Win+Alt+L)</value>
+    </data>
+    <data name="Tray_ToggleWidgets" xml:space="preserve">
+        <value>Показать / скрыть виджеты (Win+Shift+W)</value>
+    </data>
+    <data name="Tray_ToolTip" xml:space="preserve">
+        <value>Виджеты рабочего стола uWidgets</value>
+    </data>
+    <data name="Widget_Center" xml:space="preserve">
+        <value>По центру экрана</value>
+    </data>
+    <data name="Widget_Duplicate" xml:space="preserve">
+        <value>Дублировать виджет</value>
     </data>
 </root>

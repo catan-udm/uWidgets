@@ -24,8 +24,14 @@ public partial class UpdatePopup : Window
 
     private void DownloadUpdate(object? sender, RoutedEventArgs e)
     {
-        Process.Start(
-            new ProcessStartInfo("https://www.github.com/creewick/uWidgets/releases/latest") { UseShellExecute = true });
+        try
+        {
+            Process.Start(new ProcessStartInfo(UpdateService.LatestReleaseUrl) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[UpdatePopup] Failed opening release URL: {ex.Message}");
+        }
         Close();
     }
 

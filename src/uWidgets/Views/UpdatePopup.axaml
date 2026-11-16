@@ -9,7 +9,8 @@
         ExtendClientAreaTitleBarHeightHint="40"
         WindowStartupLocation="CenterScreen"
         Topmost="True"
-        Width="340" Height="240" CanResize="False"
+        Width="340" Height="240"
+        MinWidth="340" MinHeight="240" CanResize="True"
         Title="Update" x:DataType="views:UpdatePopup">
     <Window.Styles>
         <Styles>

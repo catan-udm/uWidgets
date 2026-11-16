@@ -1,7 +1,9 @@
+using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Clock.Models;
 using Clock.ViewModels;
+using uWidgets.Core.Interfaces;
 
 namespace Clock.Views;
 
@@ -9,11 +11,14 @@ public partial class Pomodoro : UserControl
 {
     private readonly PomodoroViewModel viewModel;
 
-    public Pomodoro() : this(new PomodoroModel()) { }
+    public Pomodoro() : this(null, null) { }
 
-    public Pomodoro(PomodoroModel model)
+    public Pomodoro(PomodoroModel model) : this(null, model) { }
+
+    public Pomodoro(IWidgetLayoutProvider? widgetLayoutProvider, PomodoroModel? model = null)
     {
-        viewModel = new PomodoroViewModel(model);
+        var id = widgetLayoutProvider?.Get()?.Id ?? Guid.Empty;
+        viewModel = new PomodoroViewModel(model ?? new PomodoroModel(), id);
         DataContext = viewModel;
         Unloaded += OnUnloaded;
         InitializeComponent();

@@ -44,6 +44,19 @@ public class StocksSettingsViewModel : ReactiveObject
 
     public ObservableCollection<string> Tickers { get; }
 
+    public int RefreshMinutes
+    {
+        get => Math.Clamp(model.RefreshMinutes, 1, 60);
+        set
+        {
+            var clamped = Math.Clamp(value, 1, 60);
+            if (model.RefreshMinutes == clamped) return;
+            model = model with { RefreshMinutes = clamped };
+            Save();
+            this.RaisePropertyChanged(nameof(RefreshMinutes));
+        }
+    }
+
     private string newTicker = "";
     public string NewTicker
     {

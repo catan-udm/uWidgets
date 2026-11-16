@@ -18,11 +18,13 @@ public class StartupService : IStartupService
         
         try
         {
-            var rk = Registry.CurrentUser.OpenSubKey(RegistryKey, true);
+            using var rk = Registry.CurrentUser.OpenSubKey(RegistryKey, true);
+            if (rk == null) return false;
+
             if (value)
-                rk?.SetValue(Const.AppName, ExePath);
+                rk.SetValue(Const.AppName, $"\"{ExePath}\"");
             else
-                rk?.DeleteValue(Const.AppName);
+                rk.DeleteValue(Const.AppName, throwOnMissingValue: false);
             return true;
         }
         catch (Exception)

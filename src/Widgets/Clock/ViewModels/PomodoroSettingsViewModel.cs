@@ -34,6 +34,12 @@ public class PomodoroSettingsViewModel(IWidgetLayoutProvider widgetLayoutProvide
         set => Save(model with { LongBreakMinutes = Math.Clamp(value, 1, 90) });
     }
 
+    public bool AutoStartNextPhase
+    {
+        get => model.AutoStartNextPhase;
+        set => Save(model with { AutoStartNextPhase = value });
+    }
+
     private void Save(PomodoroModel updated)
     {
         model = updated;

@@ -4,5 +4,7 @@ public record PhotoFrameModel(
     string Path = "",
     int IntervalMinutes = 5,
     bool FillWidget = true,
-    string Caption = ""
+    string Caption = "",
+    bool Shuffle = false,
+    bool IncludeSubfolders = false
 );

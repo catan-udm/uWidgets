@@ -9,9 +9,10 @@
     <ScrollViewer>
         <StackPanel Orientation="Vertical" Spacing="5">
             <controls:Setting Title="{x:Static locales:Locale.Weather_Location}">
-                <AutoCompleteBox Width="130" Name="Search" FilterMode="None" 
+                <AutoCompleteBox MinWidth="185" HorizontalAlignment="Stretch" Name="Search" FilterMode="None" 
                                  ValueMemberBinding="{Binding Name, x:DataType=geocoding:City}" 
-                                 SelectedItem="{Binding Location, Mode=OneWay}"
+                                 SelectedItem="{Binding Location, Mode=TwoWay}"
+                                 SelectionChanged="Search_OnSelectionChanged"
                                  LostFocus="Search_OnLostFocus">
                     <AutoCompleteBox.ItemTemplate>
                         <DataTemplate x:DataType="geocoding:City">

@@ -15,17 +15,26 @@
                                               MinHeight="0"
                                               Text="{Binding Title}"
                                               Watermark="Title..."
+                                              TextChanged="OnTitleTextChanged"
                                               LostFocus="UpdateTitle"
                                               FontSize="15"
                                               FontWeight="Bold"
                                               AcceptsReturn="True"
                                               TextWrapping="Wrap" />
-                <TextBlock Grid.Row="1"
-                           Padding="8,4,8,2"
-                           Text="{Binding Updated}"
-                           FontSize="10"
-                           Opacity="0.55"
-                           TextWrapping="Wrap" />
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                               Padding="8,4,4,2"
+                               IsVisible="{Binding ShowTimestamp}"
+                               Text="{Binding Updated}"
+                               FontSize="10"
+                               Opacity="0.55"
+                               TextWrapping="Wrap" />
+                    <Button Grid.Column="1" Background="Transparent" BorderThickness="0" Padding="6,4"
+                            VerticalAlignment="Bottom" ToolTip.Tip="{Binding CopyButtonTooltip}" Click="CopyNote_OnClick">
+                        <PathIcon Width="12" Height="12" Opacity="0.65"
+                                  Data="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
+                    </Button>
+                </Grid>
             </Grid>
         </Border>
 
@@ -40,8 +49,10 @@
         <controls:ClickThroughTextBox Grid.Column="2"
                                       MinHeight="0"
                                       Padding="12,10"
+                                      FontSize="{Binding ContentFontSize}"
                                       Text="{Binding Content}"
                                       Watermark="Take a note (double-click to type)..."
+                                      TextChanged="OnContentTextChanged"
                                       LostFocus="UpdateContent"
                                       AcceptsReturn="True"
                                       TextWrapping="Wrap" />

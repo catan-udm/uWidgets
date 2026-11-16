@@ -43,12 +43,29 @@ public class CountdownSettingsViewModel : ReactiveObject
         {
             if (value.HasValue && model.TargetDate != value.Value.Date)
             {
+                var nextStart = model.StartDate.Date < value.Value.Date
+                    ? model.StartDate.Date
+                    : DateTime.Now.Date;
                 Save(model with
                 {
                     TargetDate = value.Value.Date,
-                    StartDate = DateTime.Now.Date
+                    StartDate = nextStart
                 });
                 this.RaisePropertyChanged(nameof(TargetDate));
+                this.RaisePropertyChanged(nameof(StartDate));
+            }
+        }
+    }
+
+    public DateTime? StartDate
+    {
+        get => model.StartDate;
+        set
+        {
+            if (value.HasValue && model.StartDate != value.Value.Date)
+            {
+                Save(model with { StartDate = value.Value.Date });
+                this.RaisePropertyChanged(nameof(StartDate));
             }
         }
     }

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Development.Models;
 
 namespace Development.Services;
@@ -17,72 +18,87 @@ public static class GitRepositoryService
         var repoName = Path.GetFileName(repoPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         if (string.IsNullOrEmpty(repoName)) repoName = repoPath;
 
-        return await Task.Run(() =>
+        try
         {
+            var psi = new ProcessStartInfo("git")
+            {
+                WorkingDirectory = repoPath,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            psi.ArgumentList.Add("--no-optional-locks");
+            psi.ArgumentList.Add("status");
+            psi.ArgumentList.Add("--porcelain=v2");
+            psi.ArgumentList.Add("--branch");
+
+            using var proc = Process.Start(psi);
+            if (proc == null)
+                return new GitStatusInfo(repoPath, repoName, "N/A", 0, 0, 0, 0, true, false);
+
+            var stdoutTask = proc.StandardOutput.ReadToEndAsync();
+            var stderrTask = proc.StandardError.ReadToEndAsync();
+
+            using var cts = new CancellationTokenSource(3000);
             try
             {
-                var psi = new ProcessStartInfo("git", "status --porcelain=v2 --branch")
-                {
-                    WorkingDirectory = repoPath,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using var proc = Process.Start(psi);
-                if (proc == null)
-                    return new GitStatusInfo(repoPath, repoName, "N/A", 0, 0, 0, 0, true, false);
-
-                var output = proc.StandardOutput.ReadToEnd();
-                proc.WaitForExit(3000);
-
-                if (proc.ExitCode != 0)
-                {
-                    return new GitStatusInfo(repoPath, repoName, "Not a Git repo", 0, 0, 0, 0, true, false);
-                }
-
-                string branch = "HEAD (detached)";
-                int ahead = 0;
-                int behind = 0;
-                int modified = 0;
-                int untracked = 0;
-
-                using var reader = new StringReader(output);
-                string? line;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    if (line.StartsWith("# branch.head "))
-                    {
-                        branch = line[14..].Trim();
-                    }
-                    else if (line.StartsWith("# branch.ab "))
-                    {
-                        var parts = line[12..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                        if (parts.Length >= 2)
-                        {
-                            if (parts[0].StartsWith("+") && int.TryParse(parts[0][1..], out var a)) ahead = a;
-                            if (parts[1].StartsWith("-") && int.TryParse(parts[1][1..], out var b)) behind = b;
-                        }
-                    }
-                    else if (line.StartsWith("1 ") || line.StartsWith("2 ") || line.StartsWith("u "))
-                    {
-                        modified++;
-                    }
-                    else if (line.StartsWith("? "))
-                    {
-                        untracked++;
-                    }
-                }
-
-                bool isClean = modified == 0 && untracked == 0;
-                return new GitStatusInfo(repoPath, repoName, branch, ahead, behind, modified, untracked, isClean, true);
+                await proc.WaitForExitAsync(cts.Token);
             }
-            catch
+            catch (OperationCanceledException)
             {
-                return new GitStatusInfo(repoPath, repoName, "Git error", 0, 0, 0, 0, true, false);
+                try { proc.Kill(true); } catch { }
+                return new GitStatusInfo(repoPath, repoName, "Git timeout", 0, 0, 0, 0, true, false);
             }
-        });
+
+            var output = await stdoutTask;
+            _ = await stderrTask;
+
+            if (proc.ExitCode != 0)
+            {
+                return new GitStatusInfo(repoPath, repoName, "Not a Git repo", 0, 0, 0, 0, true, false);
+            }
+
+            string branch = "HEAD (detached)";
+            int ahead = 0;
+            int behind = 0;
+            int modified = 0;
+            int untracked = 0;
+
+            using var reader = new StringReader(output);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (line.StartsWith("# branch.head "))
+                {
+                    branch = line[14..].Trim();
+                }
+                else if (line.StartsWith("# branch.ab "))
+                {
+                    var parts = line[12..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 2)
+                    {
+                        if (parts[0].StartsWith("+") && int.TryParse(parts[0][1..], out var a)) ahead = a;
+                        if (parts[1].StartsWith("-") && int.TryParse(parts[1][1..], out var b)) behind = b;
+                    }
+                }
+                else if (line.StartsWith("1 ") || line.StartsWith("2 ") || line.StartsWith("u "))
+                {
+                    modified++;
+                }
+                else if (line.StartsWith("? "))
+                {
+                    untracked++;
+                }
+            }
+
+            bool isClean = modified == 0 && untracked == 0;
+            return new GitStatusInfo(repoPath, repoName, branch, ahead, behind, modified, untracked, isClean, true);
+        }
+        catch
+        {
+            return new GitStatusInfo(repoPath, repoName, "Git error", 0, 0, 0, 0, true, false);
+        }
     }
 
     public static FileSystemWatcher? CreateWatcher(string repoPath, Action onChanged)
@@ -240,16 +256,36 @@ public static class GitRepositoryService
                 case CodeEditorType.Neovim:
                     RunTerminalApp("nvim .", repoPath);
                     break;
+                case CodeEditorType.QuickPick:
+                {
+                    var detected = GetInstalledQuickPickEditors()
+                        .FirstOrDefault(x => x.Type != CodeEditorType.SystemOpenWith);
+                    if (detected != default)
+                    {
+                        OpenInEditor(repoPath, detected.Type, customCommand);
+                    }
+                    else
+                    {
+                        PromptOpenWith(repoPath);
+                    }
+                    break;
+                }
                 case CodeEditorType.SystemOpenWith:
                     PromptOpenWith(repoPath);
                     break;
                 case CodeEditorType.Custom:
                     if (!string.IsNullOrWhiteSpace(customCommand))
                     {
-                        string cmd = customCommand.Contains("{path}")
-                            ? customCommand.Replace("{path}", repoPath)
-                            : $"{customCommand} \"{repoPath}\"";
-                        Process.Start(new ProcessStartInfo("cmd.exe", $"/c {cmd}") { CreateNoWindow = true, UseShellExecute = false });
+                        var quotedPath = $"\"{repoPath}\"";
+                        string cmd = customCommand.Contains("{path}", StringComparison.Ordinal)
+                            ? customCommand.Replace("{path}", repoPath, StringComparison.Ordinal)
+                            : $"{customCommand} {quotedPath}";
+                        using var customProc = Process.Start(new ProcessStartInfo("cmd.exe")
+                        {
+                            CreateNoWindow = true,
+                            UseShellExecute = false,
+                            Arguments = $"/c {cmd}"
+                        });
                     }
                     else
                     {
@@ -267,16 +303,82 @@ public static class GitRepositoryService
         }
     }
 
+    private static readonly (CodeEditorType Type, string Label, string Command)[] QuickPickCandidates =
+    [
+        (CodeEditorType.VSCode, "Visual Studio Code", "code"),
+        (CodeEditorType.Cursor, "Cursor", "cursor"),
+        (CodeEditorType.Windsurf, "Windsurf", "windsurf"),
+        (CodeEditorType.AntigravityIDE, "Antigravity IDE", "antigravity"),
+        (CodeEditorType.AntigravityCLI, "Antigravity CLI (agy)", "agy"),
+        (CodeEditorType.ClaudeCode, "Claude Code", "claude"),
+        (CodeEditorType.Aider, "Aider", "aider"),
+        (CodeEditorType.Rider, "JetBrains Rider", "rider"),
+        (CodeEditorType.IntelliJ, "JetBrains IntelliJ IDEA", "idea"),
+        (CodeEditorType.PyCharm, "JetBrains PyCharm", "pycharm"),
+        (CodeEditorType.WebStorm, "JetBrains WebStorm", "webstorm"),
+        (CodeEditorType.VisualStudio, "Visual Studio", "devenv"),
+        (CodeEditorType.Zed, "Zed", "zed"),
+        (CodeEditorType.SublimeText, "Sublime Text", "subl"),
+        (CodeEditorType.Neovim, "Neovim", "nvim")
+    ];
+
+    public static IReadOnlyList<(CodeEditorType Type, string Label)> GetInstalledQuickPickEditors()
+    {
+        var pathEntries = (Environment.GetEnvironmentVariable("PATH") ?? "")
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.Trim().Trim('"'))
+            .Where(p => !string.IsNullOrEmpty(p))
+            .ToArray();
+
+        var result = new List<(CodeEditorType Type, string Label)>();
+        foreach (var (type, label, cmd) in QuickPickCandidates)
+        {
+            if (IsCommandOnPath(cmd, pathEntries))
+            {
+                result.Add((type, label));
+            }
+        }
+
+        result.Add((CodeEditorType.SystemOpenWith, "Windows Open With..."));
+        return result;
+    }
+
+    private static bool IsCommandOnPath(string command, string[] pathEntries)
+    {
+        string[] exts = [".exe", ".cmd", ".bat", ".com", ""];
+        foreach (var dir in pathEntries)
+        {
+            foreach (var ext in exts)
+            {
+                try
+                {
+                    if (File.Exists(Path.Combine(dir, command + ext)))
+                        return true;
+                }
+                catch { }
+            }
+        }
+
+        return false;
+    }
+
+    private static string EscapePowerShellSingleQuoted(string value) =>
+        value.Replace("'", "''", StringComparison.Ordinal);
+
     private static void RunGuiApp(string app, string repoPath)
     {
         try
         {
-            var psi = new ProcessStartInfo("cmd.exe", $"/c {app} \"{repoPath}\"")
+            var psi = new ProcessStartInfo("cmd.exe")
             {
                 CreateNoWindow = true,
                 UseShellExecute = false
             };
-            var p = Process.Start(psi);
+            psi.ArgumentList.Add("/c");
+            psi.ArgumentList.Add(app);
+            psi.ArgumentList.Add(repoPath);
+
+            using var p = Process.Start(psi);
             if (p == null) PromptOpenWith(repoPath);
         }
         catch
@@ -289,11 +391,16 @@ public static class GitRepositoryService
     {
         try
         {
-            var psi = new ProcessStartInfo("powershell.exe", $"-NoExit -Command \"Set-Location '{repoPath}'; {app}\"")
+            var safePath = EscapePowerShellSingleQuoted(repoPath);
+            var psi = new ProcessStartInfo("powershell.exe")
             {
-                UseShellExecute = true
+                UseShellExecute = false
             };
-            var p = Process.Start(psi);
+            psi.ArgumentList.Add("-NoExit");
+            psi.ArgumentList.Add("-Command");
+            psi.ArgumentList.Add($"Set-Location -LiteralPath '{safePath}'; {app}");
+
+            using var p = Process.Start(psi);
             if (p == null) PromptOpenWith(repoPath);
         }
         catch
@@ -310,10 +417,15 @@ public static class GitRepositoryService
         {
             try
             {
-                Process.Start(new ProcessStartInfo("powershell.exe", $"-NoExit -Command \"Set-Location '{repoPath}'\"")
+                var safePath = EscapePowerShellSingleQuoted(repoPath);
+                var psi = new ProcessStartInfo("powershell.exe")
                 {
-                    UseShellExecute = true
-                });
+                    UseShellExecute = false
+                };
+                psi.ArgumentList.Add("-NoExit");
+                psi.ArgumentList.Add("-Command");
+                psi.ArgumentList.Add($"Set-Location -LiteralPath '{safePath}'");
+                using var p = Process.Start(psi);
             }
             catch { }
         }
@@ -325,7 +437,12 @@ public static class GitRepositoryService
         {
             try
             {
-                Process.Start(new ProcessStartInfo("explorer.exe", repoPath) { UseShellExecute = true });
+                var psi = new ProcessStartInfo("explorer.exe")
+                {
+                    UseShellExecute = true
+                };
+                psi.ArgumentList.Add(repoPath);
+                using var p = Process.Start(psi);
             }
             catch { }
         }

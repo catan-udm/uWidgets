@@ -393,7 +393,13 @@ public static class MediaService
 
     public static void ToggleMute(string? appOrProcess = null) => ToggleAppMute(appOrProcess);
 
-    public static bool ToggleAppMute(string? appOrProcess)
+    public static bool ToggleAppMute(string? appOrProcess) =>
+        QueryOrToggleAppMute(appOrProcess, toggle: true);
+
+    public static bool IsAppMuted(string? appOrProcess) =>
+        QueryOrToggleAppMute(appOrProcess, toggle: false);
+
+    private static bool QueryOrToggleAppMute(string? appOrProcess, bool toggle)
     {
         if (!OperatingSystem.IsWindows()) return false;
 
@@ -422,48 +428,44 @@ public static class MediaService
 
             string targetName = NormalizeProcessTarget(appOrProcess);
             bool toggled = false;
-            bool newMuteState = false;
+            bool resultMuteState = false;
 
-            for (int i = 0; i < count; i++)
+            if (!string.IsNullOrWhiteSpace(targetName))
             {
-                if (sessionEnum.GetSession(i, out var ctl) == 0 && ctl != null)
+                for (int i = 0; i < count; i++)
                 {
-                    try
+                    if (sessionEnum.GetSession(i, out var ctl) == 0 && ctl != null)
                     {
-                        if (ctl is IAudioSessionControl2 ctl2)
+                        try
                         {
-                            ctl2.GetProcessId(out uint pid);
-                            if (pid > 0)
+                            if (ctl is IAudioSessionControl2 ctl2 &&
+                                IsAudioSessionMatch(ctl2, targetName, appOrProcess) &&
+                                ctl is ISimpleAudioVolume vol)
                             {
-                                string procName = "";
-                                try { procName = Process.GetProcessById((int)pid).ProcessName; } catch { }
-
-                                bool isMatch = false;
-                                if (!string.IsNullOrWhiteSpace(targetName))
+                                vol.GetMute(out bool currentMute);
+                                if (!toggle)
                                 {
-                                    isMatch = procName.Contains(targetName, StringComparison.OrdinalIgnoreCase) ||
-                                              targetName.Contains(procName, StringComparison.OrdinalIgnoreCase);
+                                    if (currentMute) return true;
                                 }
-
-                                if (isMatch && ctl is ISimpleAudioVolume vol)
+                                else
                                 {
-                                    vol.GetMute(out bool currentMute);
                                     var g = Guid.Empty;
                                     vol.SetMute(!currentMute, ref g);
-                                    newMuteState = !currentMute;
+                                    resultMuteState = !currentMute;
                                     toggled = true;
                                 }
                             }
                         }
-                    }
-                    finally
-                    {
-                        Marshal.ReleaseComObject(ctl);
+                        finally
+                        {
+                            Marshal.ReleaseComObject(ctl);
+                        }
                     }
                 }
             }
 
-            if (!toggled)
+            // Only fall back to an active audio session when no specific app target was known
+            if (toggle && !toggled && string.IsNullOrWhiteSpace(targetName))
             {
                 for (int i = 0; i < count; i++)
                 {
@@ -477,7 +479,7 @@ public static class MediaService
                                 vol.GetMute(out bool currentMute);
                                 var g = Guid.Empty;
                                 vol.SetMute(!currentMute, ref g);
-                                newMuteState = !currentMute;
+                                resultMuteState = !currentMute;
                                 toggled = true;
                                 break;
                             }
@@ -490,7 +492,7 @@ public static class MediaService
                 }
             }
 
-            return newMuteState;
+            return resultMuteState;
         }
         catch
         {
@@ -517,96 +519,58 @@ public static class MediaService
         }
     }
 
-    public static bool IsAppMuted(string? appOrProcess)
+    private static bool IsAudioSessionMatch(IAudioSessionControl2 ctl2, string targetName, string? rawAppId)
     {
-        if (!OperatingSystem.IsWindows()) return false;
+        try
+        {
+            ctl2.GetProcessId(out uint pid);
+            if (pid > 0)
+            {
+                string procName = "";
+                try
+                {
+                    using var proc = Process.GetProcessById((int)pid);
+                    procName = proc.ProcessName;
+                }
+                catch { }
 
-        object? enumerator = null;
-        IMMDevice? device = null;
-        object? managerObj = null;
-        IAudioSessionEnumerator? sessionEnum = null;
+                if (!string.IsNullOrWhiteSpace(procName) &&
+                    (procName.Contains(targetName, StringComparison.OrdinalIgnoreCase) ||
+                     targetName.Contains(procName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return true;
+                }
+            }
+        }
+        catch { }
 
         try
         {
-            var enumeratorType = Type.GetTypeFromCLSID(new Guid("BCDE0395-E52F-467C-8E3D-C4579291692E"));
-            if (enumeratorType == null) return false;
-
-            enumerator = Activator.CreateInstance(enumeratorType);
-            if (enumerator is not IMMDeviceEnumerator devEnum) return false;
-
-            devEnum.GetDefaultAudioEndpoint(0, 1, out device);
-            if (device == null) return false;
-
-            var iidManager = typeof(IAudioSessionManager2).GUID;
-            device.Activate(ref iidManager, 0, IntPtr.Zero, out managerObj);
-            if (managerObj is not IAudioSessionManager2 sessionManager) return false;
-
-            if (sessionManager.GetSessionEnumerator(out sessionEnum) != 0 || sessionEnum == null) return false;
-            sessionEnum.GetCount(out int count);
-
-            string targetName = NormalizeProcessTarget(appOrProcess);
-
-            for (int i = 0; i < count; i++)
+            if (ctl2.GetSessionIdentifier(out var sessionId) == 0 && !string.IsNullOrWhiteSpace(sessionId))
             {
-                if (sessionEnum.GetSession(i, out var ctl) == 0 && ctl != null)
+                if (sessionId.Contains(targetName, StringComparison.OrdinalIgnoreCase) ||
+                    (!string.IsNullOrWhiteSpace(rawAppId) && sessionId.Contains(rawAppId, StringComparison.OrdinalIgnoreCase)))
                 {
-                    try
-                    {
-                        if (ctl is IAudioSessionControl2 ctl2)
-                        {
-                            ctl2.GetProcessId(out uint pid);
-                            if (pid > 0)
-                            {
-                                string procName = "";
-                                try { procName = Process.GetProcessById((int)pid).ProcessName; } catch { }
-
-                                bool isMatch = false;
-                                if (!string.IsNullOrWhiteSpace(targetName))
-                                {
-                                    isMatch = procName.Contains(targetName, StringComparison.OrdinalIgnoreCase) ||
-                                              targetName.Contains(procName, StringComparison.OrdinalIgnoreCase);
-                                }
-
-                                if (isMatch && ctl is ISimpleAudioVolume vol)
-                                {
-                                    vol.GetMute(out bool isMuted);
-                                    if (isMuted) return true;
-                                }
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        Marshal.ReleaseComObject(ctl);
-                    }
+                    return true;
                 }
             }
+        }
+        catch { }
 
-            return false;
-        }
-        catch
+        try
         {
-            return false;
-        }
-        finally
-        {
-            if (sessionEnum != null && Marshal.IsComObject(sessionEnum))
+            if (ctl2.GetDisplayName(out var displayName) == 0 && !string.IsNullOrWhiteSpace(displayName))
             {
-                try { Marshal.ReleaseComObject(sessionEnum); } catch { }
-            }
-            if (managerObj != null && Marshal.IsComObject(managerObj))
-            {
-                try { Marshal.ReleaseComObject(managerObj); } catch { }
-            }
-            if (device != null && Marshal.IsComObject(device))
-            {
-                try { Marshal.ReleaseComObject(device); } catch { }
-            }
-            if (enumerator != null && Marshal.IsComObject(enumerator))
-            {
-                try { Marshal.ReleaseComObject(enumerator); } catch { }
+                if (displayName.Contains(targetName, StringComparison.OrdinalIgnoreCase) ||
+                    (!string.IsNullOrWhiteSpace(rawAppId) && displayName.Contains(rawAppId, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return true;
+                }
             }
         }
+        catch { }
+
+        return false;
     }
 
     private static string NormalizeProcessTarget(string? raw)
@@ -730,8 +694,6 @@ public static class MediaService
 
     public static async Task<MediaSnapshot> GetSnapshotAsync(bool prefersMusicPlayer = true, bool allowBrowserMedia = true)
     {
-        var peak = GetSystemAudioPeak();
-
         GlobalSystemMediaTransportControlsSessionManager? manager = null;
         try
         {
@@ -842,7 +804,7 @@ public static class MediaService
                             ArtistOrApp: artist,
                             Album: album,
                             IsPlaying: isPlaying,
-                            PeakLevel: peak,
+                            PeakLevel: isPlaying ? 1.0 : 0.0,
                             ThumbnailBytes: thumbnail ?? (string.Equals(trackKey, cachedTrackKey, StringComparison.Ordinal) ? cachedThumbnailBytes : null),
                             SourceAppUserModelId: session.SourceAppUserModelId ?? "",
                             PositionSeconds: positionSeconds,
@@ -874,9 +836,11 @@ public static class MediaService
             return lastValidSnapshot with
             {
                 IsPlaying = false,
-                PeakLevel = peak
+                PeakLevel = 0.0
             };
         }
+
+        var peak = GetSystemAudioPeak();
 
         // Win32 Process Scraper Fallback
         var fallback = FindActivePlayerMetadata(allowBrowserMedia);
@@ -901,7 +865,7 @@ public static class MediaService
 
         return peak > 0.005
             ? new MediaSnapshot(Locale.Media_NowPlaying_Title, Locale.Media_SystemAudio, "", true, peak, null, "")
-            : new MediaSnapshot(Locale.Media_NowPlaying_Title, Locale.Media_SystemAudio, "", false, 0.0, null, "");
+            : new MediaSnapshot(Locale.Media_NoTrack, Locale.Media_SystemAudio, "", false, 0.0, null, "");
     }
 
     private static (string Title, string Artist, string PlayerName) FindActivePlayerMetadata(bool allowBrowserMedia)

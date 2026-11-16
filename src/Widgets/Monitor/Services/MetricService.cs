@@ -182,20 +182,24 @@ public static class MetricService
 
         try
         {
-            using var searcher = new ManagementObjectSearcher("select UtilizationPercentage from Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine where Name like '%engtype_3D%'");
+            using var searcher = new ManagementObjectSearcher("select Name, UtilizationPercentage from Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine where Name like '%engtype_3D%'");
             using var results = searcher.Get();
-            double total = 0;
-            int count = 0;
+            var luidTotals = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+
             foreach (var o in results)
             {
                 using var obj = (ManagementObject)o;
-                total += Convert.ToDouble(obj["UtilizationPercentage"]);
-                count++;
+                var name = obj["Name"]?.ToString() ?? string.Empty;
+                var util = Convert.ToDouble(obj["UtilizationPercentage"]);
+
+                var luidKey = ExtractGpuLuid(name);
+                luidTotals[luidKey] = luidTotals.GetValueOrDefault(luidKey) + util;
             }
 
-            if (count > 0)
+            if (luidTotals.Count > 0)
             {
-                return Math.Clamp(total / 100.0, 0.0, 1.0);
+                var maxUsage = luidTotals.Values.Max();
+                return Math.Clamp(maxUsage / 100.0, 0.0, 1.0);
             }
         }
         catch
@@ -204,6 +208,14 @@ public static class MetricService
         }
 
         return null;
+    }
+
+    private static string ExtractGpuLuid(string instanceName)
+    {
+        var idx = instanceName.IndexOf("luid_", StringComparison.OrdinalIgnoreCase);
+        if (idx < 0) return "default";
+        var physIdx = instanceName.IndexOf("_phys_", idx, StringComparison.OrdinalIgnoreCase);
+        return physIdx > idx ? instanceName[idx..physIdx] : instanceName[idx..];
     }
 
     private static double? GetRecycleBinUsage()
@@ -274,38 +286,35 @@ public static class MetricService
 
         try
         {
-            double maxSpeed = 0;
-            double totalBytesSent = 0;
-            double totalBytesReceived = 0;
+            double maxUtilization = 0;
+            bool foundInterface = false;
 
-            using (var searcher = new ManagementObjectSearcher("select * from Win32_PerfFormattedData_Tcpip_NetworkInterface"))
+            using var searcher = new ManagementObjectSearcher("select Name, BytesTotalPersec, CurrentBandwidth from Win32_PerfFormattedData_Tcpip_NetworkInterface");
+            using var results = searcher.Get();
+            foreach (var o in results)
             {
-                using var results = searcher.Get();
-                foreach (var o in results)
+                using var obj = (ManagementObject)o;
+                var name = obj["Name"]?.ToString() ?? string.Empty;
+                if (name.Contains("Loopback", StringComparison.OrdinalIgnoreCase) ||
+                    name.Contains("isatap", StringComparison.OrdinalIgnoreCase) ||
+                    name.Contains("Teredo", StringComparison.OrdinalIgnoreCase))
                 {
-                    using var obj = (ManagementObject)o;
-                    totalBytesSent += Convert.ToDouble(obj["BytesSentPerSec"]);
-                    totalBytesReceived += Convert.ToDouble(obj["BytesReceivedPerSec"]);
+                    continue;
+                }
+
+                var bandwidthBitsPerSec = Convert.ToDouble(obj["CurrentBandwidth"]);
+                if (bandwidthBitsPerSec <= 0) continue;
+
+                var bytesPerSec = Convert.ToDouble(obj["BytesTotalPersec"]);
+                var utilization = Math.Clamp((bytesPerSec * 8.0) / bandwidthBitsPerSec, 0.0, 1.0);
+                foundInterface = true;
+                if (utilization > maxUtilization)
+                {
+                    maxUtilization = utilization;
                 }
             }
 
-            using (var searcher = new ManagementObjectSearcher("select * from Win32_NetworkAdapter where NetEnabled=true"))
-            {
-                using var results = searcher.Get();
-                foreach (var o in results)
-                {
-                    using var obj = (ManagementObject)o;
-                    maxSpeed = Convert.ToDouble(obj["Speed"]);
-                    break;
-                }
-            }
-
-            if (maxSpeed > 0)
-            {
-                var totalBitsPerSec = (totalBytesSent + totalBytesReceived) * 8;
-                var networkUsage = totalBitsPerSec / maxSpeed;
-                return networkUsage;
-            }
+            return foundInterface ? maxUtilization : null;
         }
         catch
         {

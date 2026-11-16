@@ -1,4 +1,5 @@
 ﻿using Clock.Models;
+using Clock.Services;
 using ReactiveUI;
 using uWidgets.Services;
 using Locale = Clock.Locales.Locale;
@@ -35,17 +36,13 @@ public class AnalogClockViewModel : ReactiveObject, IDisposable
         SecondHand = new ClockHandViewModel(GetSecondsAngle(time), 460, true, clockModel.ShowSeconds);
     }
     
-    private TimeZoneInfo TimeZoneInfo => clockModel.TimeZoneId != null
-        ? TimeZoneInfo.FindSystemTimeZoneById(clockModel.TimeZoneId)
-        : TimeZoneInfo.Local;
+    private TimeZoneInfo TimeZoneInfo => ClockTimeZoneHelper.FindSafeTimeZone(clockModel.TimeZoneId);
 
     private DateTime Time => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo);
         
-    public string CityAbbreviation => TimeZoneInfo.Id == TimeZoneInfo.Local.Id 
-        ? "" 
-        : TimeZoneInfo.DisplayName.Split(") ").Last()[..3].ToUpper();
+    public string CityAbbreviation => ClockTimeZoneHelper.GetCityAbbreviation(TimeZoneInfo);
 
-    private string CityFullName => TimeZoneInfo.DisplayName.Split(") ").Last().Split(", ").First().Split("(").First();
+    private string CityFullName => ClockTimeZoneHelper.GetCityFullName(TimeZoneInfo);
 
     public string CityName => CityFullName.Length > 11 ? CityFullName[..9] + "…" : CityFullName;
     
@@ -58,12 +55,7 @@ public class AnalogClockViewModel : ReactiveObject, IDisposable
 
     public TimeSpan TimeZoneDiffInternal(DateTime utcNow) => TimeZoneInfo.ConvertTimeFromUtc(utcNow, TimeZoneInfo) - TimeZoneInfo.ConvertTimeFromUtc(utcNow, TimeZoneInfo.Local);
     
-    public string TimeZoneDiff => TimeZoneDiffInternal(DateTime.UtcNow).Hours switch
-    {
-        > 0 => $"+{TimeZoneDiffInternal(DateTime.UtcNow):hh\\:mm}",
-        < 0 => $"-{TimeZoneDiffInternal(DateTime.UtcNow):hh\\:mm}",
-        _ => "00:00"
-    };
+    public string TimeZoneDiff => ClockTimeZoneHelper.FormatTimeZoneDiff(TimeZoneDiffInternal(DateTime.UtcNow));
 
     private bool showCityName;
     public bool ShowCityName

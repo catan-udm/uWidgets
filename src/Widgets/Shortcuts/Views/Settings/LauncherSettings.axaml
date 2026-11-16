@@ -24,6 +24,25 @@
                 <ToggleSwitch IsChecked="{Binding ShowLabels}" />
             </controls:Setting>
 
+            <Border IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    CornerRadius="6"
+                    Padding="8,6"
+                    Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding StatusMessage}"
+                               FontSize="11"
+                               TextWrapping="Wrap"
+                               Margin="0,0,6,0"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="1"
+                            Content="✕"
+                            Padding="6,2"
+                            FontSize="10"
+                            Click="DismissStatus_OnClick" />
+                </Grid>
+            </Border>
+
             <ItemsControl ItemsSource="{Binding Items}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="viewModels:EditableShortcutViewModel">
@@ -32,19 +51,34 @@
                                 Margin="0,2"
                                 Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
                             <StackPanel Spacing="4">
-                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2">
+                                <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,2">
                                     <TextBox Grid.Column="0"
                                              Watermark="{x:Static locales:Locale.Shortcuts_Name}"
-                                             Text="{Binding Name}"
-                                             Margin="0,0,6,0" />
-                                    <Button Grid.Column="1" Content="✕" Click="Remove_OnClick" />
+                                             Text="{Binding Name, UpdateSourceTrigger=LostFocus}"
+                                             Margin="0,0,4,0" />
+                                    <Button Grid.Column="1" Content="↑" ToolTip.Tip="Move Up" IsEnabled="{Binding CanMoveUp}" Click="MoveUp_OnClick" Margin="0,0,2,0" Padding="7,4" />
+                                    <Button Grid.Column="2" Content="↓" ToolTip.Tip="Move Down" IsEnabled="{Binding CanMoveDown}" Click="MoveDown_OnClick" Margin="0,0,2,0" Padding="7,4" />
+                                    <Button Grid.Column="3" Content="✕" ToolTip.Tip="Remove" IsEnabled="{Binding CanRemove}" Click="Remove_OnClick" Padding="7,4" />
                                 </Grid>
-                                <Grid ColumnDefinitions="*,Auto">
+                                <Grid ColumnDefinitions="*,Auto,Auto">
                                     <TextBox Grid.Column="0"
                                              Watermark="{x:Static locales:Locale.Shortcuts_Target}"
-                                             Text="{Binding Target}"
-                                             Margin="0,0,6,0" />
-                                    <DropDownButton Grid.Column="1"
+                                             Text="{Binding Target, UpdateSourceTrigger=LostFocus}"
+                                             Margin="0,0,4,0" />
+                                    <Button Grid.Column="1"
+                                            Content="..."
+                                            ToolTip.Tip="Browse file or folder"
+                                            Padding="8,5"
+                                            Margin="0,0,4,0"
+                                            VerticalAlignment="Center">
+                                        <Button.Flyout>
+                                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                                <MenuItem Header="Browse File..." Click="BrowseRowFile_OnClick" />
+                                                <MenuItem Header="Browse Folder..." Click="BrowseRowFolder_OnClick" />
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                    <DropDownButton Grid.Column="2"
                                                     MinWidth="130"
                                                     Padding="8,5"
                                                     VerticalAlignment="Center">
@@ -226,46 +260,22 @@
                     <MenuFlyout Placement="BottomEdgeAlignedLeft">
                         <MenuItem Header="Custom Blank Shortcut" Click="Add_OnClick" />
                         <MenuItem Header="Browse File or App..." Click="BrowseApp_OnClick" />
+                        <MenuItem Header="Browse Folder..." Click="BrowseFolder_OnClick" />
                         <Separator />
-                        <MenuItem Header="💻 Development &amp; Code" ItemsSource="{Binding AppCategories[0].Apps}">
+                        <MenuItem Header="📂 Installed App Categories" ItemsSource="{Binding AppCategories}">
                             <MenuItem.ItemTemplate>
-                                <DataTemplate DataType="services:DiscoveredApp">
-                                    <MenuItem Header="{Binding Name}" CommandParameter="{Binding}" Click="SelectDiscoveredApp_OnClick" />
-                                </DataTemplate>
-                            </MenuItem.ItemTemplate>
-                        </MenuItem>
-                        <MenuItem Header="🌐 Web Browsers" ItemsSource="{Binding AppCategories[1].Apps}">
-                            <MenuItem.ItemTemplate>
-                                <DataTemplate DataType="services:DiscoveredApp">
-                                    <MenuItem Header="{Binding Name}" CommandParameter="{Binding}" Click="SelectDiscoveredApp_OnClick" />
-                                </DataTemplate>
-                            </MenuItem.ItemTemplate>
-                        </MenuItem>
-                        <MenuItem Header="🎵 Media &amp; Audio" ItemsSource="{Binding AppCategories[2].Apps}">
-                            <MenuItem.ItemTemplate>
-                                <DataTemplate DataType="services:DiscoveredApp">
-                                    <MenuItem Header="{Binding Name}" CommandParameter="{Binding}" Click="SelectDiscoveredApp_OnClick" />
-                                </DataTemplate>
-                            </MenuItem.ItemTemplate>
-                        </MenuItem>
-                        <MenuItem Header="🎨 Graphics &amp; Design" ItemsSource="{Binding AppCategories[3].Apps}">
-                            <MenuItem.ItemTemplate>
-                                <DataTemplate DataType="services:DiscoveredApp">
-                                    <MenuItem Header="{Binding Name}" CommandParameter="{Binding}" Click="SelectDiscoveredApp_OnClick" />
-                                </DataTemplate>
-                            </MenuItem.ItemTemplate>
-                        </MenuItem>
-                        <MenuItem Header="📄 Office &amp; Documents" ItemsSource="{Binding AppCategories[4].Apps}">
-                            <MenuItem.ItemTemplate>
-                                <DataTemplate DataType="services:DiscoveredApp">
-                                    <MenuItem Header="{Binding Name}" CommandParameter="{Binding}" Click="SelectDiscoveredApp_OnClick" />
-                                </DataTemplate>
-                            </MenuItem.ItemTemplate>
-                        </MenuItem>
-                        <MenuItem Header="🛠️ System &amp; Utilities" ItemsSource="{Binding AppCategories[5].Apps}">
-                            <MenuItem.ItemTemplate>
-                                <DataTemplate DataType="services:DiscoveredApp">
-                                    <MenuItem Header="{Binding Name}" CommandParameter="{Binding}" Click="SelectDiscoveredApp_OnClick" />
+                                <DataTemplate DataType="services:AppCategoryInfo">
+                                    <MenuItem Header="{Binding CategoryName}"
+                                              IsEnabled="{Binding HasApps}"
+                                              ItemsSource="{Binding Apps}">
+                                        <MenuItem.ItemTemplate>
+                                            <DataTemplate DataType="services:DiscoveredApp">
+                                                <MenuItem Header="{Binding Name}"
+                                                          CommandParameter="{Binding}"
+                                                          Click="SelectDiscoveredApp_OnClick" />
+                                            </DataTemplate>
+                                        </MenuItem.ItemTemplate>
+                                    </MenuItem>
                                 </DataTemplate>
                             </MenuItem.ItemTemplate>
                         </MenuItem>

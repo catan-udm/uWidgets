@@ -9,6 +9,7 @@ using Avalonia.Interactivity;
 using uWidgets.Core;
 using uWidgets.Core.Interfaces;
 using uWidgets.Core.Models.Settings;
+using uWidgets.Core.Services;
 using uWidgets.Locales;
 using uWidgets.Services;
 
@@ -19,6 +20,7 @@ public partial class About : UserControl, IDisposable
     private readonly IAppSettingsProvider appSettingsProvider;
     private readonly UpdateService updateService;
     private readonly CancellationTokenSource checkCts = new();
+    private bool resetConfirmPending;
     public string? Version => Assembly.GetExecutingAssembly().GetName().Version?.ToString();
     public string DataFolderPath => Const.CurrentFolder;
 
@@ -28,60 +30,144 @@ public partial class About : UserControl, IDisposable
         this.updateService = updateService;
         DataContext = this;
         InitializeComponent();
-        _ = CheckForUpdates();
+        RefreshSkippedBanner();
+        _ = CheckForUpdatesAsync(manual: false);
     }
 
-    private async Task CheckForUpdates()
+    private void RefreshSkippedBanner()
     {
+        var ignored = appSettingsProvider.Get().IgnoreUpdate;
+        if (!string.IsNullOrWhiteSpace(ignored))
+        {
+            UpdateStatusBanner.IsVisible = true;
+            UpdateStatusBanner.Subtitle = $"Notifications for version {ignored} are currently skipped.";
+            ClearSkipButton.IsVisible = true;
+        }
+        else
+        {
+            ClearSkipButton.IsVisible = false;
+        }
+    }
+
+    private async Task CheckForUpdatesAsync(bool manual)
+    {
+        if (manual)
+        {
+            CheckUpdatesButton.IsEnabled = false;
+            UpdateStatusBanner.IsVisible = true;
+            UpdateStatusBanner.Subtitle = "Checking GitHub for the latest release...";
+            ClearSkipButton.IsVisible = false;
+        }
+
         try
         {
-            var version = await updateService.GetUpdateVersionAsync(checkCts.Token);
-            if (version == null || checkCts.IsCancellationRequested) return;
+            var result = await updateService.CheckLatestReleaseAsync(respectIgnoreSetting: !manual, checkCts.Token);
+            if (checkCts.IsCancellationRequested) return;
 
-            Update.IsVisible = true;
-            Update.Subtitle = string.Format(Locale.Update_UpdateFormat, version);
+            switch (result.Status)
+            {
+                case UpdateCheckStatus.UpdateAvailable when result.Version != null:
+                    Update.IsVisible = true;
+                    Update.Subtitle = string.Format(Locale.Update_UpdateFormat, result.Version);
+                    UpdateStatusBanner.IsVisible = false;
+                    break;
+                case UpdateCheckStatus.Skipped when result.Version != null:
+                    Update.IsVisible = true;
+                    Update.Subtitle = string.Format(Locale.Update_UpdateFormat, result.Version);
+                    RefreshSkippedBanner();
+                    break;
+                case UpdateCheckStatus.UpToDate:
+                    Update.IsVisible = false;
+                    if (manual)
+                    {
+                        UpdateStatusBanner.IsVisible = true;
+                        UpdateStatusBanner.Subtitle = $"You are running the latest version ({Version}).";
+                    }
+                    break;
+                default:
+                    if (manual)
+                    {
+                        UpdateStatusBanner.IsVisible = true;
+                        UpdateStatusBanner.Subtitle = "Could not reach GitHub releases right now. Please try again later.";
+                    }
+                    break;
+            }
         }
         catch (Exception)
         {
-            // Ignore transient/cancellation update check failures on the About page
+            if (manual)
+            {
+                UpdateStatusBanner.IsVisible = true;
+                UpdateStatusBanner.Subtitle = "Could not reach GitHub releases right now.";
+            }
+        }
+        finally
+        {
+            if (manual)
+                CheckUpdatesButton.IsEnabled = true;
         }
     }
-    
-    private void GoToUpdate(object? sender, RoutedEventArgs e)
+
+    private void CheckForUpdates_OnClick(object? sender, RoutedEventArgs e) =>
+        _ = CheckForUpdatesAsync(manual: true);
+
+    private void ClearSkippedVersion_OnClick(object? sender, RoutedEventArgs e)
     {
-        Process.Start(
-            new ProcessStartInfo("https://www.github.com/creewick/uWidgets/releases/latest") { UseShellExecute = true });
+        updateService.ClearSkippedVersion();
+        ClearSkipButton.IsVisible = false;
+        _ = CheckForUpdatesAsync(manual: true);
     }
 
-    private void GoToRepository(object? sender, RoutedEventArgs e)
-    {
-        Process.Start(
-            new ProcessStartInfo("https://www.github.com/creewick/uWidgets") { UseShellExecute = true });
-    }
+    private void GoToUpdate(object? sender, RoutedEventArgs e) =>
+        LaunchExternal(UpdateService.LatestReleaseUrl);
 
-    private void GoToIssues(object? sender, RoutedEventArgs e)
-    {
-        Process.Start(
-            new ProcessStartInfo("https://github.com/creewick/uWidgets/issues") { UseShellExecute = true });
-    }
+    private void GoToRepository(object? sender, RoutedEventArgs e) =>
+        LaunchExternal(UpdateService.RepositoryUrl);
+
+    private void GoToIssues(object? sender, RoutedEventArgs e) =>
+        LaunchExternal(UpdateService.IssuesUrl);
 
     private void OpenDataFolder(object? sender, RoutedEventArgs e)
     {
         Directory.CreateDirectory(Const.CurrentFolder);
-        Process.Start(new ProcessStartInfo(Const.CurrentFolder) { UseShellExecute = true });
+        LaunchExternal(Const.CurrentFolder);
     }
 
     private void OpenLogsFolder(object? sender, RoutedEventArgs e)
     {
         Directory.CreateDirectory(Const.LogsFolder);
-        Process.Start(new ProcessStartInfo(Const.LogsFolder) { UseShellExecute = true });
+        LaunchExternal(Const.LogsFolder);
+    }
+
+    private static void LaunchExternal(string target)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[About] Failed launching '{target}': {ex.Message}");
+        }
     }
 
     private void ResetDefaults(object? sender, RoutedEventArgs e)
     {
+        if (!resetConfirmPending)
+        {
+            resetConfirmPending = true;
+            ResetDefaultsButton.Content = "Click Again to Confirm";
+            return;
+        }
+
+        resetConfirmPending = false;
         var current = appSettingsProvider.Get();
+        new StartupService().SetRunOnStartup(false);
         var defaults = AppSettings.CreateDefault() with { Onboarding = current.EffectiveOnboarding };
         appSettingsProvider.Save(defaults);
+        ResetDefaultsButton.Content = "Defaults Restored";
+        UpdateStatusBanner.IsVisible = true;
+        UpdateStatusBanner.Subtitle = "Settings restored to defaults. Restart uWidgets if window frames changed.";
     }
 
     public void Dispose()

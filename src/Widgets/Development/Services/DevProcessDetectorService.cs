@@ -10,6 +10,7 @@ public static class DevProcessDetectorService
 {
     private static readonly ConcurrentDictionary<int, (string Framework, string AppName)> ProcessCache = new();
     private const int AF_INET = 2;
+    private const int AF_INET6 = 23;
     private const int TCP_TABLE_OWNER_PID_ALL = 5;
     private const int MIB_TCP_STATE_LISTEN = 2;
 
@@ -27,6 +28,27 @@ public static class DevProcessDetectorService
         public byte remotePort2;
         public byte remotePort3;
         public byte remotePort4;
+        public int owningPid;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MIB_TCP6ROW_OWNER_PID
+    {
+        public ulong localAddrPart1;
+        public ulong localAddrPart2;
+        public uint localScopeId;
+        public byte localPort1;
+        public byte localPort2;
+        public byte localPort3;
+        public byte localPort4;
+        public ulong remoteAddrPart1;
+        public ulong remoteAddrPart2;
+        public uint remoteScopeId;
+        public byte remotePort1;
+        public byte remotePort2;
+        public byte remotePort3;
+        public byte remotePort4;
+        public uint state;
         public int owningPid;
     }
 
@@ -71,7 +93,7 @@ public static class DevProcessDetectorService
                 {
                     try
                     {
-                        var proc = Process.GetProcessById(pid);
+                        using var proc = Process.GetProcessById(pid);
                         var procName = proc.ProcessName.ToLowerInvariant();
 
                         // Target node, bun, deno, or processes running on known dev ports
@@ -117,17 +139,38 @@ public static class DevProcessDetectorService
 
     private static List<(int Port, int Pid)> GetListeningPorts()
     {
-        var list = new List<(int Port, int Pid)>();
+        var seen = new HashSet<(int Port, int Pid)>();
+        ReadListeningPortsForFamily(AF_INET, seen, rowPtr =>
+        {
+            var row = Marshal.PtrToStructure<MIB_TCPROW_OWNER_PID>(rowPtr);
+            return (row.state, (row.localPort1 << 8) + row.localPort2, row.owningPid);
+        }, Marshal.SizeOf<MIB_TCPROW_OWNER_PID>());
+
+        ReadListeningPortsForFamily(AF_INET6, seen, rowPtr =>
+        {
+            var row = Marshal.PtrToStructure<MIB_TCP6ROW_OWNER_PID>(rowPtr);
+            return (row.state, (row.localPort1 << 8) + row.localPort2, row.owningPid);
+        }, Marshal.SizeOf<MIB_TCP6ROW_OWNER_PID>());
+
+        return seen.ToList();
+    }
+
+    private static void ReadListeningPortsForFamily(
+        int addressFamily,
+        HashSet<(int Port, int Pid)> seen,
+        Func<IntPtr, (uint State, int Port, int Pid)> readRow,
+        int rowSize)
+    {
         int bufferSize = 0;
+        _ = GetExtendedTcpTable(IntPtr.Zero, ref bufferSize, true, addressFamily, TCP_TABLE_OWNER_PID_ALL);
+        if (bufferSize < 4 + rowSize) return;
 
-        _ = GetExtendedTcpTable(IntPtr.Zero, ref bufferSize, true, AF_INET, TCP_TABLE_OWNER_PID_ALL);
-        int rowSize = Marshal.SizeOf<MIB_TCPROW_OWNER_PID>();
-        if (bufferSize < 4 + rowSize) return list;
-
+        // Allocate slight headroom in case table grows slightly between size query and fetch
+        bufferSize += rowSize * 4;
         IntPtr buffer = Marshal.AllocHGlobal(bufferSize);
         try
         {
-            uint ret = GetExtendedTcpTable(buffer, ref bufferSize, true, AF_INET, TCP_TABLE_OWNER_PID_ALL);
+            uint ret = GetExtendedTcpTable(buffer, ref bufferSize, true, addressFamily, TCP_TABLE_OWNER_PID_ALL);
             if (ret == 0)
             {
                 int numEntries = Marshal.ReadInt32(buffer);
@@ -136,14 +179,10 @@ public static class DevProcessDetectorService
 
                 for (int i = 0; i < numEntries; i++)
                 {
-                    var row = Marshal.PtrToStructure<MIB_TCPROW_OWNER_PID>(rowPtr);
-                    if (row.state == MIB_TCP_STATE_LISTEN)
+                    var (state, port, pid) = readRow(rowPtr);
+                    if (state == MIB_TCP_STATE_LISTEN && pid > 4)
                     {
-                        int port = (row.localPort1 << 8) + row.localPort2;
-                        if (row.owningPid > 4)
-                        {
-                            list.Add((port, row.owningPid));
-                        }
+                        seen.Add((port, pid));
                     }
                     rowPtr = IntPtr.Add(rowPtr, rowSize);
                 }
@@ -153,8 +192,6 @@ public static class DevProcessDetectorService
         {
             Marshal.FreeHGlobal(buffer);
         }
-
-        return list;
     }
 
     private static string GetCommandLine(int pid)

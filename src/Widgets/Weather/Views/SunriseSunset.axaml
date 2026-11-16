@@ -4,7 +4,7 @@
              x:Class="Weather.Views.SunriseSunset"
              x:DataType="viewModels:ForecastViewModel"
              Margin="6">
-    <Viewbox Stretch="Uniform" DataContext="{Binding SunsetSunrise}">
+    <Viewbox Stretch="Uniform" DataContext="{Binding SunsetSunrise}" ToolTip.Tip="{Binding ToolTipText}">
         <Canvas Width="100" Height="100">
             <Ellipse Width="100" Height="100" Opacity="0.2"
                      Fill="{DynamicResource SystemControlForegroundBaseHighBrush}" />

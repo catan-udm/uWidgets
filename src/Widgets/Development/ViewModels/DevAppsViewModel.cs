@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Threading;
 using System.Windows.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -13,6 +14,8 @@ namespace Development.ViewModels;
 public class DevAppItemViewModel : ReactiveObject
 {
     private DevAppInstanceInfo info;
+    private DateTimeOffset confirmDeadlineUtc = DateTimeOffset.MinValue;
+    private bool isConfirmingStop;
 
     public DevAppItemViewModel(DevAppInstanceInfo info, Action<int> killCallback)
     {
@@ -27,7 +30,18 @@ public class DevAppItemViewModel : ReactiveObject
             catch { }
         }, outputScheduler: RxApp.MainThreadScheduler);
 
-        StopCommand = ReactiveCommand.Create(() => killCallback(info.ProcessId), outputScheduler: RxApp.MainThreadScheduler);
+        StopCommand = ReactiveCommand.Create(() =>
+        {
+            if (IsConfirmingStop && DateTimeOffset.UtcNow <= confirmDeadlineUtc)
+            {
+                IsConfirmingStop = false;
+                killCallback(info.ProcessId);
+                return;
+            }
+
+            confirmDeadlineUtc = DateTimeOffset.UtcNow.AddSeconds(4);
+            IsConfirmingStop = true;
+        }, outputScheduler: RxApp.MainThreadScheduler);
     }
 
     public int ProcessId => info.ProcessId;
@@ -41,12 +55,28 @@ public class DevAppItemViewModel : ReactiveObject
     public string PortDisplay => $":{Port}";
     public string MemoryDisplay => $"{MemoryMb} MB";
 
+    public bool IsConfirmingStop
+    {
+        get => isConfirmingStop;
+        private set
+        {
+            this.RaiseAndSetIfChanged(ref isConfirmingStop, value);
+            this.RaisePropertyChanged(nameof(StopTooltip));
+        }
+    }
+
+    public string StopTooltip => IsConfirmingStop ? "Click again to kill process tree" : "Stop Process";
+
     public ICommand OpenBrowserCommand { get; }
     public ICommand StopCommand { get; }
 
     public void Update(DevAppInstanceInfo newInfo)
     {
         info = newInfo;
+        if (isConfirmingStop && DateTimeOffset.UtcNow > confirmDeadlineUtc)
+        {
+            IsConfirmingStop = false;
+        }
         this.RaisePropertyChanged(nameof(AppName));
         this.RaisePropertyChanged(nameof(Framework));
         this.RaisePropertyChanged(nameof(Port));
@@ -60,14 +90,18 @@ public class DevAppItemViewModel : ReactiveObject
 public class DevAppsViewModel : ReactiveObject, IDisposable
 {
     private readonly DevAppsModel model;
+    private readonly int refreshSeconds;
+    private DateTimeOffset nextPollUtc = DateTimeOffset.MinValue;
+    private int isUpdating;
 
     public DevAppsViewModel(DevAppsModel model)
     {
         this.model = model;
+        refreshSeconds = Math.Clamp(model.RefreshIntervalSeconds, 1, 60);
         Apps = [];
 
-        Update();
-        TimerService.Timer5Seconds.Subscribe(Update);
+        OnTimerTick();
+        TimerService.Timer1Second.Subscribe(OnTimerTick);
     }
 
     public ObservableCollection<DevAppItemViewModel> Apps { get; }
@@ -86,10 +120,19 @@ public class DevAppsViewModel : ReactiveObject, IDisposable
         private set => this.RaiseAndSetIfChanged(ref headerSummary, value);
     }
 
-    private void Update() => _ = UpdateAsync();
+    private void OnTimerTick()
+    {
+        var now = DateTimeOffset.UtcNow;
+        if (now < nextPollUtc) return;
+        nextPollUtc = now.AddSeconds(refreshSeconds);
+        _ = UpdateAsync();
+    }
 
     private async Task UpdateAsync()
     {
+        if (Interlocked.CompareExchange(ref isUpdating, 1, 0) != 0)
+            return;
+
         try
         {
             var list = await DevProcessDetectorService.GetActiveDevAppsAsync();
@@ -119,23 +162,28 @@ public class DevAppsViewModel : ReactiveObject, IDisposable
         catch (Exception)
         {
         }
+        finally
+        {
+            Volatile.Write(ref isUpdating, 0);
+        }
     }
 
     private void HandleStopApp(int pid)
     {
         try
         {
-            var p = Process.GetProcessById(pid);
+            using var p = Process.GetProcessById(pid);
             p.Kill(true);
         }
         catch { }
 
+        nextPollUtc = DateTimeOffset.MinValue;
         _ = UpdateAsync();
     }
 
     public void Dispose()
     {
-        TimerService.Timer5Seconds.Unsubscribe(Update);
+        TimerService.Timer1Second.Unsubscribe(OnTimerTick);
         GC.SuppressFinalize(this);
     }
 }

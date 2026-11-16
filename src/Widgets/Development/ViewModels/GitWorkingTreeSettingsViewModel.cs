@@ -23,14 +23,26 @@ public class GitWorkingTreeSettingsViewModel : ReactiveObject
 
         RemoveFolderCommand = ReactiveCommand.Create<string>(path =>
         {
-            if (Repositories.Remove(path))
-            {
-                Save();
-            }
+            var removedIndex = Repositories.IndexOf(path);
+            if (removedIndex < 0) return;
+
+            Repositories.RemoveAt(removedIndex);
+            var nextIndex = Repositories.Count == 0
+                ? 0
+                : Math.Clamp(
+                    model.SelectedIndex > removedIndex ? model.SelectedIndex - 1 : model.SelectedIndex,
+                    0,
+                    Repositories.Count - 1);
+
+            model = model with { SelectedIndex = nextIndex };
+            Save();
+            this.RaisePropertyChanged(nameof(HasRepositories));
+            this.RaisePropertyChanged(nameof(SelectedIndex));
         });
     }
 
     public ObservableCollection<string> Repositories { get; }
+    public bool HasRepositories => Repositories.Count > 0;
 
     public List<EditorOption> AvailableEditors { get; } =
     [
@@ -107,6 +119,8 @@ public class GitWorkingTreeSettingsViewModel : ReactiveObject
         {
             Repositories.Add(path);
             Save();
+            this.RaisePropertyChanged(nameof(HasRepositories));
+            this.RaisePropertyChanged(nameof(SelectedIndex));
         }
     }
 

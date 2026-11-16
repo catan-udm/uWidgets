@@ -26,7 +26,13 @@ public partial class PhotoFrameSettings : UserControl
         var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             AllowMultiple = false,
-            FileTypeFilter = [FilePickerFileTypes.ImageAll]
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Supported Images (*.png, *.jpg, *.jpeg, *.bmp, *.webp)")
+                {
+                    Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.webp"]
+                }
+            ]
         });
 
         var selected = files.FirstOrDefault()?.TryGetLocalPath();

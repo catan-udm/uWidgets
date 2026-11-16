@@ -10,8 +10,16 @@
                    Text="{x:Static locales:Locale.Settings_About}"/>
         <controls:Setting Icon="{DynamicResource About}" 
                           Title="{x:Static locales:Locale.Settings_About_Version}"
-                          Subtitle="uWidgets by creewick">
-            <TextBlock Text="{Binding Version}" />
+                          Subtitle="uWidgets by creewick (forked at catan-udm/uWidgets)">
+            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <TextBlock VerticalAlignment="Center" Text="{Binding Version}" />
+                <Button Name="CheckUpdatesButton" Content="Check for Updates" Click="CheckForUpdates_OnClick" />
+            </StackPanel>
+        </controls:Setting>
+        <controls:Setting Name="UpdateStatusBanner" IsVisible="False"
+                          Icon="{DynamicResource Download}"
+                          Title="Update Status">
+            <Button Name="ClearSkipButton" IsVisible="False" Content="Re-enable Update" Click="ClearSkippedVersion_OnClick" />
         </controls:Setting>
         <controls:Setting Name="Update" IsVisible="False" 
                           Icon="{DynamicResource Download}" 
@@ -41,7 +49,7 @@
         <controls:Setting Icon="{DynamicResource Refresh}"
                           Title="Reset Settings to Defaults"
                           Subtitle="Restores theme, grid, hotkeys, and general preferences without deleting your placed widgets">
-            <Button MinWidth="130" HorizontalContentAlignment="Center" Content="Reset Defaults" Click="ResetDefaults" />
+            <Button Name="ResetDefaultsButton" MinWidth="130" HorizontalContentAlignment="Center" Content="Reset Defaults" Click="ResetDefaults" />
         </controls:Setting>
     </StackPanel>
 </UserControl>

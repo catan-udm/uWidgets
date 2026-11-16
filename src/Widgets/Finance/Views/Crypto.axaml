@@ -11,25 +11,37 @@
                           Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
                 <TextBlock Text="Crypto" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
             </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                <TextBlock Text="Offline"
+                           IsVisible="{Binding IsOffline}"
+                           FontSize="9" Opacity="0.6" VerticalAlignment="Center" />
+                <Button Command="{Binding RefreshCommand}"
+                        IsEnabled="{Binding !IsRefreshing}"
+                        Padding="5,2" Background="Transparent" ToolTip.Tip="Refresh prices">
+                    <TextBlock Text="↻" FontSize="12" />
+                </Button>
+            </StackPanel>
         </Grid>
 
         <!-- Coins List -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" IsVisible="{Binding HasCoins}">
             <ItemsControl ItemsSource="{Binding Coins}" Margin="4,0">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="viewModels:CryptoItemViewModel">
                         <Border Margin="0,2,0,3" Padding="6,4" CornerRadius="6"
+                                ToolTip.Tip="{Binding SummaryTooltip}"
                                 Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}">
-                            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                            <Grid ColumnDefinitions="*,Auto,Auto" VerticalAlignment="Center">
                                 <!-- Coin info -->
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="1" Width="65">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="1" Margin="0,0,6,0">
                                     <TextBlock Text="{Binding Symbol}" FontSize="11" FontWeight="SemiBold" />
                                     <TextBlock Text="{Binding Name}" FontSize="9" Opacity="0.6"
                                                TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
 
-                                <!-- Mini Sparkline Chart -->
-                                <Canvas Grid.Column="1" Width="60" Height="20" Margin="4,0"
+                                <!-- Mini Sparkline Chart (hidden on narrow 2x2 tiles) -->
+                                <Canvas Grid.Column="1" Width="56" Height="20" Margin="2,0,6,0"
+                                        IsVisible="{Binding ShowSparkline}"
                                         HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <Path Data="{Binding SparklineGeometry}"
                                           Stroke="{Binding DeltaBrush}"
@@ -52,5 +64,13 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
+
+        <!-- Empty state -->
+        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="4"
+                    IsVisible="{Binding IsEmpty}" Margin="8">
+            <TextBlock Text="No Coins Found" FontSize="11" FontWeight="SemiBold" Opacity="0.65" HorizontalAlignment="Center" />
+            <TextBlock Text="Check coin IDs in Settings (e.g. bitcoin, solana)"
+                       FontSize="9.5" Opacity="0.5" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" />
+        </StackPanel>
     </Grid>
 </UserControl>

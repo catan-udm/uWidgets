@@ -379,18 +379,32 @@ public class InteropService
             };
             desktopWatchdogTimer.Tick += (_, _) =>
             {
-                if (!isSessionLocked)
+                if (!isSessionLocked && !isWatchdogPaused)
                     SyncPinnedWidgetsZOrder();
             };
-            if (!isSessionLocked)
+            if (!isSessionLocked && !isWatchdogPaused)
                 desktopWatchdogTimer.Start();
         }
 
         if (!systemEventsSubscribed && OperatingSystem.IsWindows())
         {
             SystemEvents.SessionSwitch += OnSessionSwitch;
-            SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
             systemEventsSubscribed = true;
+        }
+    }
+
+    private static bool isWatchdogPaused;
+
+    public static void SetWatchdogPaused(bool paused)
+    {
+        isWatchdogPaused = paused;
+        if (desktopWatchdogTimer == null) return;
+        if (paused || isSessionLocked)
+            desktopWatchdogTimer.Stop();
+        else
+        {
+            desktopWatchdogTimer.Start();
+            SyncPinnedWidgetsZOrder();
         }
     }
 
@@ -419,7 +433,6 @@ public class InteropService
         if (systemEventsSubscribed && OperatingSystem.IsWindows())
         {
             SystemEvents.SessionSwitch -= OnSessionSwitch;
-            SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
             systemEventsSubscribed = false;
         }
     }
@@ -438,22 +451,13 @@ public class InteropService
             else if (e.Reason == SessionSwitchReason.SessionUnlock)
             {
                 isSessionLocked = false;
-                desktopWatchdogTimer?.Start();
-                SyncPinnedWidgetsZOrder();
+                if (!isWatchdogPaused)
+                {
+                    desktopWatchdogTimer?.Start();
+                    SyncPinnedWidgetsZOrder();
+                }
             }
         });
-    }
-
-    private static void OnDisplaySettingsChanged(object? sender, EventArgs e)
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            foreach (var entry in new List<PinnedWidgetEntry>(PinnedWidgets.Values))
-            {
-                if (entry.Window is Views.Widget widget)
-                    widget.RecoverIfOffscreen();
-            }
-        }, DispatcherPriority.Background);
     }
 
     private static void OnWinEvent(

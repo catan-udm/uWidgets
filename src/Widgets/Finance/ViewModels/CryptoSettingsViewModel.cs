@@ -44,6 +44,38 @@ public class CryptoSettingsViewModel : ReactiveObject
 
     public ObservableCollection<string> Coins { get; }
 
+    public IReadOnlyList<string> AvailableFiats { get; } =
+    [
+        "usd", "eur", "gbp", "jpy", "cad", "aud", "chf", "cny", "php", "sgd", "inr"
+    ];
+
+    public string FiatCurrency
+    {
+        get => model.FiatCurrency;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value)) return;
+            var lower = value.Trim().ToLowerInvariant();
+            if (string.Equals(model.FiatCurrency, lower, StringComparison.OrdinalIgnoreCase)) return;
+            model = model with { FiatCurrency = lower };
+            Save();
+            this.RaisePropertyChanged(nameof(FiatCurrency));
+        }
+    }
+
+    public int RefreshMinutes
+    {
+        get => Math.Clamp(model.RefreshMinutes, 1, 60);
+        set
+        {
+            var clamped = Math.Clamp(value, 1, 60);
+            if (model.RefreshMinutes == clamped) return;
+            model = model with { RefreshMinutes = clamped };
+            Save();
+            this.RaisePropertyChanged(nameof(RefreshMinutes));
+        }
+    }
+
     private string newCoinId = "";
     public string NewCoinId
     {

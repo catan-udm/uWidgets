@@ -1,0 +1,17 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
+             xmlns:viewModels="clr-namespace:Notes.ViewModels"
+             x:Class="Notes.Views.Settings.NoteSettings"
+             x:DataType="viewModels:NoteSettingsViewModel">
+    <ScrollViewer>
+        <StackPanel Orientation="Vertical" Spacing="5">
+            <controls:Setting Title="Note font size">
+                <NumericUpDown Width="130" Minimum="10" Maximum="24" Increment="1" FormatString="0" Value="{Binding FontSize}" />
+            </controls:Setting>
+            <controls:Setting Title="Show last updated timestamp">
+                <ToggleSwitch IsChecked="{Binding ShowTimestamp}" />
+            </controls:Setting>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

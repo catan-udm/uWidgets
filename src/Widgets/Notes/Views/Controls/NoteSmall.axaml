@@ -6,16 +6,26 @@
              x:DataType="viewModels:NoteViewModel"
              Margin="0">
     <Grid RowDefinitions="Auto, Auto, *, Auto" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-        <controls:ClickThroughTextBox Grid.Row="0"
-                                      CornerRadius="0"
-                                      Height="40"
-                                      VerticalContentAlignment="Center"
-                                      Background="{DynamicResource SystemControlHighlightListAccentLowBrush}"
-                                      Text="{Binding Title}"
-                                      Watermark="Title..."
-                                      LostFocus="UpdateTitle"
-                                      FontSize="15"
-                                      FontWeight="SemiBold" />
+        <Border Grid.Row="0" Background="{DynamicResource SystemControlHighlightListAccentLowBrush}">
+            <Grid ColumnDefinitions="*,Auto">
+                <controls:ClickThroughTextBox Grid.Column="0"
+                                              CornerRadius="0"
+                                              Height="40"
+                                              VerticalContentAlignment="Center"
+                                              Background="Transparent"
+                                              Text="{Binding Title}"
+                                              Watermark="Title..."
+                                              TextChanged="OnTitleTextChanged"
+                                              LostFocus="UpdateTitle"
+                                              FontSize="15"
+                                              FontWeight="SemiBold" />
+                <Button Grid.Column="1" Background="Transparent" BorderThickness="0" Padding="8,4" Margin="0,0,4,0"
+                        VerticalAlignment="Center" ToolTip.Tip="{Binding CopyButtonTooltip}" Click="CopyNote_OnClick">
+                    <PathIcon Width="12" Height="12" Opacity="0.65"
+                              Data="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
+                </Button>
+            </Grid>
+        </Border>
         <Path Grid.Row="1" Height="1" Margin="0,4,0,0" Stretch="Fill"
               Opacity="0.2" StrokeThickness="2" StrokeDashArray="1,1" StrokeDashOffset="1"
               Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}">
@@ -25,13 +35,16 @@
         </Path>
         <controls:ClickThroughTextBox Grid.Row="2"
                                       MinHeight="0"
+                                      FontSize="{Binding ContentFontSize}"
                                       Text="{Binding Content}"
                                       Watermark="Take a note (double-click to type)..."
+                                      TextChanged="OnContentTextChanged"
                                       LostFocus="UpdateContent"
                                       AcceptsReturn="True"
                                       TextWrapping="Wrap" />
         <TextBlock Grid.Row="3"
                    Padding="12,0,12,8"
+                   IsVisible="{Binding ShowTimestamp}"
                    Text="{Binding Updated}"
                    FontSize="11"
                    Opacity="0.5" />

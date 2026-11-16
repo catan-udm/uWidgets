@@ -3,10 +3,21 @@
              xmlns:controls="clr-namespace:Monitor.Views.Controls"
              xmlns:viewModels="clr-namespace:Monitor.ViewModels"
              x:Class="Monitor.Views.SingleMetric"
-             x:DataType="viewModels:SingleMetricViewModel">
+             x:DataType="viewModels:SingleMetricViewModel"
+             ToolTip.Tip="{Binding ToolTipText}">
     <Grid RowDefinitions="*,*" Name="Grid">
         <controls:Metric VerticalAlignment="Top" HorizontalAlignment="Left" 
                          DataContext="{Binding Metric}" />
+        <Button Content="{Binding EmptyButtonText}"
+                Command="{Binding EmptyRecycleBinCommand}"
+                IsVisible="{Binding CanShowEmptyButton}"
+                ToolTip.Tip="{Binding EmptyButtonTooltip}"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                FontSize="9.5"
+                Padding="6,2"
+                CornerRadius="6"
+                Opacity="0.85" />
         <Viewbox Grid.Row="1" Name="Text" Stretch="Uniform" HorizontalAlignment="Left" VerticalAlignment="Bottom">
             <TextBlock  FontSize="44" Text="{Binding Metric.Text}" />
         </Viewbox>

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Media;
@@ -31,6 +32,10 @@ public class DockerContainerItemViewModel : ReactiveObject
     public string PortSummary => info.PortSummary;
     public bool IsRunning => info.IsRunning;
 
+    public string SummaryTooltip => string.IsNullOrWhiteSpace(PortSummary)
+        ? $"{Name}\n{Image}\n{Status}"
+        : $"{Name}\n{Image}\n{Status} ({PortSummary})";
+
     private static readonly IBrush RunningLightBrush = new SolidColorBrush(Color.Parse("#047857"));
     private static readonly IBrush RunningDarkBrush = new SolidColorBrush(Color.Parse("#34D399"));
     private static readonly IBrush StoppedLightBrush = new SolidColorBrush(Color.Parse("#6B7280"));
@@ -60,6 +65,7 @@ public class DockerContainerItemViewModel : ReactiveObject
         this.RaisePropertyChanged(nameof(Status));
         this.RaisePropertyChanged(nameof(PortSummary));
         this.RaisePropertyChanged(nameof(IsRunning));
+        this.RaisePropertyChanged(nameof(SummaryTooltip));
         this.RaisePropertyChanged(nameof(StatusBrush));
     }
 }
@@ -67,23 +73,51 @@ public class DockerContainerItemViewModel : ReactiveObject
 public class DockerViewModel : ReactiveObject, IDisposable
 {
     private readonly DockerModel model;
+    private readonly int refreshSeconds;
+    private DateTimeOffset nextPollUtc = DateTimeOffset.MinValue;
+    private int isUpdating;
 
     public DockerViewModel(DockerModel model)
     {
         this.model = model;
+        refreshSeconds = Math.Clamp(model.RefreshIntervalSeconds, 2, 120);
         Containers = [];
 
-        Update();
-        TimerService.Timer5Seconds.Subscribe(Update);
+        DismissStatusCommand = ReactiveCommand.Create(() => StatusMessage = null);
+
+        OnTimerTick();
+        TimerService.Timer1Second.Subscribe(OnTimerTick);
     }
 
     public ObservableCollection<DockerContainerItemViewModel> Containers { get; }
+    public ICommand DismissStatusCommand { get; }
 
     private bool isDockerOnline = true;
     public bool IsDockerOnline
     {
         get => isDockerOnline;
-        private set => this.RaiseAndSetIfChanged(ref isDockerOnline, value);
+        private set
+        {
+            this.RaiseAndSetIfChanged(ref isDockerOnline, value);
+            this.RaisePropertyChanged(nameof(IsEmptyState));
+        }
+    }
+
+    public bool HasContainers => Containers.Count > 0;
+    public bool IsEmptyState => IsDockerOnline && Containers.Count == 0;
+
+    private bool isBusy;
+    public bool IsBusy
+    {
+        get => isBusy;
+        private set => this.RaiseAndSetIfChanged(ref isBusy, value);
+    }
+
+    private string? statusMessage;
+    public string? StatusMessage
+    {
+        get => statusMessage;
+        private set => this.RaiseAndSetIfChanged(ref statusMessage, value);
     }
 
     private string headerSummary = "Docker";
@@ -93,10 +127,19 @@ public class DockerViewModel : ReactiveObject, IDisposable
         private set => this.RaiseAndSetIfChanged(ref headerSummary, value);
     }
 
-    private void Update() => _ = UpdateAsync();
+    private void OnTimerTick()
+    {
+        var now = DateTimeOffset.UtcNow;
+        if (now < nextPollUtc) return;
+        nextPollUtc = now.AddSeconds(refreshSeconds);
+        _ = UpdateAsync();
+    }
 
     private async Task UpdateAsync()
     {
+        if (Interlocked.CompareExchange(ref isUpdating, 1, 0) != 0)
+            return;
+
         try
         {
             var (online, list) = await DockerEngineService.GetContainersAsync(model.ShowAllContainers);
@@ -109,6 +152,8 @@ public class DockerViewModel : ReactiveObject, IDisposable
                 {
                     HeaderSummary = "Docker Offline";
                     Containers.Clear();
+                    this.RaisePropertyChanged(nameof(HasContainers));
+                    this.RaisePropertyChanged(nameof(IsEmptyState));
                     return;
                 }
 
@@ -132,29 +177,49 @@ public class DockerViewModel : ReactiveObject, IDisposable
                         Containers.Add(new DockerContainerItemViewModel(item, HandleContainerActionAsync));
                     }
                 }
+
+                this.RaisePropertyChanged(nameof(HasContainers));
+                this.RaisePropertyChanged(nameof(IsEmptyState));
             });
         }
         catch (Exception)
         {
         }
+        finally
+        {
+            Volatile.Write(ref isUpdating, 0);
+        }
     }
 
     private async Task HandleContainerActionAsync(string id, string action)
     {
+        if (IsBusy) return;
+        IsBusy = true;
+        StatusMessage = null;
         try
         {
-            await DockerEngineService.ExecuteActionAsync(id, action);
+            var ok = await DockerEngineService.ExecuteActionAsync(id, action);
+            if (!ok)
+            {
+                StatusMessage = $"Docker failed to {action} container.";
+            }
             await Task.Delay(500);
+            nextPollUtc = DateTimeOffset.MinValue;
             await UpdateAsync();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            StatusMessage = ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 
     public void Dispose()
     {
-        TimerService.Timer5Seconds.Unsubscribe(Update);
+        TimerService.Timer1Second.Unsubscribe(OnTimerTick);
         GC.SuppressFinalize(this);
     }
 }

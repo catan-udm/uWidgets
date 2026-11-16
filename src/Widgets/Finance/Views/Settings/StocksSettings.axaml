@@ -6,6 +6,12 @@
              x:Class="Finance.Views.Settings.StocksSettings">
     <ScrollViewer>
         <StackPanel Orientation="Vertical" Spacing="8">
+            <controls:Setting Title="Refresh Interval (Minutes)">
+                <NumericUpDown Minimum="1" Maximum="60"
+                               Value="{Binding RefreshMinutes}"
+                               Width="110" />
+            </controls:Setting>
+
             <controls:Setting Title="Add Ticker (e.g. AAPL, NVDA, ^GSPC)">
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBox Grid.Column="0" Text="{Binding NewTicker}" Watermark="symbol..." Width="120" />

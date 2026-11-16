@@ -1,4 +1,6 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Animation;
@@ -15,14 +17,25 @@ using uWidgets.Services;
 
 namespace uWidgets.Views;
 
-public partial class Widget : Window
+public partial class Widget : Window, INotifyPropertyChanged
 {
+    public new event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged(string propertyName) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     private readonly IWidgetLayoutProvider widgetLayoutProvider;
     private readonly IAppSettingsProvider appSettingsProvider;
     private readonly IGridService<Widget> gridService;
     private readonly Func<UserControl> userControl;
     private readonly Func<Settings> settingsWindow;
     private readonly Func<EditWidget>? editWidgetWindow;
+
+    private bool isDragging;
+    private bool isResizing;
+    private EditWidget? activeEditWindow;
+    private CancellationTokenSource? highlightCts;
+
+    public event Action<Widget>? DuplicateRequested;
 
     public Widget(IAppSettingsProvider appSettingsProvider, IWidgetLayoutProvider widgetLayoutProvider, 
         IGridService<Widget> gridService, Func<UserControl> userControl, Func<Settings> settingsWindow, 
@@ -76,7 +89,7 @@ public partial class Widget : Window
 
     private void OnResized(object? sender, WindowResizedEventArgs e)
     {
-        if (appSettingsProvider.Get().Theme.UseNativeFrame)
+        if (UseEffectiveNativeFrame && !isResizing)
             AfterResize();
         if (IsLiquidGlassEnabled)
             LiquidGlassSurface.InvalidateVisual();
@@ -93,10 +106,8 @@ public partial class Widget : Window
 
     private void OnActivated(object? sender, EventArgs e)
     {
-        Position = new PixelPoint(widgetLayoutProvider.Get().X, widgetLayoutProvider.Get().Y);
-        Scale();
-        InteropService.ApplyLayeringMode(this, appSettingsProvider.Get().Layout.LayeringMode);
-        UpdateLiquidGlassState(appSettingsProvider.Get());
+        if (appSettingsProvider.Get().Layout.LayeringMode == LayeringMode.DesktopPinned)
+            InteropService.EnforceDesktopZOrder(this);
     }
 
     private void DisposeContent()
@@ -136,15 +147,66 @@ public partial class Widget : Window
         ? SystemDecorations.BorderOnly
         : SystemDecorations.None;
 
-    public bool ToolTipVisible => !UseEffectiveNativeFrame && !appSettingsProvider.Get().Layout.LockSize;
+    public bool ToolTipVisible => !appSettingsProvider.Get().Layout.LockSize;
     public bool WidgetExtendClientArea => UseEffectiveNativeFrame;
-    public async void EditWidget()
+    public bool IsPositionLocked => appSettingsProvider.Get().Layout.LockPosition;
+    public bool IsSizeLocked => appSettingsProvider.Get().Layout.LockSize;
+    public bool CanResizeWidget => !IsSizeLocked;
+    public bool CanMoveWidget => !IsPositionLocked;
+
+    private (int Cols, int Rows) GetCurrentGridUnits()
+    {
+        var dims = appSettingsProvider.Get().Dimensions;
+        var span = Math.Max(1, dims.Size + dims.Margin);
+        var cols = Math.Max(1, (int)Math.Round((Width + dims.Margin) / span));
+        var rows = Math.Max(1, (int)Math.Round((Height + dims.Margin) / span));
+        return (cols, rows);
+    }
+
+    public bool IsSmallSize => GetCurrentGridUnits() == (2, 2);
+    public bool IsMediumSize => GetCurrentGridUnits() == (4, 2);
+    public bool IsLargeSize => GetCurrentGridUnits() == (4, 4);
+    public bool IsExtraLargeSize => GetCurrentGridUnits() == (8, 4);
+
+    public void ToggleLockPosition()
+    {
+        var current = appSettingsProvider.Get();
+        appSettingsProvider.Save(current with { Layout = current.Layout with { LockPosition = !current.Layout.LockPosition } });
+    }
+
+    public void ToggleLockSize()
+    {
+        var current = appSettingsProvider.Get();
+        appSettingsProvider.Save(current with { Layout = current.Layout with { LockSize = !current.Layout.LockSize } });
+    }
+
+    public void DuplicateWidget() => DuplicateRequested?.Invoke(this);
+
+    public async void EditWidget(Window? fallbackOwner = null)
     {
         if (editWidgetWindow == null) return;
-        await editWidgetWindow.Invoke().ShowDialog(this);
-        if (appSettingsProvider.Get().Layout.LayeringMode == LayeringMode.DesktopPinned)
-            InteropService.EnforceDesktopZOrder(this);
+        if (activeEditWindow != null)
+        {
+            activeEditWindow.Activate();
+            return;
+        }
+
+        var dialog = editWidgetWindow.Invoke();
+        activeEditWindow = dialog;
+        try
+        {
+            var owner = IsVisible ? this : (fallbackOwner ?? settingsWindow.Invoke());
+            await dialog.ShowDialog(owner);
+        }
+        finally
+        {
+            activeEditWindow = null;
+            if (IsVisible && appSettingsProvider.Get().Layout.LayeringMode == LayeringMode.DesktopPinned)
+                InteropService.EnforceDesktopZOrder(this);
+        }
     }
+
+    public void EditWidget() => EditWidget(null);
     public void ResizeSmall() => _ = Resize(2, 2);
     public void ResizeMedium() => _ = Resize(4, 2);
     public void ResizeLarge() => _ = Resize(4, 4);
@@ -158,10 +220,31 @@ public partial class Widget : Window
         settings.Activate();
     }
 
-    public void RecoverIfOffscreen()
+    public void ResetToCenter() => ResetToCenter(0);
+
+    public void ResetToCenter(int cascadeIndex)
+    {
+        var primary = Screens.Primary ?? (Screens.All.Count > 0 ? Screens.All[0] : null);
+        if (primary == null) return;
+
+        var work = primary.WorkingArea;
+        var scaling = primary.Scaling;
+        var pixelW = (int)(Width * scaling);
+        var pixelH = (int)(Height * scaling);
+        var offset = (cascadeIndex % 6) * Math.Max(16, (int)(28 * scaling));
+        var maxX = Math.Max(work.X, work.X + work.Width - pixelW);
+        var maxY = Math.Max(work.Y, work.Y + work.Height - pixelH);
+        var targetX = Math.Clamp(work.X + Math.Max(0, (work.Width - pixelW) / 2) + offset, work.X, maxX);
+        var targetY = Math.Clamp(work.Y + Math.Max(0, (work.Height - pixelH) / 2) + offset, work.Y, maxY);
+
+        Position = new PixelPoint(targetX, targetY);
+        AfterMove();
+    }
+
+    public bool RecoverIfOffscreen(int cascadeIndex = 0)
     {
         var screens = Screens.All;
-        if (screens.Count == 0) return;
+        if (screens.Count == 0) return false;
 
         var scaling = Screens.ScreenFromWindow(this)?.Scaling ?? RenderScaling;
         var widgetRect = new PixelRect(
@@ -182,36 +265,53 @@ public partial class Widget : Window
         }
 
         if (!isVisibleOnAnyScreen)
-            ResetToCenter();
-    }
+        {
+            ResetToCenter(cascadeIndex);
+            return true;
+        }
 
-    public void ResetToCenter()
-    {
-        var primary = Screens.Primary ?? (Screens.All.Count > 0 ? Screens.All[0] : null);
-        if (primary == null) return;
-
-        var work = primary.WorkingArea;
-        var scaling = primary.Scaling;
-        var targetX = work.X + Math.Max(0, (work.Width - (int)(Width * scaling)) / 2);
-        var targetY = work.Y + Math.Max(0, (work.Height - (int)(Height * scaling)) / 2);
-
-        Position = new PixelPoint(targetX, targetY);
-        AfterMove();
+        return false;
     }
 
     public async Task HighlightAsync()
     {
-        var originalOpacity = Opacity;
-        for (var i = 0; i < 3; i++)
+        highlightCts?.Cancel();
+        highlightCts?.Dispose();
+        var cts = new CancellationTokenSource();
+        highlightCts = cts;
+
+        if (!IsVisible)
+            Show();
+
+        var wasTopmost = Topmost;
+        try
         {
-            Opacity = 0.35;
-            await Task.Delay(140);
-            Opacity = originalOpacity;
-            await Task.Delay(140);
+            Topmost = true;
+            for (var i = 0; i < 3 && !cts.IsCancellationRequested; i++)
+            {
+                Opacity = 0.35;
+                await Task.Delay(140, cts.Token);
+                Opacity = 1.0;
+                await Task.Delay(140, cts.Token);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            Opacity = 1.0;
+            Topmost = wasTopmost;
+            InteropService.ApplyLayeringMode(this, appSettingsProvider.Get().Layout.LayeringMode);
         }
     }
 
-    private void OnPointerReleased(object? sender, PointerReleasedEventArgs e) => AfterMove();
+    private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (!isDragging) return;
+        isDragging = false;
+        AfterMove();
+    }
 
     private void Scale()
     {
@@ -220,7 +320,11 @@ public partial class Widget : Window
         ContentPresenter.VerticalAlignment = VerticalAlignment.Top;
         ContentPresenter.Width = Width / scaleFactor;
         ContentPresenter.Height = Height / scaleFactor;
-        if (Math.Abs(scaleFactor - 1.0) < 0.01) return;
+        if (Math.Abs(scaleFactor - 1.0) < 0.01)
+        {
+            ContentPresenter.RenderTransform = null;
+            return;
+        }
         
         ContentPresenter.RenderTransformOrigin = new RelativePoint(0, 0, RelativeUnit.Absolute);
         ContentPresenter.RenderTransform = new ScaleTransform(scaleFactor, scaleFactor);
@@ -229,18 +333,44 @@ public partial class Widget : Window
     private void OnAppSettingsUpdated(object sender, AppSettings? oldData, AppSettings newData)
     {
         if (oldData?.Layout.LockSize != newData.Layout.LockSize)
+        {
             SetMinMaxSize(newData.Layout.LockSize);
+            OnPropertyChanged(nameof(IsSizeLocked));
+            OnPropertyChanged(nameof(CanResizeWidget));
+            OnPropertyChanged(nameof(ToolTipVisible));
+        }
+
+        if (oldData?.Layout.LockPosition != newData.Layout.LockPosition)
+        {
+            OnPropertyChanged(nameof(IsPositionLocked));
+            OnPropertyChanged(nameof(CanMoveWidget));
+        }
 
         if (oldData?.Layout.LayeringMode != newData.Layout.LayeringMode)
             InteropService.ApplyLayeringMode(this, newData.Layout.LayeringMode);
 
-        if (oldData?.Dimensions != newData.Dimensions)
+        if (oldData != null && oldData.Dimensions != newData.Dimensions)
         {
-            AfterMove();
+            var oldSpan = Math.Max(1, oldData.Dimensions.Size + oldData.Dimensions.Margin);
+            var cols = Math.Max(1, (int)Math.Round((Width + oldData.Dimensions.Margin) / oldSpan));
+            var rows = Math.Max(1, (int)Math.Round((Height + oldData.Dimensions.Margin) / oldSpan));
+            SetMinMaxSize(newData.Layout.LockSize);
+            gridService.SetSize(this, cols, rows);
+            if (!newData.Layout.LockPosition)
+                AfterMove();
             AfterResize();
+            NotifySizePresetProperties();
         }
 
         UpdateLiquidGlassState(newData);
+    }
+
+    private void NotifySizePresetProperties()
+    {
+        OnPropertyChanged(nameof(IsSmallSize));
+        OnPropertyChanged(nameof(IsMediumSize));
+        OnPropertyChanged(nameof(IsLargeSize));
+        OnPropertyChanged(nameof(IsExtraLargeSize));
     }
 
     private void UpdateLiquidGlassState(AppSettings settings)
@@ -281,6 +411,9 @@ public partial class Widget : Window
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        highlightCts?.Cancel();
+        highlightCts?.Dispose();
+        highlightCts = null;
         DisposeContent();
         InteropService.UnpinWindowFromDesktop(this);
         PointerPressed -= OnPointerPressed;
@@ -302,6 +435,12 @@ public partial class Widget : Window
         var newJson = newLayout.Settings?.GetRawText();
         if (oldJson != newJson)
         {
+            if (ContentPresenter.Content is ILiveSettingsWidget liveWidget &&
+                liveWidget.OnLayoutSettingsChanged(newLayout))
+            {
+                return;
+            }
+
             DisposeContent();
             ContentPresenter.Content = userControl();
         }
@@ -313,8 +452,14 @@ public partial class Widget : Window
         
         ToolTip.SetIsOpen(this, false);
         if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed) return;
-        
+
+        isDragging = true;
         BeginMoveDrag(e);
+        if (isDragging)
+        {
+            isDragging = false;
+            AfterMove();
+        }
     }
 
     private void AfterMove()
@@ -330,15 +475,35 @@ public partial class Widget : Window
 
     private async Task Resize(int columns, int rows)
     {
+        if (appSettingsProvider.Get().Layout.LockSize) return;
+
         Border.Transitions = new Transitions
         {
             new DoubleTransition { Property = WidthProperty, Duration = TimeSpan.FromMilliseconds(300) },
             new DoubleTransition { Property = HeightProperty, Duration = TimeSpan.FromMilliseconds(300) }
         };
         gridService.SetSize(this, columns, rows);
+        ClampToCurrentWorkingArea();
         AfterResize();
         await Task.Delay(300);
         Border.Transitions = null;
+    }
+
+    private void ClampToCurrentWorkingArea()
+    {
+        var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary;
+        if (screen == null) return;
+
+        var work = screen.WorkingArea;
+        var scaling = screen.Scaling;
+        var pixelW = Math.Max(1, (int)(Width * scaling));
+        var pixelH = Math.Max(1, (int)(Height * scaling));
+        var maxX = Math.Max(work.X, work.X + work.Width - pixelW);
+        var maxY = Math.Max(work.Y, work.Y + work.Height - pixelH);
+        var clampedX = Math.Clamp(Position.X, work.X, maxX);
+        var clampedY = Math.Clamp(Position.Y, work.Y, maxY);
+        if (clampedX != Position.X || clampedY != Position.Y)
+            Position = new PixelPoint(clampedX, clampedY);
     }
 
     private void AfterResize()
@@ -348,7 +513,14 @@ public partial class Widget : Window
         
         Scale();
         var settings = widgetLayoutProvider.Get();
-        widgetLayoutProvider.Save(settings with { Width = (int)Width, Height = (int)Height });
+        widgetLayoutProvider.Save(settings with
+        {
+            X = Position.X,
+            Y = Position.Y,
+            Width = (int)Width,
+            Height = (int)Height
+        });
+        NotifySizePresetProperties();
     }
 
     public void Remove()
@@ -361,10 +533,18 @@ public partial class Widget : Window
     {
         if (appSettingsProvider.Get().Layout.LockSize) return;
 
+        isResizing = true;
         CanResize = true;
-        BeginResizeDrag(WindowEdge.SouthEast, e);
+        try
+        {
+            BeginResizeDrag(WindowEdge.SouthEast, e);
+        }
+        finally
+        {
+            isResizing = false;
+            CanResize = false;
+        }
         AfterResize();
         e.Handled = true;
-        CanResize = false;
     }
 }

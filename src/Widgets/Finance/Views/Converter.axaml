@@ -3,46 +3,63 @@
              xmlns:viewModels="clr-namespace:Finance.ViewModels"
              x:Class="Finance.Views.Converter"
              x:DataType="viewModels:ConverterViewModel">
-    <ScrollViewer Margin="4">
-        <StackPanel Spacing="10">
+    <ScrollViewer Margin="2" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="6">
             <!-- Header -->
-            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="2,0">
-                <PathIcon Data="{x:Static viewModels:FinanceIcon.ConverterGeometry}" Width="16" Height="16"
-                          Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
-                <TextBlock Text="Live Currency &amp; Dev Converter" FontWeight="SemiBold" FontSize="12"
-                           VerticalAlignment="Center" />
-            </StackPanel>
+            <Grid ColumnDefinitions="Auto,*,Auto" Margin="4,0,2,0">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <PathIcon Data="{x:Static viewModels:FinanceIcon.ConverterGeometry}" Width="14" Height="14"
+                              Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                    <TextBlock Text="Live Currency &amp; Dev Converter" FontWeight="SemiBold" FontSize="12"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding RatesStatus}"
+                               IsVisible="{Binding RatesStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                               FontSize="9" Opacity="0.6" VerticalAlignment="Center" />
+                    <Button Command="{Binding RefreshRatesCommand}"
+                            IsEnabled="{Binding !IsRefreshing}"
+                            Padding="5,1" Background="Transparent" ToolTip.Tip="Refresh exchange rates">
+                        <TextBlock Text="↻" FontSize="12" />
+                    </Button>
+                </StackPanel>
+            </Grid>
 
             <!-- Currency Conversion Section -->
             <Border Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}"
-                    CornerRadius="8" Padding="10,8">
-                <StackPanel Spacing="8">
-                    <TextBlock Text="CURRENCY" FontSize="9" FontWeight="Bold" Opacity="0.5" />
-
+                    CornerRadius="8" Padding="8,6">
+                <StackPanel Spacing="4">
                     <!-- Amount Input -->
                     <NumericUpDown Value="{Binding SourceAmount}" Minimum="0" Maximum="1000000000"
-                                   FormatString="N2" HorizontalAlignment="Stretch" />
+                                   FormatString="N2" HorizontalAlignment="Stretch"
+                                   Height="28" MinHeight="28" Padding="6,2" FontSize="12" />
 
                     <!-- Currencies Row -->
                     <Grid ColumnDefinitions="*,Auto,*">
                         <ComboBox Grid.Column="0" ItemsSource="{Binding Currencies}"
-                                  SelectedItem="{Binding SourceCurrency}" HorizontalAlignment="Stretch" />
+                                  SelectedItem="{Binding SourceCurrency}" HorizontalAlignment="Stretch"
+                                  Height="28" MinHeight="28" Padding="8,2" FontSize="12" />
 
                         <Button Grid.Column="1" Command="{Binding SwapCurrenciesCommand}"
-                                Margin="4,0" Padding="8,4" Background="Transparent" ToolTip.Tip="Swap">
-                            <TextBlock Text="⇄" FontSize="14" FontWeight="Bold" />
+                                Margin="4,0" Padding="8,2" Background="Transparent" ToolTip.Tip="Swap">
+                            <TextBlock Text="⇄" FontSize="13" FontWeight="Bold" />
                         </Button>
 
                         <ComboBox Grid.Column="2" ItemsSource="{Binding Currencies}"
-                                  SelectedItem="{Binding TargetCurrency}" HorizontalAlignment="Stretch" />
+                                  SelectedItem="{Binding TargetCurrency}" HorizontalAlignment="Stretch"
+                                  Height="28" MinHeight="28" Padding="8,2" FontSize="12" />
                     </Grid>
 
-                    <!-- Result -->
-                    <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
-                            CornerRadius="6" Padding="8,6">
-                        <TextBlock Text="{Binding ConvertedResult}" FontSize="16" FontWeight="Bold"
-                                   Foreground="{DynamicResource SystemControlForegroundAccentBrush}" HorizontalAlignment="Center" />
-                    </Border>
+                    <!-- Result (click to copy) -->
+                    <Button Click="CopyCurrencyResult_OnClick"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                            CornerRadius="6" Padding="8,4"
+                            ToolTip.Tip="Click to copy converted amount">
+                        <TextBlock Text="{Binding ConvertedResult}" FontSize="14" FontWeight="Bold"
+                                   Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                    </Button>
                 </StackPanel>
             </Border>
 
@@ -50,7 +67,10 @@
             <Border Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}"
                     CornerRadius="8" Padding="10,8">
                 <StackPanel Spacing="8">
-                    <TextBlock Text="CSS UNITS (PX ⇄ REM)" FontSize="9" FontWeight="Bold" Opacity="0.5" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="CSS UNITS (PX ⇄ REM)" FontSize="9" FontWeight="Bold" Opacity="0.5" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{Binding BaseFontSizeBadge}" FontSize="9" Opacity="0.6" VerticalAlignment="Center" />
+                    </Grid>
 
                     <Grid ColumnDefinitions="*,Auto,*">
                         <StackPanel Grid.Column="0" Spacing="2">
@@ -68,6 +88,28 @@
                                            FormatString="0.###" HorizontalAlignment="Stretch" />
                         </StackPanel>
                     </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Digital Storage Conversion Section -->
+            <Border Background="{DynamicResource SystemControlBackgroundAltMediumLowBrush}"
+                    CornerRadius="8" Padding="10,8">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="DIGITAL STORAGE" FontSize="9" FontWeight="Bold" Opacity="0.5" />
+                    <NumericUpDown Value="{Binding StorageAmount}" Minimum="0" Maximum="1000000000"
+                                   FormatString="0.##" HorizontalAlignment="Stretch" />
+                    <Grid ColumnDefinitions="*,Auto,*">
+                        <ComboBox Grid.Column="0" ItemsSource="{Binding StorageUnits}"
+                                  SelectedItem="{Binding FromStorageUnit}" HorizontalAlignment="Stretch" />
+                        <TextBlock Grid.Column="1" Text="→" FontSize="13" VerticalAlignment="Center" Margin="6,0" Opacity="0.6" />
+                        <ComboBox Grid.Column="2" ItemsSource="{Binding StorageUnits}"
+                                  SelectedItem="{Binding ToStorageUnit}" HorizontalAlignment="Stretch" />
+                    </Grid>
+                    <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                            CornerRadius="6" Padding="8,5">
+                        <TextBlock Text="{Binding StorageResult}" FontSize="13" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" />
+                    </Border>
                 </StackPanel>
             </Border>
         </StackPanel>

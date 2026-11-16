@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Avalonia;
@@ -19,6 +20,7 @@ public class PhotoFrameViewModel : ReactiveObject, IDisposable
     private readonly List<string> imageFiles = [];
     private int currentIndex;
     private int minutesCounter;
+    private bool isPaused;
     private Bitmap? currentBitmap;
     private Bitmap? secondaryBitmap;
 
@@ -108,9 +110,30 @@ public class PhotoFrameViewModel : ReactiveObject, IDisposable
     public Thickness FrameMargin => model.FillWidget ? new Thickness(0) : new Thickness(10);
     public CornerRadius FrameCornerRadius => model.FillWidget ? new CornerRadius(0) : new CornerRadius(12);
 
+    public bool IsPaused
+    {
+        get => isPaused;
+        private set
+        {
+            this.RaiseAndSetIfChanged(ref isPaused, value);
+            this.RaisePropertyChanged(nameof(PauseGlyph));
+            this.RaisePropertyChanged(nameof(PauseTooltip));
+        }
+    }
+
+    public string PauseGlyph => IsPaused ? "▶" : "❚❚";
+    public string PauseTooltip => IsPaused ? "Resume slideshow" : "Pause slideshow";
+
+    public void TogglePause()
+    {
+        IsPaused = !IsPaused;
+        minutesCounter = 0;
+    }
+
     public void NextImage()
     {
         if (imageFiles.Count <= 1) return;
+        minutesCounter = 0;
         currentIndex = (currentIndex + 1) % imageFiles.Count;
         ShowCurrentImage();
     }
@@ -118,13 +141,27 @@ public class PhotoFrameViewModel : ReactiveObject, IDisposable
     public void PreviousImage()
     {
         if (imageFiles.Count <= 1) return;
+        minutesCounter = 0;
         currentIndex = (currentIndex - 1 + imageFiles.Count) % imageFiles.Count;
         ShowCurrentImage();
     }
 
+    public void OpenCurrentImage()
+    {
+        if (imageFiles.Count == 0) return;
+        var path = imageFiles[Math.Clamp(currentIndex, 0, imageFiles.Count - 1)];
+        try
+        {
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+        }
+        catch
+        {
+        }
+    }
+
     private void OnTick()
     {
-        if (imageFiles.Count <= 1) return;
+        if (imageFiles.Count <= 1 || IsPaused) return;
         minutesCounter++;
         if (minutesCounter >= Math.Max(1, model.IntervalMinutes))
         {
@@ -146,9 +183,21 @@ public class PhotoFrameViewModel : ReactiveObject, IDisposable
             }
             else if (Directory.Exists(model.Path))
             {
-                var files = Directory.EnumerateFiles(model.Path)
+                var option = model.IncludeSubfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+                var files = Directory.EnumerateFiles(model.Path, "*.*", option)
                     .Where(f => SupportedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                    .OrderBy(f => f);
+                    .OrderBy(f => f)
+                    .ToList();
+
+                if (model.Shuffle && files.Count > 1)
+                {
+                    for (var i = files.Count - 1; i > 0; i--)
+                    {
+                        var j = Random.Shared.Next(i + 1);
+                        (files[i], files[j]) = (files[j], files[i]);
+                    }
+                }
+
                 imageFiles.AddRange(files);
             }
         }
@@ -180,7 +229,7 @@ public class PhotoFrameViewModel : ReactiveObject, IDisposable
             if (File.Exists(filePath))
             {
                 using var stream = File.OpenRead(filePath);
-                return new Bitmap(stream);
+                return Bitmap.DecodeToWidth(stream, 1024);
             }
         }
         catch

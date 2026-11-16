@@ -1,18 +1,30 @@
-using Avalonia;
+using System;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
+using Avalonia.Interactivity;
 using Weather.Models;
 using Weather.ViewModels;
 
 namespace Weather.Views;
 
-public partial class Pressure : UserControl
+public partial class Pressure : UserControl, IDisposable
 {
     public Pressure() : this(new ForecastModel("Cupertino", 37.3230, -122.0322, "celsius")) {}
 
     public Pressure(ForecastModel model)
     {
         DataContext = new ForecastViewModel(model);
+        Unloaded += OnUnloaded;
         InitializeComponent();
+    }
+
+    private void OnUnloaded(object? sender, RoutedEventArgs e)
+    {
+        Unloaded -= OnUnloaded;
+        Dispose();
+    }
+
+    public void Dispose()
+    {
+        (DataContext as IDisposable)?.Dispose();
     }
 }

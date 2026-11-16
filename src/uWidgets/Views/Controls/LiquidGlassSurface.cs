@@ -18,6 +18,8 @@ namespace uWidgets.Views.Controls;
 /// </summary>
 public sealed class LiquidGlassSurface : Control
 {
+    private static long lastRenderErrorLogTicks;
+
     public static readonly StyledProperty<CornerRadius> CornerRadiusProperty =
         AvaloniaProperty.Register<LiquidGlassSurface, CornerRadius>(nameof(CornerRadius), new CornerRadius(24));
 
@@ -241,13 +243,11 @@ public sealed class LiquidGlassSurface : Control
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[LiquidGlassSurface] Render error: {ex}");
-                try
+                var nowTicks = DateTime.UtcNow.Ticks;
+                if (nowTicks - lastRenderErrorLogTicks > TimeSpan.TicksPerSecond * 30)
                 {
-                    var fileName = System.IO.Path.Combine(uWidgets.Core.Const.LogsFolder, "crash_log.txt");
-                    System.IO.File.AppendAllText(fileName, $"[{DateTime.UtcNow:O}] LiquidGlassSurface Render error: {ex.Message}{Environment.NewLine}{ex.StackTrace}{Environment.NewLine}");
-                }
-                catch
-                {
+                    lastRenderErrorLogTicks = nowTicks;
+                    Program.AppendCrashLog($"[{DateTime.UtcNow:O}] LiquidGlassSurface Render error: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
                 }
             }
         }

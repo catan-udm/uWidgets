@@ -2,32 +2,41 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:Weather.ViewModels"
              x:Class="Weather.Views.Controls.ForecastSmall"
-             x:DataType="viewModels:ForecastViewModel">
-    <Grid RowDefinitions="Auto,*">
-        <!-- Top row: City Name -->
-        <TextBlock Grid.Row="0" FontSize="15" FontWeight="Bold"
-                   TextTrimming="CharacterEllipsis" Margin="0,0,0,2"
-                   Text="{Binding CityName}" />
+             x:DataType="viewModels:ForecastViewModel"
+             ToolTip.Tip="{Binding StatusTooltip}">
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Top row: City Name & Refresh -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,2">
+            <TextBlock Grid.Column="0" FontSize="14" FontWeight="Bold"
+                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                       Text="{Binding CityName}" />
+            <Button Grid.Column="1" Content="↻"
+                    Command="{Binding RefreshCommand}" IsEnabled="{Binding CanRetry}"
+                    Padding="4,0" FontSize="11" Background="Transparent"
+                    VerticalAlignment="Center" ToolTip.Tip="{Binding StatusTooltip}" />
+        </Grid>
 
-        <!-- Bottom row: Temperature, Icon, and Details -->
-        <Grid Grid.Row="1" RowDefinitions="Auto,*,Auto,Auto,Auto" VerticalAlignment="Center">
-            <TextBlock Grid.Row="0" FontSize="38" LetterSpacing="-1" Margin="-2,-2,0,0"
+        <!-- Center: Temperature, Icon, and Details -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto,Auto" VerticalAlignment="Center">
+            <TextBlock Grid.Row="0" FontSize="32" LetterSpacing="-1" LineHeight="34" Margin="-1,0,0,0"
                        Text="{Binding CurrentTemperature}" />
-            <PathIcon Grid.Row="1" HorizontalAlignment="Left" Width="20" Height="20" Margin="0,2,0,2"
+            <PathIcon Grid.Row="1" HorizontalAlignment="Left" Width="18" Height="18" Margin="0,2,0,2"
                       Foreground="{DynamicResource SystemControlForegroundAccentBrush}" 
                       Data="{Binding CurrentIcon}" />
-            <TextBlock Grid.Row="2" FontSize="13" FontWeight="Bold" Opacity="0.5"
+            <TextBlock Grid.Row="2" FontSize="12" FontWeight="Bold" Opacity="0.6"
                        TextTrimming="CharacterEllipsis"
                        Text="{Binding CurrentCondition}" />
-            <TextBlock Grid.Row="3" FontSize="12" FontWeight="Bold" Opacity="0.5"
+            <TextBlock Grid.Row="3" FontSize="11" FontWeight="Bold" Opacity="0.5"
                        Text="{Binding CurrentMinMax}" />
-            <Grid Grid.Row="4" ColumnDefinitions="*,Auto" Margin="0,4,0,0" IsVisible="{Binding HasErrorBanner}">
-                <TextBlock Grid.Column="0" Text="{Binding StatusBadgeText}" FontSize="9.5" Opacity="0.7"
-                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,4,0" />
-                <Button Grid.Column="1" Content="{Binding RetryButtonText}"
-                        Command="{Binding RetryCommand}" IsEnabled="{Binding CanRetry}"
-                        FontSize="9.5" Padding="6,2" CornerRadius="4" />
-            </Grid>
+        </Grid>
+
+        <!-- Bottom: Status / Retry -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,2,0,0" IsVisible="{Binding HasErrorBanner}">
+            <TextBlock Grid.Column="0" Text="{Binding StatusBadgeText}" FontSize="9.5" Opacity="0.7"
+                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,4,0" />
+            <Button Grid.Column="1" Content="{Binding RetryButtonText}"
+                    Command="{Binding RetryCommand}" IsEnabled="{Binding CanRetry}"
+                    FontSize="9.5" Padding="6,2" CornerRadius="4" />
         </Grid>
     </Grid>
 </UserControl>

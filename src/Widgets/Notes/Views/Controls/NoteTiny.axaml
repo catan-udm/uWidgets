@@ -14,6 +14,7 @@
                                       Background="{DynamicResource SystemControlHighlightListAccentLowBrush}"
                                       Text="{Binding Title}"
                                       Watermark="Title..."
+                                      TextChanged="OnTitleTextChanged"
                                       LostFocus="UpdateTitle"
                                       FontSize="11"
                                       FontWeight="Bold" />
@@ -23,6 +24,7 @@
                                       FontSize="11"
                                       Text="{Binding Content}"
                                       Watermark="Take a note..."
+                                      TextChanged="OnContentTextChanged"
                                       LostFocus="UpdateContent"
                                       AcceptsReturn="True"
                                       TextWrapping="Wrap" />

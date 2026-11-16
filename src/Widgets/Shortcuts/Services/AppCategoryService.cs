@@ -9,7 +9,10 @@ namespace Shortcuts.Services;
 
 public record DiscoveredApp(string Name, string Target, string IconKey);
 
-public record AppCategoryInfo(string CategoryName, string IconKey, IReadOnlyList<DiscoveredApp> Apps);
+public record AppCategoryInfo(string CategoryName, string IconKey, IReadOnlyList<DiscoveredApp> Apps)
+{
+    public bool HasApps => Apps.Count > 0;
+}
 
 public static class AppCategoryService
 {
@@ -41,7 +44,24 @@ public static class AppCategoryService
         catch { return null; }
     }
 
-    public static List<AppCategoryInfo> GetCategories()
+    private static readonly object CacheLock = new();
+    private static List<AppCategoryInfo>? cachedCategories;
+
+    public static List<AppCategoryInfo> GetCategories(bool forceRefresh = false)
+    {
+        lock (CacheLock)
+        {
+            if (!forceRefresh && cachedCategories != null)
+            {
+                return cachedCategories;
+            }
+
+            cachedCategories = BuildCategories();
+            return cachedCategories;
+        }
+    }
+
+    private static List<AppCategoryInfo> BuildCategories()
     {
         var result = new List<AppCategoryInfo>();
 

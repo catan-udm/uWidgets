@@ -8,4 +8,5 @@ public record PageViewModel(Type? Type, StreamGeometry? Icon, string? Text, Asse
 {
     public bool IsSeparator => Type == null;
     public bool IsNotSeparator => !IsSeparator;
+    public override string ToString() => Text ?? string.Empty;
 }

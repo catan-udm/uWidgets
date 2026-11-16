@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using uWidgets.Core;
 using uWidgets.Core.Services;
+using uWidgets.Services;
 
 namespace uWidgets;
 
@@ -12,6 +13,9 @@ class Program
     private const int MaxCrashLogBytes = 64 * 1024;
     private static readonly object crashLogLock = new();
 
+    public static bool IsGlossyGlassAvailable { get; private set; }
+    public static string? GlossyGlassError { get; private set; }
+
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
     // yet and stuff might break.
@@ -19,6 +23,8 @@ class Program
     public static void Main(string[] args)
     {
         StorageService.Initialize();
+        if (!SingleInstanceService.TryAcquire(args))
+            return;
 
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
         {
@@ -37,9 +43,12 @@ class Program
             try
             {
                 GlossyGlass.GlossyGlassApi.StartEngine();
+                IsGlossyGlassAvailable = true;
             }
             catch (Exception ex)
             {
+                IsGlossyGlassAvailable = false;
+                GlossyGlassError = ex.Message;
                 // Non-fatal if MyDockFinder is not installed or locked
                 AppendCrashLog($"[{DateTime.UtcNow:O}] GlossyGlass unavailable: {ex.Message}");
             }
@@ -60,9 +69,14 @@ class Program
             AppendCrashLog($"[{DateTime.UtcNow:O}] Fatal: {e.Message}{Environment.NewLine}{e.StackTrace}");
             throw;
         }
+        finally
+        {
+            SingleInstanceService.StopPipeServer();
+            SingleInstanceService.ReleaseMutex();
+        }
     }
 
-    private static void AppendCrashLog(string entry)
+    internal static void AppendCrashLog(string entry)
     {
         try
         {

@@ -8,15 +8,24 @@ namespace Finance.Views;
 
 public partial class Crypto : UserControl, IDisposable
 {
+    private readonly CryptoViewModel viewModel;
+
     public Crypto() : this(new CryptoModel())
     {
     }
 
     public Crypto(CryptoModel model)
     {
-        DataContext = new CryptoViewModel(model);
+        viewModel = new CryptoViewModel(model);
+        DataContext = viewModel;
+        SizeChanged += OnSizeChanged;
         Unloaded += OnUnloaded;
         InitializeComponent();
+    }
+
+    private void OnSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        viewModel.IsCompact = e.NewSize.Width < 210;
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
@@ -27,6 +36,7 @@ public partial class Crypto : UserControl, IDisposable
 
     public void Dispose()
     {
-        (DataContext as IDisposable)?.Dispose();
+        SizeChanged -= OnSizeChanged;
+        viewModel.Dispose();
     }
 }

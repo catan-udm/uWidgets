@@ -4,4 +4,28 @@
              Margin="0"
              x:Class="Shortcuts.Views.Launcher"
              x:DataType="viewModels:LauncherViewModel">
+    <Grid>
+        <ContentControl x:Name="TierHost" />
+        <Border IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                VerticalAlignment="Bottom"
+                Margin="6"
+                Padding="8,5"
+                CornerRadius="8"
+                Background="#DD1E1E1E">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding StatusMessage}"
+                           FontSize="10"
+                           Foreground="White"
+                           TextWrapping="Wrap"
+                           Margin="0,0,6,0"
+                           VerticalAlignment="Center" />
+                <Button Grid.Column="1"
+                        Content="✕"
+                        Padding="4,1"
+                        FontSize="10"
+                        Click="DismissStatus_OnClick" />
+            </Grid>
+        </Border>
+    </Grid>
 </UserControl>

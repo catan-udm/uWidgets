@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -11,12 +12,33 @@ namespace Monitor.ViewModels;
 
 public class DeviceBatteryItemViewModel : ReactiveObject
 {
-    public DeviceBatteryItemViewModel(DeviceBatteryInfo info)
+    public DeviceBatteryItemViewModel(DeviceBatteryInfo info, bool showPercentage = true)
     {
+        this.showPercentage = showPercentage;
         Update(info);
     }
 
     public string DeviceId { get; private set; } = string.Empty;
+
+    private bool showPercentage;
+    public bool ShowPercentage
+    {
+        get => showPercentage;
+        set => this.RaiseAndSetIfChanged(ref showPercentage, value);
+    }
+
+    private bool isConnected = true;
+    public bool IsConnected
+    {
+        get => isConnected;
+        private set
+        {
+            this.RaiseAndSetIfChanged(ref isConnected, value);
+            this.RaisePropertyChanged(nameof(RowOpacity));
+        }
+    }
+
+    public double RowOpacity => IsConnected ? 1.0 : 0.55;
 
     private string name = string.Empty;
     public string Name
@@ -68,7 +90,8 @@ public class DeviceBatteryItemViewModel : ReactiveObject
     }
 
     public double StrokeDashOffset => 27.6 * (1.0 - Math.Clamp(BatteryLevel, 0.0, 1.0));
-    public string TooltipText => $"{Name} — {BatteryPercent}%{(IsCharging ? " (Charging)" : "")}";
+    public string TooltipText =>
+        $"{Name} — {BatteryPercent}%{(IsCharging ? " (Charging)" : (!IsConnected ? " (Disconnected)" : ""))}";
 
     private static readonly IBrush NormalLight = new SolidColorBrush(Color.Parse("#047857"));
     private static readonly IBrush NormalDark = new SolidColorBrush(Color.Parse("#34D399"));
@@ -84,6 +107,7 @@ public class DeviceBatteryItemViewModel : ReactiveObject
         BatteryPercent = info.BatteryPercent;
         BatteryLevel = info.BatteryLevel;
         IsCharging = info.IsCharging;
+        IsConnected = info.IsConnected;
         Icon = info.Icon;
         FormattedLevel = info.FormattedLevel;
         this.RaisePropertyChanged(nameof(StrokeDashOffset));
@@ -113,6 +137,7 @@ public class DeviceBatteryItemViewModel : ReactiveObject
 public class DeviceBatteriesViewModel : ReactiveObject, IDisposable
 {
     private readonly DeviceBatteriesModel model;
+    private int isUpdating;
 
     public DeviceBatteriesViewModel(DeviceBatteriesModel model)
     {
@@ -125,6 +150,10 @@ public class DeviceBatteriesViewModel : ReactiveObject, IDisposable
 
     public ObservableCollection<DeviceBatteryItemViewModel> Devices { get; }
     public IEnumerable<DeviceBatteryItemViewModel> SmallDevices => Devices.Take(4);
+    public bool ShowPercentages => model.ShowPercentages;
+    public bool HasOverflowDevices => Devices.Count > 4;
+    public string OverflowBadgeText => $"+{Math.Max(0, Devices.Count - 4)}";
+    public string OverflowTooltip => string.Join(Environment.NewLine, Devices.Skip(4).Select(d => d.TooltipText));
 
     private bool isSmallView;
     public bool IsSmallView
@@ -144,9 +173,12 @@ public class DeviceBatteriesViewModel : ReactiveObject, IDisposable
 
     private async Task UpdateAsync()
     {
+        if (Interlocked.CompareExchange(ref isUpdating, 1, 0) != 0)
+            return;
+
         try
         {
-            var all = await PeripheralBatteryService.GetAllBatteriesAsync();
+            var all = await PeripheralBatteryService.GetAllBatteriesAsync(model.OnlyConnected);
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
@@ -163,20 +195,28 @@ public class DeviceBatteriesViewModel : ReactiveObject, IDisposable
                     var existing = Devices.FirstOrDefault(d => d.DeviceId == info.DeviceId);
                     if (existing != null)
                     {
+                        existing.ShowPercentage = model.ShowPercentages;
                         existing.Update(info);
                     }
                     else
                     {
-                        Devices.Add(new DeviceBatteryItemViewModel(info));
+                        Devices.Add(new DeviceBatteryItemViewModel(info, model.ShowPercentages));
                     }
                 }
 
                 HasDevices = Devices.Count > 0;
                 this.RaisePropertyChanged(nameof(SmallDevices));
+                this.RaisePropertyChanged(nameof(HasOverflowDevices));
+                this.RaisePropertyChanged(nameof(OverflowBadgeText));
+                this.RaisePropertyChanged(nameof(OverflowTooltip));
             });
         }
         catch (Exception)
         {
+        }
+        finally
+        {
+            Volatile.Write(ref isUpdating, 0);
         }
     }
 
