@@ -12,13 +12,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <UpToDateCheckInput Update="Clock.axaml">
-        <DependentUpon>Clock.axaml</DependentUpon>
-      </UpToDateCheckInput>
-      <UpToDateCheckInput Remove="Controls\ClockHand.axaml" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\..\uWidgets\uWidgets.csproj">
         <Private>false</Private>
           <ExcludeAssets>runtime</ExcludeAssets>

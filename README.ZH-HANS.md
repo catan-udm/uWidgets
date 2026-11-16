@@ -27,7 +27,7 @@
 
 ## 特点
 
-11 个模块化小部件类别，提供 **26 种可自定义桌面小部件视图**，支持首次启动引导、全局快捷键与系统托盘控制。
+11 个模块化小部件类别，提供 **30 种可自定义桌面小部件视图**，支持首次启动引导、全局快捷键与系统托盘控制。
 
 > **文档：** [用户指南 (EN)](docs/USER_GUIDE.md) ・ [小部件目录 (EN)](docs/WIDGET_CATALOG.md) ・ [快捷键与手势 (EN)](docs/SHORTCUTS.md) ・ [故障排查 (EN)](docs/TROUBLESHOOTING.md) ・ [开发指南 (EN)](docs/WIDGET_DEVELOPMENT.md)
 

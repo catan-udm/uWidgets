@@ -2,7 +2,7 @@
 
 > **Document Version**: 1.1.0 (Refined with Adversarial Quality Gates & System Constraints)  
 > **Target Release**: uWidgets 2.0 QoL Modernization  
-> **Status**: Comprehensive Engineering Research & Implementation Plan (Pre-Implementation)  
+> **Status**: Comprehensive Engineering Research & Implementation Plan (Implemented in v0.8.0)  
 > **Repository**: `C:\Users\sankobite\dev\uWidgets`  
 > **Target Framework**: .NET 8.0, Avalonia UI 11.1.3, Windows 10/11 Desktop  
 
@@ -66,12 +66,12 @@ This document serves as the **official Systemwide QoL Audit and Comprehensive Im
 The solution consists of 13 projects organized in `src/uWidgets.sln`:
 - **Executable Host (`src/uWidgets/`)**: Avalonia 11.1.3 desktop application implementing dependency injection (`Microsoft.Extensions.DependencyInjection`), desktop message hooking (`InteropService.cs`), virtual grid layout management (`GridService.cs`), and configuration views.
 - **Shared Core Library (`src/uWidgets.Core/`)**: Shared interfaces (`IAppSettingsProvider`, `ILayoutProvider`, `IAssemblyProvider`), data models (`AppSettings`, `WidgetLayout`), JSON serialization (`JsonParser.cs`), and startup registry management (`StartupService.cs`).
-- **Dynamic Widget Assemblies (`src/Widgets/`)**: 11 modular plugin assemblies loaded via .NET `AssemblyLoadContext` (`PluginLoadContext` in `AssemblyProvider.cs`), containing 27 distinct view implementations:
+- **Dynamic Widget Assemblies (`src/Widgets/`)**: 11 modular plugin assemblies loaded via .NET `AssemblyLoadContext` (`PluginLoadContext` in `AssemblyProvider.cs`), containing 30 distinct view implementations:
   1. `Calendar` (Date, Month, Countdown)
   2. `Clock` (Analog I, II, III, Digital, World, Pomodoro, Stopwatch)
   3. `Development` (Docker, DevApps, GitWorkingTree)
   4. `Finance` (Crypto, Stocks, Converter)
-  5. `Media` (NowPlaying with WinRT GSMTC & synced lyrics)
+  5. `Media` (NowPlaying with WinRT GSMTC)
   6. `Monitor` (SingleMetric, Dashboard, DeviceBatteries)
   7. `Notes` (Note with auto-save)
   8. `Photos` (PhotoFrame slideshow)
@@ -618,7 +618,7 @@ The Settings window navigation sidebar is restructured from a flat, unindexed li
        - *Toggle Visibility*: Hide/show individual widget.
        - *Delete*: Removes widget from desktop.
    - **Widget Catalog Tab**:
-     - Centralized library of all 11 widget assemblies and 27 views.
+     - Centralized library of all 11 widget assemblies and 30 views.
      - Category filter chips: All, Productivity, System & Hardware, Media & Audio, Finance, Utilities.
      - "Add to Desktop" button with smart placement (spawns in an open desktop slot rather than under Settings).
    - **Layout Profiles Tab**:
@@ -1371,7 +1371,7 @@ Overhaul repository documentation, bring widget inventory up to date, create a c
 - `docs/USER_GUIDE.md` (New): Complete user manual (placement, sizing, grid, themes, tray).
 - `docs/SHORTCUTS.md` (New): Keyboard shortcut sheet and desktop gestures guide.
 - `docs/TROUBLESHOOTING.md` (New): Multi-monitor DPI, WorkerW pinning, AppData storage, crash logs.
-- `docs/WIDGET_CATALOG.md` (New): Detailed feature breakdown of all 27 widget views.
+- `docs/WIDGET_CATALOG.md` (New): Detailed feature breakdown of all 30 widget views.
 - `docs/WIDGET_DEVELOPMENT.md` (New): Technical tutorial on creating custom widget plugins.
 
 #### Step-by-Step Implementation Steps
@@ -1457,8 +1457,8 @@ When code modifications commence under user approval in subsequent milestones, t
 
 This document constitutes the complete engineering audit, UI/UX specification, and implementation roadmap. 
 
-**Readiness Status**: Ready for User Review and Approval.  
-**Next Steps Upon Approval**: Proceed to Phase 1 implementation (Application Lifecycle, System Tray, Storage Resilience, and Multi-Monitor Coordinate Fixes).
+**Readiness Status**: Implemented across Phases 1–5 (v0.8.0).  
+**Maintenance Note (v0.8.1)**: Subsequent cleanup passes refined Media idle state rendering, Weather layout/logging, Appearance restart banners, lifecycle resource disposal, and unused resource removal.
 
 ---
 *Authored for the uWidgets Project Repository — November 2026.*

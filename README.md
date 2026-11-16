@@ -27,7 +27,7 @@
 
 ## Features
 
-11 modular widget categories featuring **26 customizable desktop widget views**, guided first-launch onboarding, global hotkeys, and system tray controls.
+11 modular widget categories featuring **30 customizable desktop widget views**, guided first-launch onboarding, global hotkeys, and system tray controls.
 
 > **Documentation:** [User Guide](docs/USER_GUIDE.md) ・ [Widget Catalog](docs/WIDGET_CATALOG.md) ・ [Shortcuts & Gestures](docs/SHORTCUTS.md) ・ [Troubleshooting](docs/TROUBLESHOOTING.md) ・ [Widget Development](docs/WIDGET_DEVELOPMENT.md)
 

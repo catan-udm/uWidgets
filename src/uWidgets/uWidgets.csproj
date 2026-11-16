@@ -10,8 +10,7 @@
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <PublishSingleFile>false</PublishSingleFile>
         <PublishReadyToRun>false</PublishReadyToRun>
-        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-        <ApplicationIcon>..\..\.github\images\icon.ico</ApplicationIcon>
+        <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -40,12 +39,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <UpToDateCheckInput Remove="Styles\WidgetStyle.axaml" />
-      <UpToDateCheckInput Remove="Controls\Setting.axaml" />
-      <UpToDateCheckInput Remove="Styles\Transparent.axaml" />
-    </ItemGroup>
-
-    <ItemGroup>
       <AvaloniaResource Include="Assets\**" />
     </ItemGroup>
 
@@ -58,9 +51,6 @@
       </None>
       <None Update="layout.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Include="..\..\.github\images\icon.ico">
-        <Link>icon.ico</Link>
       </None>
     </ItemGroup>
 
@@ -91,11 +81,5 @@
 
     <ItemGroup>
       <AdditionalFiles Include="Views\Controls\Setting.axaml" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Reference Include="System.Xaml">
-        <HintPath>..\..\..\..\..\Windows\Microsoft.NET\assembly\GAC_MSIL\System.Xaml\v4.0_4.0.0.0__b77a5c561934e089\System.Xaml.dll</HintPath>
-      </Reference>
     </ItemGroup>
 </Project>

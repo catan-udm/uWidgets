@@ -1,6 +1,6 @@
 # uWidgets Built-in Widget Catalog
 
-uWidgets ships **11 modular widget assemblies** providing **26 distinct widget views** across time, productivity, weather, hardware monitoring, developer workflows, and finance.
+uWidgets ships **11 modular widget assemblies** providing **30 distinct widget views** across time, productivity, weather, hardware monitoring, developer workflows, and finance.
 
 ---
 
