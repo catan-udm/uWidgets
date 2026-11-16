@@ -70,12 +70,6 @@ namespace Media.Locales {
             }
         }
 
-        public static string Media_ShowVisualizer {
-            get {
-                return ResourceManager.GetString("Media_ShowVisualizer", resourceCulture);
-            }
-        }
-
         public static string Media_ShowTimeline {
             get {
                 return ResourceManager.GetString("Media_ShowTimeline", resourceCulture);

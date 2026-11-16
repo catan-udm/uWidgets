@@ -39,14 +39,6 @@ public partial class NowPlaying : UserControl, IDisposable
         Content = (Control?)Activator.CreateInstance(newType, viewModel);
     }
 
-    public void Prev_OnClick(object? sender, RoutedEventArgs e) => viewModel.PreviousTrack();
-
-    public void PlayPause_OnClick(object? sender, RoutedEventArgs e) => viewModel.PlayPause();
-
-    public void Next_OnClick(object? sender, RoutedEventArgs e) => viewModel.NextTrack();
-
-    public void Mute_OnClick(object? sender, RoutedEventArgs e) => viewModel.ToggleMute();
-
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         Dispose();

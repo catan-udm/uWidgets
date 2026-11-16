@@ -15,12 +15,6 @@ public class NowPlayingSettingsViewModel(IWidgetLayoutProvider widgetLayoutProvi
         set => Save(model with { ShowTimeline = value });
     }
 
-    public bool ShowVisualizer
-    {
-        get => ShowTimeline;
-        set => ShowTimeline = value;
-    }
-
     public bool ShowMuteButton
     {
         get => model.ShowMuteButton;

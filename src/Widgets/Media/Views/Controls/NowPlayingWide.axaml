@@ -75,18 +75,11 @@
                 Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
             <Panel>
                 <Image Source="{Binding AlbumArt}" Stretch="UniformToFill" IsVisible="{Binding HasAlbumArt}" />
-                <Panel IsVisible="{Binding !HasAlbumArt}">
-                    <Ellipse Width="72" Height="72"
-                             Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                             StrokeThickness="1.5"
-                             Opacity="0.18" />
-                    <Ellipse Width="24" Height="24"
-                             Fill="{DynamicResource SystemControlForegroundAccentBrush}"
-                             Opacity="0.2" />
-                    <PathIcon Width="28" Height="28"
-                              Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
-                              Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
-                </Panel>
+                <PathIcon IsVisible="{Binding !HasAlbumArt}"
+                          Width="34" Height="34"
+                          Opacity="0.85"
+                          Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
+                          Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
             </Panel>
         </Border>
 

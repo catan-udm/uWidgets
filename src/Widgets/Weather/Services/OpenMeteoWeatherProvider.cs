@@ -62,7 +62,7 @@ public class OpenMeteoWeatherProvider
         }
         catch (Exception e)
         {
-            await WriteWeatherLogAsync($"{e.Message}{Environment.NewLine}{e.StackTrace}");
+            await WriteWeatherLogAsync(FormatExceptionForLog(e));
             return new WeatherFetchResult(null, IsOffline: true, ErrorMessage: e.Message);
         }
     }
@@ -81,7 +81,11 @@ public class OpenMeteoWeatherProvider
 
             var response = await httpClient.GetAsync(url);
 
-            if (!response.IsSuccessStatusCode) throw new Exception($"HTTP {(int)response.StatusCode} ({response.StatusCode})");
+            if (!response.IsSuccessStatusCode)
+            {
+                await WriteWeatherLogAsync($"HTTP {(int)response.StatusCode} ({response.StatusCode}) for air quality request.");
+                return null;
+            }
 
             var json = await response.Content.ReadAsStringAsync();
             var forecast = JsonSerializer.Deserialize<AirQualityResponse>(json);
@@ -90,7 +94,7 @@ public class OpenMeteoWeatherProvider
         }
         catch (Exception e)
         {
-            await WriteWeatherLogAsync($"{e.Message}{Environment.NewLine}{e.StackTrace}");
+            await WriteWeatherLogAsync(FormatExceptionForLog(e));
             return null;
         }
     }
@@ -116,23 +120,43 @@ public class OpenMeteoWeatherProvider
         }
         catch (Exception e)
         {
-            await WriteWeatherLogAsync($"{e.Message}{Environment.NewLine}{e.StackTrace}");
+            await WriteWeatherLogAsync(FormatExceptionForLog(e));
             return null;
         }
     }
 
+    private const long MaxWeatherLogBytes = 64 * 1024;
+    private static readonly SemaphoreSlim LogLock = new(1, 1);
+
+    private static string FormatExceptionForLog(Exception e) =>
+        e is HttpRequestException or TaskCanceledException
+            ? $"{e.GetType().Name}: {e.Message}"
+            : $"{e.Message}{Environment.NewLine}{e.StackTrace}";
+
     private static async Task WriteWeatherLogAsync(string content)
     {
+        await LogLock.WaitAsync();
         try
         {
             Directory.CreateDirectory(Const.LogsFolder);
             var logPath = Path.Combine(Const.LogsFolder, "weather_crash_log.txt");
+
+            if (File.Exists(logPath) && new FileInfo(logPath).Length > MaxWeatherLogBytes)
+            {
+                var lines = await File.ReadAllLinesAsync(logPath);
+                await File.WriteAllLinesAsync(logPath, lines.Skip(Math.Max(0, lines.Length / 2)));
+            }
+
             var entry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {content}{Environment.NewLine}{Environment.NewLine}";
             await File.AppendAllTextAsync(logPath, entry);
         }
         catch
         {
             // Logging failures should never crash the weather widget.
+        }
+        finally
+        {
+            LogLock.Release();
         }
     }
 }

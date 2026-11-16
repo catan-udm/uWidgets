@@ -104,21 +104,11 @@
                 Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
             <Panel>
                 <Image Source="{Binding AlbumArt}" Stretch="UniformToFill" IsVisible="{Binding HasAlbumArt}" />
-                <Viewbox IsVisible="{Binding !HasAlbumArt}" MaxWidth="100" MaxHeight="100" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10">
-                    <Canvas Width="120" Height="120">
-                        <Ellipse Canvas.Left="6" Canvas.Top="6" Width="108" Height="108"
-                                 Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                                 StrokeThickness="3" Opacity="0.2" />
-                        <Ellipse Canvas.Left="20" Canvas.Top="20" Width="80" Height="80"
-                                 Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                                 StrokeThickness="1.5" StrokeDashArray="4,3" Opacity="0.25" />
-                        <Ellipse Canvas.Left="38" Canvas.Top="38" Width="44" Height="44"
-                                 Fill="{DynamicResource SystemControlForegroundAccentBrush}" Opacity="0.22" />
-                        <PathIcon Canvas.Left="46" Canvas.Top="46" Width="28" Height="28"
-                                  Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
-                                  Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
-                    </Canvas>
-                </Viewbox>
+                <PathIcon IsVisible="{Binding !HasAlbumArt}"
+                          Width="40" Height="40"
+                          Opacity="0.85"
+                          Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
+                          Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
             </Panel>
         </Border>
 
