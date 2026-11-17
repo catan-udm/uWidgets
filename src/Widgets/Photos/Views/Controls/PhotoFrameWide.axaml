@@ -5,6 +5,11 @@
              x:Class="Photos.Views.Controls.PhotoFrameWide"
              x:DataType="viewModels:PhotoFrameViewModel"
              Margin="{Binding FrameMargin}">
+    <UserControl.Styles>
+        <Style Selector="PathIcon.play">
+            <Setter Property="RenderTransform" Value="translateX(1.25px)" />
+        </Style>
+    </UserControl.Styles>
     <Border ClipToBounds="True" CornerRadius="{Binding FrameCornerRadius}">
         <Panel>
             <Grid ColumnDefinitions="2*,Auto" IsVisible="{Binding HasImage}">
@@ -89,6 +94,7 @@
                         Background="#77000000"
                         HorizontalContentAlignment="Center"
                         VerticalContentAlignment="Center"
+                        ToolTip.Tip="Previous photo"
                         Click="Prev_OnClick">
                     <PathIcon Width="10" Height="10" Foreground="White"
                               Data="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
@@ -97,6 +103,16 @@
                         Background="#77000000"
                         HorizontalContentAlignment="Center"
                         VerticalContentAlignment="Center"
+                        ToolTip.Tip="{Binding PauseTooltip}"
+                        Click="TogglePause_OnClick">
+                    <PathIcon Data="{Binding PauseIcon}" Classes.play="{Binding IsPaused}"
+                              Width="10" Height="10" Foreground="White" />
+                </Button>
+                <Button Width="26" Height="26" Padding="0" CornerRadius="13"
+                        Background="#77000000"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        ToolTip.Tip="Next photo"
                         Click="Next_OnClick">
                     <PathIcon Width="10" Height="10" Foreground="White"
                               Data="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z" />

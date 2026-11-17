@@ -112,7 +112,7 @@ public class GitWorkingTreeViewModel : ReactiveObject, IDisposable
     public void OpenInSelectedEditor(CodeEditorType editorType) =>
         GitRepositoryService.OpenInEditor(ActivePath, editorType, model.CustomEditorCommand);
 
-    private string repoName = "Select Repository in Settings";
+    private string repoName = "Git Working Tree";
     public string RepoName
     {
         get => repoName;
@@ -248,7 +248,7 @@ public class GitWorkingTreeViewModel : ReactiveObject, IDisposable
                 await Dispatcher.UIThread.InvokeAsync(() =>
                 {
                     HasRepo = false;
-                    RepoName = "No Repository Configured";
+                    RepoName = "Git Working Tree";
                     Branch = "Click settings to add repo";
                     SyncStatus = "";
                     ChangeStatus = "";

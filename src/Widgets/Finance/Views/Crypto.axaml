@@ -1,8 +1,15 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:Finance.ViewModels"
+             xmlns:icons="clr-namespace:uWidgets.Styles;assembly=uWidgets"
              x:Class="Finance.Views.Crypto"
              x:DataType="viewModels:CryptoViewModel">
+    <UserControl.Styles>
+        <Style Selector="Button.refreshBtn:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Opacity" Value="0.35" />
+        </Style>
+    </UserControl.Styles>
     <Grid RowDefinitions="Auto,*">
         <!-- Header -->
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="6,4,6,6">
@@ -15,10 +22,11 @@
                 <TextBlock Text="Offline"
                            IsVisible="{Binding IsOffline}"
                            FontSize="9" Opacity="0.6" VerticalAlignment="Center" />
-                <Button Command="{Binding RefreshCommand}"
+                <Button Classes="refreshBtn"
+                        Command="{Binding RefreshCommand}"
                         IsEnabled="{Binding !IsRefreshing}"
-                        Padding="5,2" Background="Transparent" ToolTip.Tip="Refresh prices">
-                    <TextBlock Text="↻" FontSize="12" />
+                        Padding="5" Background="Transparent" ToolTip.Tip="Refresh prices">
+                    <PathIcon Data="{x:Static icons:WidgetIcons.Refresh}" Width="12" Height="12" />
                 </Button>
             </StackPanel>
         </Grid>

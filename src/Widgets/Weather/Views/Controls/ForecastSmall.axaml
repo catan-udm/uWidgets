@@ -1,19 +1,33 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="clr-namespace:uWidgets.Styles;assembly=uWidgets"
              xmlns:viewModels="clr-namespace:Weather.ViewModels"
              x:Class="Weather.Views.Controls.ForecastSmall"
              x:DataType="viewModels:ForecastViewModel"
              ToolTip.Tip="{Binding StatusTooltip}">
+    <UserControl.Styles>
+        <Style Selector="Button.refreshBtn">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="CornerRadius" Value="11" />
+        </Style>
+        <Style Selector="Button.refreshBtn:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Opacity" Value="0.35" />
+        </Style>
+    </UserControl.Styles>
     <Grid RowDefinitions="Auto,*,Auto">
         <!-- Top row: City Name & Refresh -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,2">
             <TextBlock Grid.Column="0" FontSize="14" FontWeight="Bold"
                        TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                        Text="{Binding CityName}" />
-            <Button Grid.Column="1" Content="↻"
+            <Button Grid.Column="1" Classes="refreshBtn"
                     Command="{Binding RefreshCommand}" IsEnabled="{Binding CanRetry}"
-                    Padding="4,0" FontSize="11" Background="Transparent"
-                    VerticalAlignment="Center" ToolTip.Tip="{Binding StatusTooltip}" />
+                    VerticalAlignment="Center" ToolTip.Tip="{Binding StatusTooltip}">
+                <PathIcon Width="12" Height="12" Data="{x:Static icons:WidgetIcons.Refresh}" />
+            </Button>
         </Grid>
 
         <!-- Center: Temperature, Icon, and Details -->

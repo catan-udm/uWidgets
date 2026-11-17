@@ -5,6 +5,11 @@
              x:Class="Photos.Views.Controls.PhotoFrameLarge"
              x:DataType="viewModels:PhotoFrameViewModel"
              Margin="{Binding FrameMargin}">
+    <UserControl.Styles>
+        <Style Selector="PathIcon.play">
+            <Setter Property="RenderTransform" Value="translateX(1.5px)" />
+        </Style>
+    </UserControl.Styles>
     <Border ClipToBounds="True" CornerRadius="{Binding FrameCornerRadius}">
         <Panel>
             <Image Source="{Binding CurrentBitmap}"
@@ -26,6 +31,7 @@
                            Text="{Binding PlaceholderTitle}"
                            FontSize="16"
                            FontWeight="Bold"
+                           TextAlignment="Center"
                            HorizontalAlignment="Center"
                            Margin="0,8,0,2" />
                 <TextBlock Grid.Row="2"
@@ -77,17 +83,28 @@
                                 VerticalAlignment="Center"
                                 IsVisible="{Binding HasMultipleImages}">
                         <Button Width="30" Height="30" Padding="0" CornerRadius="15"
-                                Background="#55FFFFFF"
+                                Background="#77000000"
                                 HorizontalContentAlignment="Center"
                                 VerticalContentAlignment="Center"
+                                ToolTip.Tip="Previous photo"
                                 Click="Prev_OnClick">
                             <PathIcon Width="11" Height="11" Foreground="White"
                                       Data="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
                         </Button>
                         <Button Width="30" Height="30" Padding="0" CornerRadius="15"
-                                Background="#55FFFFFF"
+                                Background="#77000000"
                                 HorizontalContentAlignment="Center"
                                 VerticalContentAlignment="Center"
+                                ToolTip.Tip="{Binding PauseTooltip}"
+                                Click="TogglePause_OnClick">
+                            <PathIcon Data="{Binding PauseIcon}" Classes.play="{Binding IsPaused}"
+                                      Width="12" Height="12" Foreground="White" />
+                        </Button>
+                        <Button Width="30" Height="30" Padding="0" CornerRadius="15"
+                                Background="#77000000"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                ToolTip.Tip="Next photo"
                                 Click="Next_OnClick">
                             <PathIcon Width="11" Height="11" Foreground="White"
                                       Data="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z" />

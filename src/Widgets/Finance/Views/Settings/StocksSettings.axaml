@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:uWidgets.Views.Controls;assembly=uWidgets"
+             xmlns:icons="clr-namespace:uWidgets.Styles;assembly=uWidgets"
              xmlns:viewModels="clr-namespace:Finance.ViewModels"
              x:DataType="viewModels:StocksSettingsViewModel"
              x:Class="Finance.Views.Settings.StocksSettings">
@@ -29,8 +30,10 @@
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBlock Text="{Binding}" FontSize="11" VerticalAlignment="Center" />
                                 <Button Grid.Column="1" Command="{Binding $parent[UserControl].((viewModels:StocksSettingsViewModel)DataContext).RemoveTickerCommand}"
-                                        CommandParameter="{Binding}" Content="✕" Padding="6,2"
-                                        Background="Transparent" Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" />
+                                        CommandParameter="{Binding}" Padding="6,4"
+                                        Background="Transparent" Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}">
+                                    <PathIcon Data="{x:Static icons:WidgetIcons.Close}" Width="10" Height="10" />
+                                </Button>
                             </Grid>
                         </Border>
                     </DataTemplate>

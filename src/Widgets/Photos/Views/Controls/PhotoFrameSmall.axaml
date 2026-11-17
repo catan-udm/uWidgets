@@ -5,6 +5,11 @@
              x:Class="Photos.Views.Controls.PhotoFrameSmall"
              x:DataType="viewModels:PhotoFrameViewModel"
              Margin="{Binding FrameMargin}">
+    <UserControl.Styles>
+        <Style Selector="PathIcon.play">
+            <Setter Property="RenderTransform" Value="translateX(1.25px)" />
+        </Style>
+    </UserControl.Styles>
     <Border ClipToBounds="True" CornerRadius="{Binding FrameCornerRadius}">
         <Panel DoubleTapped="OpenPhoto_OnDoubleTapped">
             <Image Source="{Binding CurrentBitmap}"
@@ -58,21 +63,22 @@
                 </Border>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" IsVisible="{Binding HasMultipleImages}">
-                    <Button Width="24" Height="24" Padding="0" CornerRadius="12" Background="#66000000"
+                    <Button Width="24" Height="24" Padding="0" CornerRadius="12" Background="#77000000"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                             ToolTip.Tip="Previous photo" Click="Prev_OnClick">
-                        <PathIcon Width="9" Height="9" Foreground="White"
+                        <PathIcon Width="10" Height="10" Foreground="White"
                                   Data="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
                     </Button>
-                    <Button Width="24" Height="24" Padding="0" CornerRadius="12" Background="#66000000"
+                    <Button Width="24" Height="24" Padding="0" CornerRadius="12" Background="#77000000"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                             ToolTip.Tip="{Binding PauseTooltip}" Click="TogglePause_OnClick">
-                        <TextBlock Text="{Binding PauseGlyph}" FontSize="9" Foreground="White" />
+                        <PathIcon Data="{Binding PauseIcon}" Classes.play="{Binding IsPaused}"
+                                  Width="10" Height="10" Foreground="White" />
                     </Button>
-                    <Button Width="24" Height="24" Padding="0" CornerRadius="12" Background="#66000000"
+                    <Button Width="24" Height="24" Padding="0" CornerRadius="12" Background="#77000000"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                             ToolTip.Tip="Next photo" Click="Next_OnClick">
-                        <PathIcon Width="9" Height="9" Foreground="White"
+                        <PathIcon Width="10" Height="10" Foreground="White"
                                   Data="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z" />
                     </Button>
                 </StackPanel>

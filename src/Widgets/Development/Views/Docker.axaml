@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:Development.ViewModels"
+             xmlns:icons="clr-namespace:uWidgets.Styles;assembly=uWidgets"
              x:Class="Development.Views.Docker"
              x:DataType="viewModels:DockerViewModel">
     <Grid RowDefinitions="Auto,*,Auto">
@@ -43,7 +44,9 @@
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                                     <Button Classes="small" Command="{Binding StartCommand}" IsVisible="{Binding !IsRunning}"
                                             Padding="4" Background="Transparent" ToolTip.Tip="Start">
-                                        <PathIcon Data="{x:Static viewModels:DevelopmentIcon.PlayGeometry}" Width="10" Height="10" Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                                        <PathIcon Data="{x:Static icons:WidgetIcons.Play}" Width="10" Height="10"
+                                                  RenderTransform="translateX(1.25px)"
+                                                  Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
                                     </Button>
                                     <Button Classes="small" Command="{Binding StopCommand}" IsVisible="{Binding IsRunning}"
                                             Padding="4" Background="Transparent" ToolTip.Tip="Stop">
@@ -97,10 +100,11 @@
                            Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"
                            VerticalAlignment="Center" />
                 <Button Grid.Column="1"
-                        Content="✕"
-                        FontSize="9"
-                        Padding="4,1"
-                        Command="{Binding DismissStatusCommand}" />
+                        Padding="4"
+                        Background="Transparent"
+                        Command="{Binding DismissStatusCommand}">
+                    <PathIcon Data="{x:Static icons:WidgetIcons.Close}" Width="9" Height="9" />
+                </Button>
             </Grid>
         </Border>
     </Grid>

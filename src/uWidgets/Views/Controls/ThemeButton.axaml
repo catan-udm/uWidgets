@@ -23,12 +23,12 @@
                     Background="{Binding WidgetBackground}"
                     BorderThickness="{Binding WidgetBorderThickness}"
                     BorderBrush="#60808080"
-                    BoxShadow="{Binding WidgetShadow}" />
-            <TextBlock Canvas.Left="70" Canvas.Top="48" Width="45"
-                       TextAlignment="Center" VerticalAlignment="Center"
-                       FontSize="28" LineHeight="24" Text="Aa"
-                       FontFamily="{Binding WidgetFontFamily}"
-                       Foreground="{Binding WidgetForeground}" />
+                    BoxShadow="{Binding WidgetShadow}">
+                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="26" Text="Aa"
+                           FontFamily="{Binding WidgetFontFamily}"
+                           Foreground="{Binding WidgetForeground}" />
+            </Border>
         </Canvas>
     </Button>
 </UserControl>

@@ -6,6 +6,7 @@ using Clock.Models;
 using Clock.Services;
 using ReactiveUI;
 using uWidgets.Services;
+using uWidgets.Styles;
 
 namespace Clock.ViewModels;
 
@@ -18,8 +19,8 @@ public enum PomodoroPhase
 
 public class PomodoroViewModel : ReactiveObject, IDisposable
 {
-    private static readonly StreamGeometry PlayGeometry = StreamGeometry.Parse("m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z");
-    private static readonly StreamGeometry PauseGeometry = StreamGeometry.Parse("M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z");
+    private static readonly StreamGeometry PlayGeometry = WidgetIcons.Play;
+    private static readonly StreamGeometry PauseGeometry = WidgetIcons.Pause;
 
     private readonly PomodoroModel model;
     private readonly Guid widgetId;

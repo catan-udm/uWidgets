@@ -9,8 +9,8 @@
         ExtendClientAreaTitleBarHeightHint="40"
         WindowStartupLocation="CenterScreen"
         Topmost="True"
-        Width="340" Height="240"
-        MinWidth="340" MinHeight="240" CanResize="True"
+        Width="340" SizeToContent="Height"
+        MinWidth="340" CanResize="False"
         Title="Update" x:DataType="views:UpdatePopup">
     <Window.Styles>
         <Styles>
@@ -18,7 +18,7 @@
                 <Setter Property="TextAlignment" Value="Center" />
             </Style>
             <Style Selector="Button">
-                <Setter Property="Width" Value="340" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
                 <Setter Property="Height" Value="40" />
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="HorizontalContentAlignment" Value="Center" />

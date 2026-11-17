@@ -24,6 +24,11 @@
     <ProjectReference Include="..\..\src\Widgets\Clock\Clock.csproj" />
     <ProjectReference Include="..\..\src\Widgets\Weather\Weather.csproj" />
     <ProjectReference Include="..\..\src\Widgets\Finance\Finance.csproj" />
+    <ProjectReference Include="..\..\src\Widgets\Media\Media.csproj" />
+    <ProjectReference Include="..\..\src\Widgets\Monitor\Monitor.csproj" />
+    <ProjectReference Include="..\..\src\Widgets\Development\Development.csproj" />
+    <ProjectReference Include="..\..\src\Widgets\Photos\Photos.csproj" />
+    <ProjectReference Include="..\..\src\Widgets\Shortcuts\Shortcuts.csproj" />
   </ItemGroup>
 
 </Project>

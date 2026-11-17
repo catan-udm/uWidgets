@@ -14,7 +14,6 @@ public partial class SunriseSunset : UserControl, IDisposable
     public SunriseSunset(ForecastModel model)
     {
         DataContext = new ForecastViewModel(model);
-        SizeChanged += OnSizeChanged;
         Unloaded += OnUnloaded;
         InitializeComponent();
     }
@@ -27,14 +26,6 @@ public partial class SunriseSunset : UserControl, IDisposable
 
     public void Dispose()
     {
-        SizeChanged -= OnSizeChanged;
         (DataContext as IDisposable)?.Dispose();
-    }
-
-    private void OnSizeChanged(object? sender, SizeChangedEventArgs e)
-    {
-        var size = Math.Min(DesiredSize.Width, DesiredSize.Height);
-        var margin = size >= 150 ? size * 0.1 : 6;
-        Margin = new Thickness(margin, margin);
     }
 }

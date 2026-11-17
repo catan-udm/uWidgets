@@ -41,18 +41,20 @@
                 <DataTemplate DataType="viewModels:DayViewModel">
                     <Grid>
                         <Viewbox>
-                            <Canvas Width="100" Height="100">
-                                <Ellipse Canvas.Left="0" Canvas.Top="0" Width="100" Height="100"
+                            <Grid Width="100" Height="100">
+                                <Ellipse Width="100" Height="100"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
                                          IsVisible="{Binding IsToday}"
                                          Fill="{DynamicResource SystemControlHighlightAccentBrush}" />
-                                <TextBlock Width="100" Height="100"
+                                <TextBlock HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
                                            TextAlignment="Center"
-                                           Margin="0,14,0,0"
                                            FontSize="60"
                                            Classes.weekend="{Binding IsWeekend}"
                                            Classes.today="{Binding IsToday}"
-                                           Text="{Binding Day}"  />
-                            </Canvas>
+                                           Text="{Binding Day}" />
+                            </Grid>
                         </Viewbox>
                         
                     </Grid>

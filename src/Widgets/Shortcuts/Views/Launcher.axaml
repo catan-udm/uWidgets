@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:Shortcuts.ViewModels"
+             xmlns:icons="clr-namespace:uWidgets.Styles;assembly=uWidgets"
              Margin="0"
              x:Class="Shortcuts.Views.Launcher"
              x:DataType="viewModels:LauncherViewModel">
@@ -21,10 +22,11 @@
                            Margin="0,0,6,0"
                            VerticalAlignment="Center" />
                 <Button Grid.Column="1"
-                        Content="✕"
-                        Padding="4,1"
-                        FontSize="10"
-                        Click="DismissStatus_OnClick" />
+                        Padding="4"
+                        Background="Transparent"
+                        Click="DismissStatus_OnClick">
+                    <PathIcon Data="{x:Static icons:WidgetIcons.Close}" Width="10" Height="10" Foreground="White" />
+                </Button>
             </Grid>
         </Border>
     </Grid>

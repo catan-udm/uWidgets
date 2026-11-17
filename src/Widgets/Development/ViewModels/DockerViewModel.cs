@@ -120,7 +120,7 @@ public class DockerViewModel : ReactiveObject, IDisposable
         private set => this.RaiseAndSetIfChanged(ref statusMessage, value);
     }
 
-    private string headerSummary = "Docker";
+    private string headerSummary = string.Empty;
     public string HeaderSummary
     {
         get => headerSummary;

@@ -2,18 +2,17 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:Weather.ViewModels"
              x:Class="Weather.Views.SunriseSunset"
-             x:DataType="viewModels:ForecastViewModel"
-             Margin="6">
+             x:DataType="viewModels:ForecastViewModel">
     <Viewbox Stretch="Uniform" DataContext="{Binding SunsetSunrise}" ToolTip.Tip="{Binding ToolTipText}">
         <Canvas Width="100" Height="100">
             <Ellipse Width="100" Height="100" Opacity="0.2"
                      Fill="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-            <PathIcon Canvas.Top="20" MinWidth="100" HorizontalAlignment="Center"
-                      Width="40"
+            <PathIcon Canvas.Left="30" Canvas.Top="14"
+                      Width="40" Height="40"
                       Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
                       Data="{Binding Icon}" />
-            <TextBlock Canvas.Top="45" MinWidth="100" TextAlignment="Center"
-                       FontSize="25" FontWeight="SemiBold" LetterSpacing="-1"
+            <TextBlock Canvas.Top="58" MinWidth="100" TextAlignment="Center"
+                       FontSize="24" FontWeight="SemiBold" LetterSpacing="-1"
                        Text="{Binding Time}" />
         </Canvas>
     </Viewbox>

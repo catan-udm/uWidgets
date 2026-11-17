@@ -113,7 +113,7 @@ public class DevAppsViewModel : ReactiveObject, IDisposable
         private set => this.RaiseAndSetIfChanged(ref hasApps, value);
     }
 
-    private string headerSummary = "Dev Apps";
+    private string headerSummary = string.Empty;
     public string HeaderSummary
     {
         get => headerSummary;

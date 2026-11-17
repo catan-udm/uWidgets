@@ -1,8 +1,15 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:Finance.ViewModels"
+             xmlns:icons="clr-namespace:uWidgets.Styles;assembly=uWidgets"
              x:Class="Finance.Views.Converter"
              x:DataType="viewModels:ConverterViewModel">
+    <UserControl.Styles>
+        <Style Selector="Button.refreshBtn:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Opacity" Value="0.35" />
+        </Style>
+    </UserControl.Styles>
     <ScrollViewer Margin="2" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="6">
             <!-- Header -->
@@ -17,10 +24,11 @@
                     <TextBlock Text="{Binding RatesStatus}"
                                IsVisible="{Binding RatesStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                FontSize="9" Opacity="0.6" VerticalAlignment="Center" />
-                    <Button Command="{Binding RefreshRatesCommand}"
+                    <Button Classes="refreshBtn"
+                            Command="{Binding RefreshRatesCommand}"
                             IsEnabled="{Binding !IsRefreshing}"
-                            Padding="5,1" Background="Transparent" ToolTip.Tip="Refresh exchange rates">
-                        <TextBlock Text="↻" FontSize="12" />
+                            Padding="5" Background="Transparent" ToolTip.Tip="Refresh exchange rates">
+                        <PathIcon Data="{x:Static icons:WidgetIcons.Refresh}" Width="12" Height="12" />
                     </Button>
                 </StackPanel>
             </Grid>
@@ -41,8 +49,8 @@
                                   Height="28" MinHeight="28" Padding="8,2" FontSize="12" />
 
                         <Button Grid.Column="1" Command="{Binding SwapCurrenciesCommand}"
-                                Margin="4,0" Padding="8,2" Background="Transparent" ToolTip.Tip="Swap">
-                            <TextBlock Text="⇄" FontSize="13" FontWeight="Bold" />
+                                Margin="4,0" Padding="8,4" Background="Transparent" ToolTip.Tip="Swap">
+                            <PathIcon Data="{x:Static icons:WidgetIcons.SwapHorizontal}" Width="14" Height="14" />
                         </Button>
 
                         <ComboBox Grid.Column="2" ItemsSource="{Binding Currencies}"
@@ -101,7 +109,7 @@
                     <Grid ColumnDefinitions="*,Auto,*">
                         <ComboBox Grid.Column="0" ItemsSource="{Binding StorageUnits}"
                                   SelectedItem="{Binding FromStorageUnit}" HorizontalAlignment="Stretch" />
-                        <TextBlock Grid.Column="1" Text="→" FontSize="13" VerticalAlignment="Center" Margin="6,0" Opacity="0.6" />
+                        <PathIcon Grid.Column="1" Data="{x:Static icons:WidgetIcons.ArrowRight}" Width="12" Height="12" VerticalAlignment="Center" Margin="6,0" Opacity="0.6" />
                         <ComboBox Grid.Column="2" ItemsSource="{Binding StorageUnits}"
                                   SelectedItem="{Binding ToStorageUnit}" HorizontalAlignment="Stretch" />
                     </Grid>

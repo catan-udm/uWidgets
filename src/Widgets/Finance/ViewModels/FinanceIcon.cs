@@ -17,10 +17,10 @@ public static class FinanceIcon
         "M11.5 2a.5.5 0 0 1 .5.5v2.8l2.1-2.1a.5.5 0 0 1 .7.7l-3 3a.5.5 0 0 1-.7 0l-3-3a.5.5 0 1 1 .7-.7l2.2 2.1V2.5a.5.5 0 0 1 .5-.5zm-7 12a.5.5 0 0 1-.5-.5v-2.8L1.9 12.8a.5.5 0 0 1-.7-.7l3-3a.5.5 0 0 1 .7 0l3 3a.5.5 0 0 1-.7.7L5 10.7v2.8a.5.5 0 0 1-.5.5z"));
 
     public static Lazy<StreamGeometry> ArrowUp = new(() => StreamGeometry.Parse(
-        "M8 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4l-2.6 2.6a.5.5 0 1 1-.7-.7l3.5-3.5a.5.5 0 0 1 .3-.1z"));
+        "M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"));
 
     public static Lazy<StreamGeometry> ArrowDown = new(() => StreamGeometry.Parse(
-        "M8 12.5a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 1 0v8l2.6-2.6a.5.5 0 0 1 .7.7l-3.5 3.5a.5.5 0 0 1-.3.1z"));
+        "M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"));
 
     public static StreamGeometry CategoryGeometry => Category.Value;
     public static StreamGeometry CryptoGeometry => Crypto.Value;

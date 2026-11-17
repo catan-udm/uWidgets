@@ -117,11 +117,15 @@ public class PhotoFrameViewModel : ReactiveObject, IDisposable
         {
             this.RaiseAndSetIfChanged(ref isPaused, value);
             this.RaisePropertyChanged(nameof(PauseGlyph));
+            this.RaisePropertyChanged(nameof(PauseIcon));
             this.RaisePropertyChanged(nameof(PauseTooltip));
         }
     }
 
     public string PauseGlyph => IsPaused ? "▶" : "❚❚";
+    public Avalonia.Media.StreamGeometry PauseIcon => IsPaused
+        ? uWidgets.Styles.WidgetIcons.Play
+        : uWidgets.Styles.WidgetIcons.Pause;
     public string PauseTooltip => IsPaused ? "Resume slideshow" : "Pause slideshow";
 
     public void TogglePause()

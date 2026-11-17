@@ -32,13 +32,13 @@
             <TextBlock FontSize="{Binding FontSize}" FontWeight="SemiBold"
                        MinWidth="110" TextAlignment="Center" LineHeight="100"
                        Text="{Binding DisplayValue}" />
-            <TextBlock Canvas.Left="20" Canvas.Top="80" FontSize="20" FontWeight="SemiBold"
+            <TextBlock Canvas.Left="26" Canvas.Top="82" FontSize="17" FontWeight="SemiBold"
                        Text="{Binding DisplayMin}" />
-            <TextBlock Canvas.Right="20" Canvas.Top="80"
-                       Opacity="0.5" FontSize="20" FontWeight="SemiBold"
+            <TextBlock Canvas.Right="26" Canvas.Top="82"
+                       Opacity="0.5" FontSize="17" FontWeight="SemiBold"
                        Text="{Binding DisplayMax}" />
             <PathIcon Foreground="{DynamicResource SystemControlForegroundAccentBrush}" 
-                      Canvas.Left="45" Canvas.Top="80" Data="{Binding Icon}" />
+                      Canvas.Left="46" Canvas.Top="78" Width="18" Height="18" Data="{Binding Icon}" />
         </Canvas>
     </Viewbox>
 </UserControl>

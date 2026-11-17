@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="clr-namespace:uWidgets.Styles;assembly=uWidgets"
              xmlns:viewModels="clr-namespace:Media.ViewModels"
              x:Class="Media.Views.Controls.NowPlayingLarge"
              x:DataType="viewModels:NowPlayingViewModel">
@@ -32,6 +33,9 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.playBtn PathIcon.play">
+            <Setter Property="RenderTransform" Value="translateX(2px)" />
         </Style>
         <Style Selector="Button.muteBtn">
             <Setter Property="Background" Value="Transparent" />
@@ -70,10 +74,14 @@
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <Border Width="26" Height="26"
                         CornerRadius="7"
+                        IsVisible="{Binding HasAlbumArt}"
                         Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
-                    <PathIcon Width="13" Height="13"
-                              Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
-                              Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
+                    <Panel>
+                        <PathIcon Width="14" Height="14"
+                                  RenderTransform="translateX(-0.5px)"
+                                  Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
+                                  Data="{x:Static icons:WidgetIcons.MusicNote}" />
+                    </Panel>
                 </Border>
                 <TextBlock Text="{Binding ArtistOrApp}"
                            FontSize="12"
@@ -105,14 +113,15 @@
             <Panel>
                 <Image Source="{Binding AlbumArt}" Stretch="UniformToFill" IsVisible="{Binding HasAlbumArt}" />
                 <PathIcon IsVisible="{Binding !HasAlbumArt}"
-                          Width="40" Height="40"
+                          Width="44" Height="44"
+                          RenderTransform="translateX(-2px)"
                           Opacity="0.85"
                           Foreground="{DynamicResource SystemControlForegroundAccentBrush}"
-                          Data="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2 M14 11V2h1v9zM6 3v10H5V3z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z" />
+                          Data="{x:Static icons:WidgetIcons.MusicNote}" />
             </Panel>
         </Border>
 
-        <!-- Row 2: Track Title & Artist Block (Single line ellipsis, never overflows) -->
+        <!-- Row 2: Track Title & Album Block (Single line ellipsis, never overflows) -->
         <StackPanel Grid.Row="2" Spacing="2" Margin="0,2,0,6">
             <TextBlock Text="{Binding TrackTitle}"
                        ToolTip.Tip="{Binding TooltipText}"
@@ -122,18 +131,10 @@
                        MaxLines="1"
                        TextWrapping="NoWrap"
                        TextTrimming="CharacterEllipsis" />
-            <TextBlock Text="{Binding ArtistOrApp}"
-                       FontSize="12"
-                       FontWeight="SemiBold"
-                       Opacity="0.65"
-                       TextAlignment="Center"
-                       MaxLines="1"
-                       TextWrapping="NoWrap"
-                       TextTrimming="CharacterEllipsis" />
             <TextBlock Text="{Binding Album}"
                        IsVisible="{Binding HasAlbum}"
-                       FontSize="10.5"
-                       Opacity="0.5"
+                       FontSize="11"
+                       Opacity="0.55"
                        TextAlignment="Center"
                        MaxLines="1"
                        TextWrapping="NoWrap"
@@ -182,7 +183,7 @@
                           Data="M.5 3.5A.5.5 0 0 0 0 4v8a.5.5 0 0 0 1 0V8.753l6.267 3.636c.54.313 1.233-.066 1.233-.697v-2.94l6.267 3.636c.54.314 1.233-.065 1.233-.696V4.308c0-.63-.693-1.01-1.233-.696L8.5 7.248v-2.94c0-.63-.692-1.01-1.233-.696L1 7.248V4a.5.5 0 0 0-.5-.5" />
             </Button>
             <Button Classes="playBtn" Click="PlayPause_OnClick" ToolTip.Tip="Play / Pause">
-                <PathIcon Width="16" Height="16" Foreground="{DynamicResource SystemControlForegroundAltHighBrush}" Data="{Binding PlayPauseIcon}" />
+                <PathIcon Width="16" Height="16" Classes.play="{Binding !IsPlaying}" Foreground="{DynamicResource SystemControlForegroundAltHighBrush}" Data="{Binding PlayPauseIcon}" />
             </Button>
             <Button Classes="mediaBtn" Click="Next_OnClick" ToolTip.Tip="Next Track">
                 <PathIcon Width="13" Height="13"

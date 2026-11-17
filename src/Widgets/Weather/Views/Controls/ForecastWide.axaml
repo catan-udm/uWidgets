@@ -1,9 +1,22 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="clr-namespace:uWidgets.Styles;assembly=uWidgets"
              xmlns:viewModels="clr-namespace:Weather.ViewModels"
              x:Class="Weather.Views.Controls.ForecastWide"
              x:DataType="viewModels:ForecastViewModel"
              ToolTip.Tip="{Binding StatusTooltip}">
+    <UserControl.Styles>
+        <Style Selector="Button.refreshBtn">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="CornerRadius" Value="11" />
+        </Style>
+        <Style Selector="Button.refreshBtn:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Opacity" Value="0.35" />
+        </Style>
+    </UserControl.Styles>
     <Grid RowDefinitions="Auto,*">
         <!-- Header Section -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,4">
@@ -16,9 +29,10 @@
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Right" VerticalAlignment="Top">
                 <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" Margin="0,0,0,2">
-                    <Button Content="↻" Command="{Binding RefreshCommand}" IsEnabled="{Binding CanRetry}"
-                            Padding="4,0" FontSize="11" Background="Transparent" VerticalAlignment="Center"
-                            ToolTip.Tip="{Binding StatusTooltip}" />
+                    <Button Classes="refreshBtn" Command="{Binding RefreshCommand}" IsEnabled="{Binding CanRetry}"
+                            VerticalAlignment="Center" ToolTip.Tip="{Binding StatusTooltip}">
+                        <PathIcon Width="12" Height="12" Data="{x:Static icons:WidgetIcons.Refresh}" />
+                    </Button>
                     <PathIcon Width="20" Height="20"
                               Foreground="{DynamicResource SystemControlForegroundAccentBrush}" 
                               Data="{Binding CurrentIcon}" />
