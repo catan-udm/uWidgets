@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -411,23 +412,42 @@ public static class GitRepositoryService
 
     public static void OpenInVSCode(string repoPath) => OpenInEditor(repoPath, CodeEditorType.VSCode, null);
 
+    /// <summary>
+    /// Builds the <see cref="ProcessStartInfo"/> used to launch PowerShell as Administrator
+    /// in <paramref name="repoPath"/>.
+    /// </summary>
+    public static ProcessStartInfo BuildTerminalAdminStartInfo(string repoPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(repoPath);
+
+        var safePath = EscapePowerShellSingleQuoted(repoPath);
+        return new ProcessStartInfo("powershell.exe")
+        {
+            UseShellExecute = true,
+            Verb = "runas",
+            WorkingDirectory = repoPath,
+            Arguments = $"-NoExit -Command \"Set-Location -LiteralPath '{safePath}'\""
+        };
+    }
+
     public static void OpenInTerminal(string repoPath)
     {
-        if (Directory.Exists(repoPath))
+        if (string.IsNullOrWhiteSpace(repoPath) || !Directory.Exists(repoPath))
         {
-            try
-            {
-                var safePath = EscapePowerShellSingleQuoted(repoPath);
-                var psi = new ProcessStartInfo("powershell.exe")
-                {
-                    UseShellExecute = false
-                };
-                psi.ArgumentList.Add("-NoExit");
-                psi.ArgumentList.Add("-Command");
-                psi.ArgumentList.Add($"Set-Location -LiteralPath '{safePath}'");
-                using var p = Process.Start(psi);
-            }
-            catch { }
+            return;
+        }
+
+        try
+        {
+            var psi = BuildTerminalAdminStartInfo(repoPath);
+            using var p = Process.Start(psi);
+        }
+        catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
+        {
+            // User declined the UAC elevation prompt.
+        }
+        catch
+        {
         }
     }
 
