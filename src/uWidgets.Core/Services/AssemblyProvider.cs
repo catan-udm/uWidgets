@@ -11,6 +11,7 @@ namespace uWidgets.Core.Services;
 /// <inheritdoc />
 public class AssemblyProvider : IAssemblyProvider
 {
+    private readonly object contextLock = new();
     private readonly Dictionary<string, AssemblyLoadContext> loadedContexts = new();
     private ILookup<string, AssemblyInfo> assemblyCache;
     private readonly IServiceProvider serviceProvider;
@@ -74,17 +75,31 @@ public class AssemblyProvider : IAssemblyProvider
             var assembly = context.LoadFromAssemblyPath(filePath);
             var localeAttribute = assembly.GetCustomAttributes<LocaleAttribute>().FirstOrDefault();
             var companyAttribute = assembly.GetCustomAttributes<AssemblyCompanyAttribute>().FirstOrDefault();
-            var widgetAttributes = assembly.GetCustomAttributes<WidgetInfoAttribute>();
+            var widgetAttributes = assembly.GetCustomAttributes<WidgetInfoAttribute>().ToArray();
 
-            if (!widgetAttributes.Any()) return null;
+            if (widgetAttributes.Length == 0) return null;
 
             var assemblyName = assembly.GetName().Name!;
             var version = assembly.GetName().Version!;
             var company = companyAttribute?.Company ?? "";
             var locale = GetLocaleResourceManager(assembly);
             var displayName = locale?.GetString(localeAttribute?.DisplayName ?? "") ?? assemblyName;
+            var widgets = widgetAttributes
+                .Select(attr => new WidgetDescriptor(
+                    attr.ViewType.Name,
+                    locale?.GetString(attr.Title ?? string.Empty) ?? attr.ViewType.Name,
+                    locale?.GetString(attr.Subtitle ?? string.Empty) ?? displayName))
+                .ToArray();
+            var searchKeywords = string.Join(" ", widgets
+                .SelectMany(w => new[] { w.SubType, w.Title, w.Subtitle })
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Prepend(assemblyName));
 
-            return new AssemblyInfo(filePath, assemblyName, displayName, company, version, localeAttribute?.IconData ?? "");
+            return new AssemblyInfo(filePath, assemblyName, displayName, company, version, localeAttribute?.IconData ?? "")
+            {
+                Widgets = widgets,
+                SearchKeywords = searchKeywords
+            };
         }
         catch (Exception)
         {
@@ -99,27 +114,35 @@ public class AssemblyProvider : IAssemblyProvider
     /// <inheritdoc />
     public Assembly LoadAssembly(string name)
     {
-        if (loadedContexts.TryGetValue(name, out var context))
+        lock (contextLock)
         {
-            return context.Assemblies.Single(assembly =>
-                string.Equals(assembly.GetName().Name, name, StringComparison.OrdinalIgnoreCase));
-        }
-        
-        var filePath = GetAssemblyPath(name);
-        context = new PluginLoadContext(filePath);
-        loadedContexts[name] = context;
+            if (loadedContexts.TryGetValue(name, out var context))
+            {
+                return context.Assemblies.Single(assembly =>
+                    string.Equals(assembly.GetName().Name, name, StringComparison.OrdinalIgnoreCase));
+            }
 
-        return context.LoadFromAssemblyPath(filePath);
+            var filePath = GetAssemblyPath(name);
+            context = new PluginLoadContext(filePath);
+            loadedContexts[name] = context;
+
+            return context.LoadFromAssemblyPath(filePath);
+        }
     }
-    
+
     /// <inheritdoc />
     public void UnloadAssembly(string name)
     {
-        if (!loadedContexts.TryGetValue(name, out var context))
-            throw new InvalidOperationException($"Assembly {name} is not loaded");
+        AssemblyLoadContext? context;
+        lock (contextLock)
+        {
+            if (!loadedContexts.TryGetValue(name, out context))
+                throw new InvalidOperationException($"Assembly {name} is not loaded");
+
+            loadedContexts.Remove(name);
+        }
 
         context.Unload();
-        loadedContexts.Remove(name);
         GC.Collect();
         GC.WaitForPendingFinalizers();
     }

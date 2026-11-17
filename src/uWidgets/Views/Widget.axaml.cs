@@ -30,8 +30,15 @@ public partial class Widget : Window, INotifyPropertyChanged
     private readonly Func<Settings> settingsWindow;
     private readonly Func<EditWidget>? editWidgetWindow;
 
+    private const uint WM_ENTERSIZEMOVE = 0x0231;
+    private const uint WM_EXITSIZEMOVE = 0x0232;
+
     private bool isDragging;
     private bool isResizing;
+    private bool isInSizeMove;
+    private double sizeMoveStartWidth;
+    private double sizeMoveStartHeight;
+    private Win32Properties.CustomWndProcHookCallback? sizeMoveHook;
     private EditWidget? activeEditWindow;
     private CancellationTokenSource? highlightCts;
 
@@ -102,6 +109,47 @@ public partial class Widget : Window, INotifyPropertyChanged
         InteropService.ApplyLayeringMode(this, appSettingsProvider.Get().Layout.LayeringMode);
         UpdateLiquidGlassState(appSettingsProvider.Get());
         RecoverIfOffscreen();
+
+        if (sizeMoveHook == null && OperatingSystem.IsWindows())
+        {
+            sizeMoveHook = WidgetSizeMoveWndProc;
+            Win32Properties.AddWndProcHookCallback(this, sizeMoveHook);
+        }
+    }
+
+    internal bool IsDragging => isDragging;
+    internal bool IsInSizeMove => isInSizeMove;
+
+    private IntPtr WidgetSizeMoveWndProc(
+        IntPtr hWnd,
+        uint msg,
+        IntPtr wParam,
+        IntPtr lParam,
+        ref bool handled)
+    {
+        ProcessSizeMoveMessage(msg);
+        return IntPtr.Zero;
+    }
+
+    internal void ProcessSizeMoveMessage(uint msg)
+    {
+        if (msg == WM_ENTERSIZEMOVE)
+        {
+            isInSizeMove = true;
+            sizeMoveStartWidth = Width;
+            sizeMoveStartHeight = Height;
+        }
+        else if (msg == WM_EXITSIZEMOVE)
+        {
+            isInSizeMove = false;
+            var sizeChanged = Math.Abs(Width - sizeMoveStartWidth) > 0.5 ||
+                              Math.Abs(Height - sizeMoveStartHeight) > 0.5;
+            if (!isResizing && !sizeChanged && !appSettingsProvider.Get().Layout.LockPosition)
+            {
+                isDragging = false;
+                AfterMove();
+            }
+        }
     }
 
     private void OnActivated(object? sender, EventArgs e)
@@ -306,9 +354,13 @@ public partial class Widget : Window, INotifyPropertyChanged
         }
     }
 
-    private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
+    private void OnPointerReleased(object? sender, PointerReleasedEventArgs e) =>
+        CompletePointerRelease();
+
+    internal void CompletePointerRelease()
     {
-        if (!isDragging) return;
+        // BeginMoveDrag runs asynchronously on Windows; avoid double-snapping while modal move loop owns input.
+        if (!isDragging || isInSizeMove) return;
         isDragging = false;
         AfterMove();
     }
@@ -416,6 +468,11 @@ public partial class Widget : Window, INotifyPropertyChanged
         highlightCts = null;
         DisposeContent();
         InteropService.UnpinWindowFromDesktop(this);
+        if (sizeMoveHook != null)
+        {
+            Win32Properties.RemoveWndProcHookCallback(this, sizeMoveHook);
+            sizeMoveHook = null;
+        }
         PointerPressed -= OnPointerPressed;
         PointerReleased -= OnPointerReleased;
         PositionChanged -= OnPositionChanged;
@@ -446,31 +503,31 @@ public partial class Widget : Window, INotifyPropertyChanged
         }
     }
 
-    public void OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    public void OnPointerPressed(object? sender, PointerPressedEventArgs e) =>
+        BeginDragFromPointer(e.GetCurrentPoint(this).Properties.IsLeftButtonPressed, () => BeginMoveDrag(e));
+
+    internal void BeginDragFromPointer(bool isLeftButtonPressed, Action startMoveDrag)
     {
         if (appSettingsProvider.Get().Layout.LockPosition) return;
-        
-        ToolTip.SetIsOpen(this, false);
-        if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed) return;
 
+        ToolTip.SetIsOpen(this, false);
+        if (!isLeftButtonPressed) return;
+
+        // Window.BeginMoveDrag posts SC_MOVE asynchronously on Win32; completion is handled via WM_EXITSIZEMOVE / PointerReleased.
         isDragging = true;
-        BeginMoveDrag(e);
-        if (isDragging)
-        {
-            isDragging = false;
-            AfterMove();
-        }
+        startMoveDrag();
     }
 
     private void AfterMove()
     {
         var appSettings = appSettingsProvider.Get();
-        
-        if (appSettings.Layout.SnapPosition) 
+
+        if (appSettings.Layout.SnapPosition)
             gridService.SnapPosition(this);
-        
+
         var settings = widgetLayoutProvider.Get();
-        widgetLayoutProvider.Save(settings with { X = Position.X, Y = Position.Y });
+        if (settings.X != Position.X || settings.Y != Position.Y)
+            widgetLayoutProvider.Save(settings with { X = Position.X, Y = Position.Y });
     }
 
     private async Task Resize(int columns, int rows)

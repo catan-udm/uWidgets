@@ -324,9 +324,24 @@ public class WidgetManagerViewModel : ReactiveObject, IDisposable
             var info = pair.Value;
             try
             {
+                var category = MapCategory(info.AssemblyName);
+                if (info.Widgets.Count > 0)
+                {
+                    foreach (var widget in info.Widgets)
+                    {
+                        allCatalogItems.Add(new CatalogWidgetItemViewModel(
+                            info.AssemblyName,
+                            info.DisplayName,
+                            widget.SubType,
+                            widget.Title,
+                            widget.Subtitle,
+                            category));
+                    }
+                    continue;
+                }
+
                 var asm = assemblyProvider.LoadAssembly(info.AssemblyName);
                 var locale = assemblyProvider.GetLocaleResourceManager(asm);
-                var category = MapCategory(info.AssemblyName);
 
                 foreach (var attr in asm.GetCustomAttributes<WidgetInfoAttribute>())
                 {

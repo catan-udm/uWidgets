@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Resources;
 using ReactiveUI;
@@ -37,7 +38,10 @@ public class GeneralViewModel : ReactiveObject, IDisposable
         this.RaisePropertyChanged(nameof(HasHotkeyWarnings));
     }
 
-    public CultureInfo[] Languages => GetAvailableCultures().ToHashSet().OrderBy(x => x.DisplayName).ToArray();
+    private static readonly Lazy<CultureInfo[]> CachedLanguages = new(() =>
+        GetAvailableCultures().ToHashSet().OrderBy(x => x.DisplayName).ToArray());
+
+    public CultureInfo[] Languages => CachedLanguages.Value;
 
     public bool LanguageChangedPendingRestart
     {
@@ -180,11 +184,31 @@ public class GeneralViewModel : ReactiveObject, IDisposable
 
     public static IEnumerable<CultureInfo> GetAvailableCultures()
     {
-        var cultures = CultureInfo.GetCultures(CultureTypes.NeutralCultures);
-
         yield return new CultureInfo("en");
 
-        foreach (var culture in cultures)
+        // Probe only directories that actually contain satellite resource assemblies to avoid hundreds of disk misses on the UI thread.
+        var assemblyLocation = typeof(Locale).Assembly.Location;
+        var assemblyDir = string.IsNullOrEmpty(assemblyLocation) ? null : Path.GetDirectoryName(assemblyLocation);
+        var satelliteFileName = $"{typeof(Locale).Assembly.GetName().Name}.resources.dll";
+
+        IEnumerable<CultureInfo> candidates;
+        if (!string.IsNullOrEmpty(assemblyDir) && Directory.Exists(assemblyDir))
+        {
+            candidates = Directory.EnumerateDirectories(assemblyDir)
+                .Where(dir => File.Exists(Path.Combine(dir, satelliteFileName)))
+                .Select(dir =>
+                {
+                    try { return CultureInfo.GetCultureInfo(Path.GetFileName(dir)); }
+                    catch (CultureNotFoundException) { return null; }
+                })
+                .Where(c => c != null)!;
+        }
+        else
+        {
+            candidates = CultureInfo.GetCultures(CultureTypes.NeutralCultures);
+        }
+
+        foreach (var culture in candidates)
         {
             if (culture.Equals(CultureInfo.InvariantCulture) ||
                 string.Equals(culture.Name, "en", StringComparison.OrdinalIgnoreCase))

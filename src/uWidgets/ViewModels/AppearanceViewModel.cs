@@ -15,6 +15,7 @@ namespace uWidgets.ViewModels;
 public class AppearanceViewModel : ReactiveObject, IDisposable
 {
     private readonly IAppSettingsProvider appSettingsProvider;
+    private ThemeButton[]? cachedThemes;
     private bool nativeFrameChangedPendingRestart;
     private bool disposed;
 
@@ -47,7 +48,9 @@ public class AppearanceViewModel : ReactiveObject, IDisposable
         this.RaisePropertyChanged(nameof(PreviewBorderThickness));
     }
 
-    public ThemeButton[] Themes => appSettingsProvider.Get().Templates.Select(theme => new ThemeButton(appSettingsProvider, theme)).ToArray();
+    public ThemeButton[] Themes => cachedThemes ??= appSettingsProvider.Get().Templates
+        .Select(theme => new ThemeButton(appSettingsProvider, theme))
+        .ToArray();
     
     public DarkModeViewModel[] DarkModes =>
     [

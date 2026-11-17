@@ -16,28 +16,10 @@ namespace uWidgets.Tests;
 /// Regression tests ensuring shared and widget vector geometries maintain valid bounds,
 /// alignment parity, and expected view-model icon defaults.
 /// </summary>
+[Collection(AvaloniaUiCollection.Name)]
 public class VisualGeometryTests
 {
-    private static readonly object AvaloniaInitLock = new();
-    private static bool avaloniaInitialized;
-
-    private sealed class TestAvaloniaApp : Application;
-
-    private static void EnsureAvaloniaSkia()
-    {
-        if (avaloniaInitialized) return;
-        lock (AvaloniaInitLock)
-        {
-            if (avaloniaInitialized) return;
-            if (Application.Current is null)
-            {
-                AppBuilder.Configure<TestAvaloniaApp>()
-                    .UsePlatformDetect()
-                    .SetupWithoutStarting();
-            }
-            avaloniaInitialized = true;
-        }
-    }
+    private static void EnsureAvaloniaSkia() { }
 
     [Fact]
     public void WidgetIcons_PlayAndPause_HaveExactIdenticalIntegerBounds()

@@ -49,7 +49,9 @@ public class SettingsViewModel : ReactiveObject, IDisposable
                 group => group.MaxBy(assembly => assembly.Version)!)
             .Select(assembly =>
             {
-                var subKeywords = BuildWidgetSearchKeywords(assembly.Value.AssemblyName);
+                var subKeywords = !string.IsNullOrWhiteSpace(assembly.Value.SearchKeywords)
+                    ? assembly.Value.SearchKeywords
+                    : BuildWidgetSearchKeywords(assembly.Value.AssemblyName);
                 return new PageViewModel(
                     typeof(Gallery),
                     StreamGeometry.Parse(assembly.Value.IconData),

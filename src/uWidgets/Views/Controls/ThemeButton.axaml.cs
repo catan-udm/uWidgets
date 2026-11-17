@@ -76,20 +76,14 @@ public partial class ThemeButton : UserControl
                 return CreateFallbackBitmap(targetHeight);
 
             using var stream = File.OpenRead(wallpaperPath);
-            using var originalBitmap = Bitmap.DecodeToHeight(stream, targetHeight);
-            if (originalBitmap.PixelSize.Height <= 0 || originalBitmap.PixelSize.Width <= 0)
+            var scaledBitmap = Bitmap.DecodeToHeight(stream, targetHeight);
+            if (scaledBitmap.PixelSize.Height <= 0 || scaledBitmap.PixelSize.Width <= 0)
+            {
+                scaledBitmap.Dispose();
                 return CreateFallbackBitmap(targetHeight);
+            }
 
-            var aspectRatio = (double)originalBitmap.PixelSize.Width / originalBitmap.PixelSize.Height;
-            var targetWidth = Math.Max(1, (int)(targetHeight * aspectRatio));
-            var renderTarget = new RenderTargetBitmap(new PixelSize(targetWidth, targetHeight), new Vector(96, 96));
-
-            using var context = renderTarget.CreateDrawingContext(false);
-            var sourceRect = new Rect(0, 0, originalBitmap.PixelSize.Width, originalBitmap.PixelSize.Height);
-            var targetRect = new Rect(0, 0, targetWidth, targetHeight);
-            context.DrawImage(originalBitmap, sourceRect, targetRect);
-
-            return renderTarget;
+            return scaledBitmap;
         }
         catch
         {
